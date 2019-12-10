@@ -1,0 +1,12 @@
+[submodule "rocketchip"]
+	path = rocketchip
+	url = https://github.com/chipsalliance/rocket-chip/
+[submodule "config"]
+	path = config
+	url = https://github.com/chipsalliance/api-config-chipsalliance
+[submodule "blocks"]
+	path = blocks
+	url = https://github.com/sifive/sifive-blocks
+[submodule "inclusivecache"]
+	path = inclusivecache
+	url = https://github.com/sifive/block-inclusivecache-sifive
