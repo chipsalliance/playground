@@ -8,10 +8,8 @@ import wishbone._
 import system._
 import diplomacy._
 import devices.tilelink._
-import freechips.rocketchip.subsystem.WithJtagDTM
-
-
-
+import freechips.rocketchip.subsystem._
+import sifive.blocks.devices.gpio._
 
 object play extends TestSuite {
   val tests = Tests {
@@ -24,10 +22,16 @@ object play extends TestSuite {
        * notice this has been parameterized all Module
        **/
       val lm = LazyModule(playground.configToLazyModule(classOf[ExampleRocketSystem], config))
-      chisel3.Driver.emitVerilog(lm.module)
+      val target = lm.getChildren.filter(_.name == "bh").head
     }
     test("wishbone") {
       val lm = LazyModule(playground.configToLazyModule(classOf[WishboneDemoMaster], new Config(Parameters.empty)))
+      chisel3.Driver.emitVerilog(lm.module)
+    }
+    test("ku040") {
+      import ku040._
+      val config = new Ku040Config
+      val lm = LazyModule(playground.configToLazyModule(classOf[Ku040RocketSystem], config))
       chisel3.Driver.emitVerilog(lm.module)
     }
   }
