@@ -8,7 +8,7 @@ trait CommonModule extends ScalaModule {
 
   def ivyDeps = Agg(
     ivy"edu.berkeley.cs::chisel3:3.2.2",
-    ivy"edu.berkeley.cs::chisel-testers2:0.1-SNAPSHOT"
+    ivy"edu.berkeley.cs::chisel-testers2:0.2-SNAPSHOT"
   )
 
   private val macroParadise = ivy"org.scalamacros:::paradise:2.1.0"
