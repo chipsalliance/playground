@@ -1,6 +1,6 @@
-package ku040
+package arty100t
 
-/** This class is designed for ku040 board */
+/** This class is designed for arty100t board */
 
 /** rocketchip dependency */
 
@@ -10,6 +10,8 @@ import config._
 import devices.tilelink._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tile._
+import sifive.blocks.devices.jtag.JTAGPins
+import sifive.blocks.devices.pinctrl.BasePin
 import subsystem._
 
 /** sifive blocks dependency */
@@ -19,7 +21,7 @@ import uart._
 import spi._
 
 /** Example Top with periphery devices and ports, and a Rocket subsystem */
-class Ku040RocketSystem(implicit p: Parameters) extends RocketSubsystem
+class CustomArty100TRocketSystem(implicit p: Parameters) extends RocketSubsystem
   with HasHierarchicalBusTopology
   with HasAsyncExtInterrupts
   with CanHaveMasterAXI4MemPort
@@ -27,18 +29,21 @@ class Ku040RocketSystem(implicit p: Parameters) extends RocketSubsystem
   with HasPeripherySPIFlash
   with HasPeripheryGPIO
   with HasPeripheryUART {
-  override lazy val module = new Ku040RocketSystemModuleImp(this)
+
+  override lazy val module = new CustomArty100TRocketSystemModuleImp(this)
 }
 
-class Ku040RocketSystemModuleImp[+L <: Ku040RocketSystem](_outer: L) extends RocketSubsystemModuleImp(_outer)
+class CustomArty100TRocketSystemModuleImp[+L <: CustomArty100TRocketSystem](_outer: L) extends RocketSubsystemModuleImp(_outer)
   with HasRTCModuleImp
   with HasExtInterruptsModuleImp
   with HasPeripheryBootROMModuleImp
   with HasPeripherySPIFlashModuleImp
   with HasPeripheryGPIOModuleImp
-  with HasPeripheryUARTModuleImp
+  with HasPeripheryUARTModuleImp {
 
-class WithNKu040Cores(n: Int) extends Config((site, here, up) => {
+}
+
+class WithNCustomArty100TCores(n: Int) extends Config((site, here, up) => {
   case RocketTilesKey => {
     val small = RocketTileParams(
       core = RocketCoreParams(useVM = false, fpu = None),
@@ -60,7 +65,7 @@ class WithNKu040Cores(n: Int) extends Config((site, here, up) => {
   }
 })
 
-class Ku040Config extends Config(
+class CustomArty100TConfig extends Config(
   new Config((site, here, up) => {
     case BootROMParams => new BootROMParams(contentFileName = "rocketchip/bootrom/bootrom.img")
     case PeripheryGPIOKey => List(GPIOParams(address = 0x10012000, width = 4, includeIOF = true))
@@ -70,12 +75,12 @@ class Ku040Config extends Config(
     )
     case PeripherySPIFlashKey => List(SPIFlashParams(fAddress = 0x20000000, rAddress = 0x10015000, sampleDelayBits = 3))
   }) ++
-    new WithNKu040Cores(2) ++
+    new WithNCustomArty100TCores(2) ++
     new WithJtagDTM ++
     new WithDefaultMemPort() ++
     new WithNoMMIOPort() ++
     new WithNoSlavePort() ++
-    new WithDTS("freechips,rocketchip-ku040", Nil) ++
+    new WithDTS("freechips,rocketchip-arty100t", Nil) ++
     new WithNExtTopInterrupts(2) ++
     new WithTimebase(BigInt(50000000)) ++
     new BaseSubsystemConfig

@@ -8,7 +8,6 @@ trait CommonModule extends ScalaModule {
 
   def ivyDeps = Agg(
     ivy"edu.berkeley.cs::chisel3:3.2.2",
-    ivy"edu.berkeley.cs::chisel-testers2:0.2-SNAPSHOT"
   )
 
   private val macroParadise = ivy"org.scalamacros:::paradise:2.1.0"
@@ -47,8 +46,12 @@ object blocks extends CommonModule with SbtModule {
   def moduleDeps = Seq(rocketchip)
 }
 
+object shells extends CommonModule with SbtModule {
+  def moduleDeps = Seq(rocketchip, blocks)
+}
+
 object playground extends CommonModule {
-  def moduleDeps = Seq(rocketchip, inclusivecache, blocks, rocketchip.macros)
+  def moduleDeps = Seq(rocketchip, inclusivecache, blocks, rocketchip.macros, shells)
 
   object tests extends Tests {
     def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.2")

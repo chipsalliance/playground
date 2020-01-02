@@ -30,9 +30,8 @@ object play extends TestSuite {
     }
     test("ku040") {
       import ku040._
-      val config = new Ku040Config
-      val lm = LazyModule(playground.configToLazyModule(classOf[Ku040RocketSystem], config))
-      chisel3.Driver.emitVerilog(lm.module)
+      implicit val p = new Ku040Config
+      chisel3.Driver.emitVerilog(new Ku040DevKitPlatform)
     }
   }
 }

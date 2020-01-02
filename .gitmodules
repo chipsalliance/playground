@@ -10,3 +10,6 @@
 [submodule "inclusivecache"]
 	path = inclusivecache
 	url = https://github.com/sifive/block-inclusivecache-sifive
+[submodule "shells"]
+	path = shells
+	url = https://github.com/sifive/fpga-shells
