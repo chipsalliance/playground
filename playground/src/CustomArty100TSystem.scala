@@ -8,15 +8,13 @@ import chipsalliance.rocketchip.config.Config
 import freechips.rocketchip._
 import config._
 import devices.tilelink._
+import freechips.rocketchip.devices.debug.HasPeripheryDebugModuleImp
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tile._
-import sifive.blocks.devices.jtag.JTAGPins
-import sifive.blocks.devices.pinctrl.BasePin
 import subsystem._
 
 /** sifive blocks dependency */
 import sifive.blocks.devices._
-import gpio._
 import uart._
 import spi._
 
@@ -27,7 +25,6 @@ class CustomArty100TRocketSystem(implicit p: Parameters) extends RocketSubsystem
   with CanHaveMasterAXI4MemPort
   with HasPeripheryBootROM
   with HasPeripherySPIFlash
-  with HasPeripheryGPIO
   with HasPeripheryUART {
 
   override lazy val module = new CustomArty100TRocketSystemModuleImp(this)
@@ -38,10 +35,8 @@ class CustomArty100TRocketSystemModuleImp[+L <: CustomArty100TRocketSystem](_out
   with HasExtInterruptsModuleImp
   with HasPeripheryBootROMModuleImp
   with HasPeripherySPIFlashModuleImp
-  with HasPeripheryGPIOModuleImp
-  with HasPeripheryUARTModuleImp {
-
-}
+  with HasPeripheryUARTModuleImp
+  with HasPeripheryDebugModuleImp
 
 class WithNCustomArty100TCores(n: Int) extends Config((site, here, up) => {
   case RocketTilesKey => {
@@ -68,12 +63,10 @@ class WithNCustomArty100TCores(n: Int) extends Config((site, here, up) => {
 class CustomArty100TConfig extends Config(
   new Config((site, here, up) => {
     case BootROMParams => new BootROMParams(contentFileName = "rocketchip/bootrom/bootrom.img")
-    case PeripheryGPIOKey => List(GPIOParams(address = 0x10012000, width = 4, includeIOF = true))
     case PeripheryUARTKey => List(
-      UARTParams(address = 0x10013000),
-      UARTParams(address = 0x10014000)
+      UARTParams(address = 0x10012000),
     )
-    case PeripherySPIFlashKey => List(SPIFlashParams(fAddress = 0x20000000, rAddress = 0x10015000, sampleDelayBits = 3))
+    case PeripherySPIFlashKey => List(SPIFlashParams(fAddress = 0x20000000, rAddress = 0x10013000, sampleDelayBits = 3))
   }) ++
     new WithNCustomArty100TCores(2) ++
     new WithJtagDTM ++

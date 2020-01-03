@@ -9,7 +9,7 @@ import system._
 import diplomacy._
 import devices.tilelink._
 import freechips.rocketchip.subsystem._
-import sifive.blocks.devices.gpio._
+import arty100t._
 
 object play extends TestSuite {
   val tests = Tests {
@@ -28,10 +28,8 @@ object play extends TestSuite {
       val lm = LazyModule(playground.configToLazyModule(classOf[WishboneDemoMaster], new Config(Parameters.empty)))
       chisel3.Driver.emitVerilog(lm.module)
     }
-    test("ku040") {
-      import ku040._
-      implicit val p = new Ku040Config
-      chisel3.Driver.emitVerilog(new Ku040DevKitPlatform)
+    test("arty") {
+      chisel3.Driver.emitVerilog(new FPGATop)
     }
   }
 }
