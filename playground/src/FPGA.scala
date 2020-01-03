@@ -30,23 +30,8 @@ class FPGATop extends MultiIOModule {
   fpgaInterrupts <> topInterrupts
 
   /** SPI */
-  def spiPin(b: SPIDataIO) = {
-    val pad = Module(new IOBUF())
-    pad.io.I := b.o
-    b.i := pad.io.O
-    pad.io.T := ~b.oe
-    pad.io.IO
-  }
-
-  val fpgaSPI = IO(new Bundle {
-    val sck = Output(Bool())
-    val cs = Output(Bool())
-    val dq = Vec(4, Analog(1.W))
-  })
-
-  fpgaSPI.sck := topSPI.sck
-  fpgaSPI.cs := topSPI.cs(0)
-  (fpgaSPI.dq zip topSPI.dq).foreach { case (a, b) => attach(a, spiPin(b)) }
+  val fpgaSPI = IO(topSPI.cloneType)
+  fpgaSPI <> topSPI
 
   /** JTAG*/
   val fpgaJtag = IO(new Bundle() {
