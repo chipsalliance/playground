@@ -75,6 +75,7 @@ class CustomArty100TConfig extends Config(
     new WithNoSlavePort() ++
     new WithDTS("freechips,rocketchip-arty100t", Nil) ++
     new WithNExtTopInterrupts(0) ++
+    new WithoutTLMonitors ++
     new WithTimebase(BigInt(50000000)) ++
     new BaseSubsystemConfig
 )
