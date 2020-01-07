@@ -9,7 +9,6 @@ import devices.debug.SystemJTAGIO
 import sifive.blocks.devices._
 import uart._
 import spi._
-import gpio._
 import playground._
 import sifive.fpgashells.ip.xilinx._
 
@@ -22,11 +21,6 @@ class FPGATop extends MultiIOModule {
   val fpgaInterrupts = IO(Input(topInterrupts.cloneType))
   fpgaInterrupts <> topInterrupts
 
-  val topGPIO = top.gpio.head.asInstanceOf[GPIOPortIO]
-  val fpgaGPIO = IO(Vec(4, Analog(1.W)))
-  fpgaGPIO.zipWithIndex.foreach {
-    case (f: Analog, i: Int) => IOBUF(f, topGPIO.pins(i).toBasePin())
-  }
   val topMem: AXI4Bundle = top.outer.mem_axi4.head
   val fpgaMem = IO(topMem.cloneType)
   fpgaMem <> topMem
