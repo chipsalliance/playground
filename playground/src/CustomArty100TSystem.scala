@@ -17,6 +17,7 @@ import subsystem._
 import sifive.blocks.devices._
 import uart._
 import spi._
+import gpio._
 
 /** Example Top with periphery devices and ports, and a Rocket subsystem */
 class CustomArty100TRocketSystem(implicit p: Parameters) extends RocketSubsystem
@@ -25,6 +26,7 @@ class CustomArty100TRocketSystem(implicit p: Parameters) extends RocketSubsystem
   with CanHaveMasterAXI4MemPort
   with HasPeripheryBootROM
   with HasPeripherySPIFlash
+  with HasPeripheryGPIO
   with HasPeripheryUART {
 
   override lazy val module = new CustomArty100TRocketSystemModuleImp(this)
@@ -36,6 +38,7 @@ class CustomArty100TRocketSystemModuleImp[+L <: CustomArty100TRocketSystem](_out
   with HasPeripheryBootROMModuleImp
   with HasPeripherySPIFlashModuleImp
   with HasPeripheryUARTModuleImp
+  with HasPeripheryGPIOModuleImp
   with HasPeripheryDebugModuleImp
 
 class WithNCustomArty100TCores(n: Int) extends Config((site, here, up) => {
@@ -66,7 +69,10 @@ class CustomArty100TConfig extends Config(
     case PeripheryUARTKey => List(
       UARTParams(address = 0x10012000),
     )
-    case PeripherySPIFlashKey => List(SPIFlashParams(fAddress = 0x20000000, rAddress = 0x10013000, sampleDelayBits = 3))
+    case PeripheryGPIOKey => List(
+      GPIOParams(address = 0x10013000, width = 4)
+    )
+    case PeripherySPIFlashKey => List(SPIFlashParams(fAddress = 0x20000000, rAddress = 0x10014000, sampleDelayBits = 3))
   }) ++
     new WithNCustomArty100TCores(2) ++
     new WithJtagDTM ++
