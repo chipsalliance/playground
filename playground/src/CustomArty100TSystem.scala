@@ -62,7 +62,7 @@ class WithNCustomArty100TCores(n: Int) extends Config((site, here, up) => {
 
 class CustomArty100TConfig extends Config(
   new Config((site, here, up) => {
-    case BootROMParams => new BootROMParams(contentFileName = "playground/bootrom/bootrom.img")
+    case BootROMParams => new BootROMParams(contentFileName = "playground/bootrom/boot.bin")
     case PeripheryUARTKey => List(
       UARTParams(address = 0x10012000),
     )
