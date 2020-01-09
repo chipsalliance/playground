@@ -49,6 +49,7 @@ class FPGATop extends MultiIOModule {
       topSPI.dq(i).i := pad.io.O
       pad.io.T := ~topSPI.dq(i).oe
       attach(pad.io.IO, io)
+      PULLUP(io)
   }
 
 
