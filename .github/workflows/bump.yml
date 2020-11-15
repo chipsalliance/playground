@@ -1,0 +1,42 @@
+on:
+  schedule:
+    - cron: '10 * * * *'
+  push:
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: '0'
+      - name: Coursier Cache
+        uses: coursier/cache-action@v5
+      - name: Mill Cache
+        uses: actions/cache@v2
+        with:
+          path: out
+          key: ${{ runner.os }}-mill-${{ hashFiles('**/build.sc') }}
+          restore-keys: ${{ runner.os }}-mill-
+      - name: Setup Mill
+        uses: jodersky/setup-mill@v0.2.3
+        with:
+          mill-version: 0.9.6
+      - name: Init
+        run: |
+          git config --global user.email "liu@jiuyang.me"
+          git config --global user.name "Github Action"
+          make init
+      - name: Bump
+        id: bump
+        run: make bump
+      - name: Patch
+        run: make patch
+      - name: Check Mill Compile
+        run: make compile
+      - name: Commit
+        run: |
+          make depatch
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Auto Bump" && git push origin
+          fi
