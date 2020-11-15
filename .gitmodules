@@ -1,0 +1,30 @@
+[submodule "chisel3"]
+	path = dependencies/chisel3
+	url = git@github.com:freechipsproject/chisel3.git
+[submodule "firrtl"]
+	path = dependencies/firrtl
+	url = git@github.com:freechipsproject/firrtl.git
+[submodule "treadle"]
+	path = dependencies/treadle
+	url = git@github.com:freechipsproject/treadle.git
+[submodule "chisel-testers2"]
+	path = dependencies/chisel-testers2
+	url = git@github.com:ucb-bar/chisel-testers2.git
+[submodule "api-config-chipsalliance"]
+	path = dependencies/api-config-chipsalliance
+	url = git@github.com:chipsalliance/api-config-chipsalliance.git
+[submodule "berkeley-hardfloat"]
+	path = dependencies/berkeley-hardfloat
+	url = git@github.com:ucb-bar/berkeley-hardfloat.git
+[submodule "rocket-chip"]
+	path = dependencies/rocket-chip
+	url = git@github.com:chipsalliance/rocket-chip.git
+[submodule "sifive-blocks"]
+	path = dependencies/sifive-blocks
+	url = git@github.com:sifive/sifive-blocks.git
+[submodule "block-inclusivecache-sifive"]
+	path = dependencies/block-inclusivecache-sifive
+	url = git@github.com:sifive/block-inclusivecache-sifive.git
+[submodule "fpga-shells"]
+	path = dependencies/fpga-shells
+	url = git@github.com:sifive/fpga-shells.git
