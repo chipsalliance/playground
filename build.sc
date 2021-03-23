@@ -106,6 +106,40 @@ object shells extends CommonModule with SbtModule {
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, blocks)
 }
 
+// FireSim Only
+
+
+object firesim extends CommonModule with SbtModule {
+  
+  object midas extends CommonModule with SbtModule {
+    override def millSourcePath = os.pwd / "dependencies" / "firesim" / "sim" / "midas"
+    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, targetutils, mdf)
+    object targetutils extends CommonModule with SbtModule
+    object mdf extends CommonModule with SbtModule {
+      override def millSourcePath = os.pwd / "dependencies" / "plsi-mdf"
+      override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, blocks)
+      override def ivyDeps = Agg(
+        ivy"com.typesafe.play::play-json:2.6.10",
+      )
+    }
+  }
+
+  object lib extends CommonModule with SbtModule {
+    override def millSourcePath = os.pwd / "dependencies" / "firesim" / "sim" / "firesim-lib"
+    override def moduleDeps = super.moduleDeps ++ Seq(midas, testchipip, icenet)
+    object icenet extends CommonModule with SbtModule {
+      override def millSourcePath = os.pwd / "dependencies" / "icenet"
+      override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, testchipip)
+    }
+    object testchipip extends CommonModule with SbtModule {
+      override def millSourcePath = os.pwd / "dependencies" / "testchipip"
+      override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, blocks)
+    }
+  }
+
+  override def moduleDeps = super.moduleDeps ++ Seq(lib, midas)
+}
+
 object playground extends CommonModule {
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells)
 

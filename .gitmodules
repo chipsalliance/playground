@@ -28,3 +28,15 @@
 [submodule "fpga-shells"]
 	path = dependencies/fpga-shells
 	url = git@github.com:sifive/fpga-shells.git
+[submodule "dependencies/firesim"]
+	path = dependencies/firesim
+	url = git@github.com:firesim/firesim.git
+[submodule "dependencies/plsi-mdf"]
+	path = dependencies/plsi-mdf
+	url = git@github.com:ucb-bar/plsi-mdf
+[submodule "dependencies/testchipip"]
+	path = dependencies/testchipip
+	url = git@github.com:ucb-bar/testchipip
+[submodule "dependencies/icenet"]
+	path = dependencies/icenet
+	url = git@github.com:firesim/icenet
