@@ -334,7 +334,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
 // Dummy
 
 object playground extends CommonModule {
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells, firesim, boom)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells, firesim, boom, chipyard, chipyard.fpga)
 
   // add some scala ivy module you like here.
   override def ivyDeps = Agg(
