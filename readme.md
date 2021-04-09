@@ -25,8 +25,6 @@ firesim https://github.com/firesim/firesim/pull/747
 firesim https://github.com/firesim/firesim/pull/749  
 firesim https://github.com/firesim/firesim/pull/750  
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
-riscv-boom https://github.com/riscv-boom/riscv-boom/pull/535  
-riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/63  
 testchipip https://github.com/ucb-bar/testchipip/pull/126  
 <!-- END-PATCH -->
 ## Why not Chipyard
