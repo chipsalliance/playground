@@ -1,5 +1,6 @@
 // import Mill dependency
 import mill._
+import mill.define.Sources
 import mill.modules.Util
 import scalalib._
 // support BSP
@@ -330,6 +331,38 @@ object chipyard extends CommonModule with SbtModule { cy =>
   }
 }
 
+// CI Tests
+object sanitytests extends CommonModule {
+  override def ivyDeps = Agg(
+    ivy"com.lihaoyi::os-lib:latest.integration",
+    ivy"com.lihaoyi::utest:latest.integration"
+  )
+  object rocketchip extends Tests {
+    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
+    override def testFrameworks = Seq("utest.runner.Framework")
+
+    def libraryResources = T.sources {
+      os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(spike.compile())
+      T.ctx.dest
+    }
+
+    override def resources: Sources = T.sources {
+      super.resources() ++ libraryResources()
+    }
+  }
+}
+
+object spike extends Module {
+  override def millSourcePath = os.pwd / "dependencies" / "riscv-isa-sim"
+  // ask make to cache file.
+  def compile = T.persistent {
+    os.proc(millSourcePath / "configure", "--prefix", "/usr").call(
+      T.ctx.dest, Map("CC" -> "clang", "CXX" -> "clang++")
+    )
+    os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
+    T.ctx.dest
+  }
+}
 
 // Dummy
 

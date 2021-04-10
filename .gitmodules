@@ -102,3 +102,6 @@
 	path = dependencies/sha3
 	url = git@github.com:ucb-bar/sha3
 	branch = master
+[submodule "dependencies/riscv-isa-sim"]
+	path = dependencies/riscv-isa-sim
+	url = git@github.com:riscv/riscv-isa-sim.git
