@@ -19,7 +19,7 @@ This repository always tracks remote developing branches, it may need some patch
 <!-- BEGIN-PATCH -->
 barstools https://github.com/ucb-bar/barstools/pull/101  
 chisel3 https://github.com/chipsalliance/chisel3/pull/1854  
-chisel3 https://github.com/chipsalliance/chisel3/pull/1859  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2809  
 dsptools https://github.com/ucb-bar/dsptools/pull/222  
 dsptools https://github.com/ucb-bar/dsptools/pull/226  
 firesim https://github.com/firesim/firesim/pull/747  
