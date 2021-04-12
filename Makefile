@@ -19,7 +19,7 @@ bsp:
 	mill -i mill.bsp.BSP/install
 
 compile:
-	mill -i __.compile
+	mill -i -j 0 __.compile
 
 clean:
 	git clean -fd
