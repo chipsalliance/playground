@@ -5,7 +5,7 @@ init:
 	touch playground/src/Playground.scala
 
 patch:
-	sed '/BEGIN-PATCH/,/END-PATCH/!d;//d' readme.md | awk '{print("(cd dependencies/" $$1 " && echo " $$2 " && curl -s -L " $$2 ".patch | git apply --index)" )}' | bash
+	sed '/BEGIN-PATCH/,/END-PATCH/!d;//d' readme.md | awk '{print("(cd dependencies/" $$1 " && echo " $$2 " && curl -s -L " $$2 ".patch | git apply --index)" )}' | parallel {}
 
 depatch:
 	git submodule foreach git reset --hard
