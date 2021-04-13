@@ -21,7 +21,6 @@ barstools https://github.com/ucb-bar/barstools/pull/101
 chisel3 https://github.com/chipsalliance/chisel3/pull/1854  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2809  
 dsptools https://github.com/ucb-bar/dsptools/pull/222  
-dsptools https://github.com/ucb-bar/dsptools/pull/226  
 firesim https://github.com/firesim/firesim/pull/747  
 firesim https://github.com/firesim/firesim/pull/749  
 firesim https://github.com/firesim/firesim/pull/750  
