@@ -357,6 +357,10 @@ object sanitytests extends CommonModule {
       super.resources() ++ libraryResources()
     }
   }
+  object vcu118 extends Tests {
+    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, shells)
+    override def testFrameworks = Seq("utest.runner.Framework")
+  }
 }
 
 object spike extends Module {
