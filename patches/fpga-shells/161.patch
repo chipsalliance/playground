@@ -1,0 +1,52 @@
+From 48f130d5c3c14f66e23c8b8e735e576a6f581911 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Mon, 19 Apr 2021 08:13:37 +0000
+Subject: [PATCH] add inline blackbox to PowerOnResetFPGAOnly.
+
+---
+ src/main/scala/ip/xilinx/Xilinx.scala | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/src/main/scala/ip/xilinx/Xilinx.scala b/src/main/scala/ip/xilinx/Xilinx.scala
+index 4df45e0..ff6a722 100644
+--- a/src/main/scala/ip/xilinx/Xilinx.scala
++++ b/src/main/scala/ip/xilinx/Xilinx.scala
+@@ -4,6 +4,7 @@ package sifive.fpgashells.ip.xilinx
+ import Chisel._
+ import chisel3.{Input, Output}
+ import chisel3.experimental.{Analog, attach}
++import chisel3.util.HasBlackBoxInline
+ import freechips.rocketchip.util.{ElaborationArtefacts}
+ 
+ import sifive.blocks.devices.pinctrl.{BasePin}
+@@ -80,11 +81,29 @@ class reset_mig extends BlackBox {
+ 
+ // This is a FPGA-Only construct, which uses
+ // 'initial' constructions
+-class PowerOnResetFPGAOnly extends BlackBox {
++class PowerOnResetFPGAOnly extends BlackBox with HasBlackBoxInline {
+   val io = new Bundle {
+     val clock = Input(Clock())
+     val power_on_reset = Output(Bool())
+   }
++  setInline("PowerOnResetFPGAOnly.v",
++    """// See LICENSE file for license details.
++      |(* keep_hierarchy = "yes" *) module PowerOnResetFPGAOnly(
++      |  input clock,
++      |  (* dont_touch = "true" *) output power_on_reset
++      |);
++      |  reg reset;
++      |  assign power_on_reset = reset;
++      |
++      |  initial begin
++      |     reset <= 1'b1;
++      |  end
++      |
++      |  always @(posedge clock) begin
++      |     reset <= 1'b0;
++      |  end
++      |endmodule
++      |""".stripMargin)
+ }
+ 
+ object PowerOnResetFPGAOnly {

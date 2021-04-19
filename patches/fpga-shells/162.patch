@@ -1,0 +1,55 @@
+From 7b2788f6dfae42fa60229fdf04ce3a70dbdd6135 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sun, 25 Apr 2021 09:00:59 +0000
+Subject: [PATCH 1/2] fix critical warning for Vivado 2020.2.
+
+---
+ src/main/scala/shell/xilinx/XilinxShell.scala | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/main/scala/shell/xilinx/XilinxShell.scala b/src/main/scala/shell/xilinx/XilinxShell.scala
+index 72ed647..7bf0176 100644
+--- a/src/main/scala/shell/xilinx/XilinxShell.scala
++++ b/src/main/scala/shell/xilinx/XilinxShell.scala
+@@ -29,9 +29,9 @@ class XDC(val name: String)
+   }
+   def addIOB(io: IOPin) {
+     if (io.isOutput) {
+-      addConstraint(s"set_property IOB {TRUE} [ get_cells -of_objects [ all_fanin -flat -startpoints_only ${io.sdcPin}]]")
++      addConstraint(s"set_property IOB {TRUE} ${io.sdcPin}")
+     } else {
+-      addConstraint(s"set_property IOB {TRUE} [ get_cells -of_objects [ all_fanout -flat -endpoints_only ${io.sdcPin}]]")
++      addConstraint(s"set_property IOB {TRUE} ${io.sdcPin}")
+     }
+   }
+   def addSlew(io: IOPin, speed: String) {
+
+From ac41bb06c7d44cf50d19c876567a28708ba54c27 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Fri, 30 Apr 2021 07:33:34 +0000
+Subject: [PATCH 2/2] disable JTAG IOB
+
+This avoid:
+[Place 30-722] Terminal 'jtag_jtag_XXX' has IOB constraint set to TRUE,
+but it is either not connected to a FLOP element or the connected FLOP
+element could not be brought into the I/O
+
+[Constraints 18-841] Port jtag_jtag_XXX has IOB constraint. But it
+drives multiple flops. Please specify IOB constraint on individual flop.
+The IOB constraint on port will be ignored.
+---
+ src/main/scala/shell/xilinx/VCU118NewShell.scala | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/main/scala/shell/xilinx/VCU118NewShell.scala b/src/main/scala/shell/xilinx/VCU118NewShell.scala
+index dd56091..136351c 100644
+--- a/src/main/scala/shell/xilinx/VCU118NewShell.scala
++++ b/src/main/scala/shell/xilinx/VCU118NewShell.scala
+@@ -263,7 +263,6 @@ class JTAGDebugVCU118PlacedOverlay(val shell: VCU118ShellBasicOverlays, name: St
+       shell.xdc.addPackagePin(io, pin_location)
+       shell.xdc.addIOStandard(io, pin_voltage)
+       shell.xdc.addPullup(io)
+-      shell.xdc.addIOB(io)
+     }
+   } }
+ }

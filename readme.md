@@ -24,6 +24,8 @@ firesim https://github.com/firesim/firesim/pull/749
 firesim https://github.com/firesim/firesim/pull/750  
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
 testchipip https://github.com/ucb-bar/testchipip/pull/126  
+fpga-shells https://github.com/sifive/fpga-shells/pull/161  
+fpga-shells https://github.com/sifive/fpga-shells/pull/162  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
