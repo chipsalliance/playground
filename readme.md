@@ -23,6 +23,7 @@ rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2809
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2811  
 chipyard https://github.com/ucb-bar/chipyard/pull/861  
+dsptools https://github.com/ucb-bar/dsptools/pull/228  
 firesim https://github.com/firesim/firesim/pull/747  
 firesim https://github.com/firesim/firesim/pull/749  
 firesim https://github.com/firesim/firesim/pull/750  
