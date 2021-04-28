@@ -25,6 +25,7 @@ rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2811
 firesim https://github.com/firesim/firesim/pull/747  
 firesim https://github.com/firesim/firesim/pull/749  
 firesim https://github.com/firesim/firesim/pull/750  
+firesim https://github.com/firesim/firesim/pull/761  
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
 testchipip https://github.com/ucb-bar/testchipip/pull/126  
 <!-- END-PATCH -->
