@@ -41,7 +41,7 @@ case class TestHarness[M <: RawModule](
     ) { case (annos, stage) => stage.transform(annos) }
     logger.warn(s"$testHarness with configs: ${configs.mkString("_")} generated.")
     val ramBehavior = annotations.collect {
-      case firrtl.passes.memlib.ReplSeqMemAnnotation(_, file) => file
+      case firrtl.passes.memlib.MemLibOutConfigFileAnnotation(file, _) => file
     }.map { conf =>
       val ramBehavior = os.temp(suffix = ".v", deleteOnExit = false)
       os.proc(resource("vlsi_mem_gen.py"), conf).call(stdout = ramBehavior)

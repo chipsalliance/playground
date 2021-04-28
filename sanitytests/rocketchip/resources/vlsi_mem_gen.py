@@ -195,10 +195,11 @@ def main(args):
   f = open(args.output_file, "w") if (args.output_file) else None
   conf_file = args.conf
   for line in open(conf_file):
-    parsed_line = gen_mem(*parse_line(line))
-    if f is not None:
+    if line.strip() != '':
+      parsed_line = gen_mem(*parse_line(line))
+      if f is not None:
         f.write(parsed_line)
-    else:
+      else:
         print(parsed_line)
 
 if __name__ == '__main__':
