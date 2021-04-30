@@ -46,9 +46,6 @@ Currently, only support **Arch Linux and Debian** sid, you can PR your own distr
 * GNU Make
   - Arch Linux: make
   - Debian: make
-* GNU Parallel
-  - Arch Linux: parallel
-  - Debian: parallel
 * git
   - Arch Linux: git
   - Debian: git
