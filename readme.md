@@ -18,9 +18,7 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 barstools https://github.com/ucb-bar/barstools/pull/101  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2809  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2811  
 firesim https://github.com/firesim/firesim/pull/747  
 firesim https://github.com/firesim/firesim/pull/749  
 firesim https://github.com/firesim/firesim/pull/750  
