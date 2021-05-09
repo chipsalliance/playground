@@ -18,12 +18,10 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 barstools https://github.com/ucb-bar/barstools/pull/101  
-chisel3 https://github.com/chipsalliance/chisel3/pull/1903  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
 firesim https://github.com/firesim/firesim/pull/747  
 firesim https://github.com/firesim/firesim/pull/749  
 firesim https://github.com/firesim/firesim/pull/750  
-firesim https://github.com/firesim/firesim/pull/761  
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
 testchipip https://github.com/ucb-bar/testchipip/pull/126  
 <!-- END-PATCH -->
