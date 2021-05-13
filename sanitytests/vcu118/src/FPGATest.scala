@@ -18,6 +18,7 @@ object FPGATest extends TestSuite {
     test("fpga build script") {
       val configs = Seq(classOf[FPGATestConfig], classOf[freechips.rocketchip.system.DefaultConfig])
       TestHarness(configs, Some(outputDirectory)).rerunFromSynthesisScript
+      os.write(outputDirectory / "openocd.cfg", os.read(resource("openocd.cfg")))
     }
   }
 }
