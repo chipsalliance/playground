@@ -30,7 +30,9 @@ jobs:
         id: bump
         run: make bump
       - name: Patch
-        run: make patch
+        run: |
+          make update-patches
+          make patch
       - name: Check Mill Compile
         run: make compile
       - name: Check Sanity
