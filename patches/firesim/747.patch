@@ -1,0 +1,718 @@
+From 412104cf8845c798b84ccb229afe40f86f27dded Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 23 Mar 2021 06:46:23 +0000
+Subject: [PATCH 1/5] remove deprecations.
+
+This commit remove all reference to chisel3.core, toBool, unless in firesim,
+which was broken by chipsalliance/chisel3#1730.
+---
+ .../src/main/scala/bridges/BlockDevBridge.scala        | 10 +++++-----
+ .../src/main/scala/bridges/SerialBridge.scala          |  4 ++--
+ .../src/main/scala/bridges/UARTBridge.scala            |  4 ++--
+ sim/midas/src/main/scala/midas/core/Channel.scala      |  6 +++---
+ sim/midas/src/main/scala/midas/core/FPGATop.scala      |  2 --
+ sim/midas/src/main/scala/midas/core/SimWrapper.scala   |  2 +-
+ .../midas/models/dram/FASEDMemoryTimingModel.scala     |  6 +++---
+ .../main/scala/midas/models/sram/AsyncMemModel.scala   | 10 +++++-----
+ .../main/scala/midas/models/sram/RegfileModel.scala    |  8 ++++----
+ .../src/main/scala/midas/passes/MidasTransforms.scala  |  1 -
+ sim/midas/src/main/scala/midas/widgets/Lib.scala       |  9 ++++-----
+ sim/midas/src/main/scala/midas/widgets/Widget.scala    |  5 ++---
+ .../targetutils/src/main/scala/midas/annotations.scala |  4 ++--
+ sim/src/main/scala/fasedtests/AXI4Fuzzer.scala         |  2 +-
+ .../main/scala/midasexamples/AutoCounterModule.scala   |  3 +--
+ sim/src/main/scala/midasexamples/GCD.scala             |  5 ++---
+ .../midasexamples/MulticlockAutoCounterModule.scala    |  2 +-
+ .../scala/midasexamples/MulticlockPrintfModule.scala   |  2 +-
+ sim/src/main/scala/midasexamples/PointerChaser.scala   |  1 -
+ .../main/scala/midasexamples/TriggerWiringModule.scala |  6 +++---
+ sim/src/main/scala/midasexamples/TwoAdders.scala       |  3 +--
+ .../main/scala/midasexamples/VerilogAccumulator.scala  |  3 +--
+ 22 files changed, 44 insertions(+), 54 deletions(-)
+
+diff --git a/sim/firesim-lib/src/main/scala/bridges/BlockDevBridge.scala b/sim/firesim-lib/src/main/scala/bridges/BlockDevBridge.scala
+index 737c1ebff..7f3c8f1e1 100644
+--- a/sim/firesim-lib/src/main/scala/bridges/BlockDevBridge.scala
++++ b/sim/firesim-lib/src/main/scala/bridges/BlockDevBridge.scala
+@@ -78,10 +78,10 @@ class BlockDevBridgeModule(blockDevExternal: BlockDeviceConfig, hostP: Parameter
+     // Decoupled helper can't exclude two bools unfortunately...
+     val targetReset = channelCtrlSignals.reduce(_ && _) && hPort.hBits.reset
+ 
+-    reqBuf.reset  := reset.toBool || targetReset
+-    dataBuf.reset  := reset.toBool || targetReset
+-    rRespBuf.reset  := reset.toBool || targetReset
+-    wAckBuf.reset  := reset.toBool || targetReset
++    reqBuf.reset  := reset.asBool || targetReset
++    dataBuf.reset  := reset.asBool || targetReset
++    rRespBuf.reset  := reset.asBool || targetReset
++    wAckBuf.reset  := reset.asBool || targetReset
+ 
+     hPort.toHost.hReady := tFireHelper.fire
+     hPort.fromHost.hValid := tFireHelper.fire
+@@ -104,7 +104,7 @@ class BlockDevBridgeModule(blockDevExternal: BlockDeviceConfig, hostP: Parameter
+     val readLatency = genWORegInit(Wire(UInt(latencyBits.W)), "read_latency", defaultReadLatency)
+     val writeLatency = genWORegInit(Wire(UInt(latencyBits.W)), "write_latency", defaultWriteLatency)
+ 
+-    withReset(reset.toBool || targetReset) {
++    withReset(reset.asBool || targetReset) {
+       when (tFire) {
+         assert(!target.req.fire || ((dataBeats.U * target.req.bits.len) < ((BigInt(1) << sectorBits) - 1).U),
+                "Transaction length exceeds timing model maximum supported length")
+diff --git a/sim/firesim-lib/src/main/scala/bridges/SerialBridge.scala b/sim/firesim-lib/src/main/scala/bridges/SerialBridge.scala
+index 5df302b27..b3debdab1 100644
+--- a/sim/firesim-lib/src/main/scala/bridges/SerialBridge.scala
++++ b/sim/firesim-lib/src/main/scala/bridges/SerialBridge.scala
+@@ -56,8 +56,8 @@ class SerialBridgeModule(serialBridgeParams: SerialBridgeParams)(implicit p: Par
+     val target = hPort.hBits.serial
+     val tFire = hPort.toHost.hValid && hPort.fromHost.hReady && tokensToEnqueue =/= 0.U
+     val targetReset = tFire & hPort.hBits.reset
+-    inBuf.reset  := reset.toBool || targetReset
+-    outBuf.reset := reset.toBool || targetReset
++    inBuf.reset  := reset.asBool || targetReset
++    outBuf.reset := reset.asBool || targetReset
+ 
+     hPort.toHost.hReady := tFire
+     hPort.fromHost.hValid := tFire
+diff --git a/sim/firesim-lib/src/main/scala/bridges/UARTBridge.scala b/sim/firesim-lib/src/main/scala/bridges/UARTBridge.scala
+index 505a57b88..aab3023b9 100644
+--- a/sim/firesim-lib/src/main/scala/bridges/UARTBridge.scala
++++ b/sim/firesim-lib/src/main/scala/bridges/UARTBridge.scala
+@@ -101,8 +101,8 @@ class UARTBridgeModule(key: UARTKey)(implicit p: Parameters) extends BridgeModul
+                hPort.fromHost.hReady && // We have space to enqueue a new output token
+                txfifo.io.enq.ready      // We have space to capture new TX data
+     val targetReset = fire & hPort.hBits.reset
+-    rxfifo.reset := reset.toBool || targetReset
+-    txfifo.reset := reset.toBool || targetReset
++    rxfifo.reset := reset.asBool || targetReset
++    txfifo.reset := reset.asBool || targetReset
+ 
+     hPort.toHost.hReady := fire
+     hPort.fromHost.hValid := fire
+diff --git a/sim/midas/src/main/scala/midas/core/Channel.scala b/sim/midas/src/main/scala/midas/core/Channel.scala
+index 8f6295cee..e345cc2a0 100644
+--- a/sim/midas/src/main/scala/midas/core/Channel.scala
++++ b/sim/midas/src/main/scala/midas/core/Channel.scala
+@@ -37,7 +37,7 @@ class PipeChannel[T <: ChLeafType](
+   io.out <> tokens.io.deq
+ 
+   if (latency == 1) {
+-    val initializing = RegNext(reset.toBool)
++    val initializing = RegNext(reset.asBool)
+     when(initializing) {
+       tokens.io.enq.valid := true.B
+       tokens.io.enq.bits := 0.U.asTypeOf(tokens.io.enq.bits)
+@@ -213,7 +213,7 @@ class ReadyValidChannel[T <: Data](
+   enqFwdQ.io.deq.ready := finishing.fire(enqFwdQ.io.deq.valid)
+   deqRevQ.io.deq.ready := finishing.fire(deqRevQ.io.deq.valid)
+ 
+-  reference.reset := reset.toBool || targetFire && io.targetReset.bits
++  reference.reset := reset.asBool || targetFire && io.targetReset.bits
+   reference.io.enq.valid := targetFire && enqFwdQ.io.deq.bits.valid
+   reference.io.enq.bits  := Mux(targetFire, enqFwdQ.io.deq.bits.bits, enqBitsLast)
+   reference.io.deq.ready := targetFire && deqRevQ.io.deq.bits
+@@ -259,7 +259,7 @@ class ReadyValidChannelUnitTest(
+   // that will more closely the FPGA
+   val enqCount = RegInit(0.U(log2Ceil(queueDepth + 1).W))
+   val memFullyDefined = enqCount === queueDepth.U
+-  enqCount := Mux(!memFullyDefined && reference.io.enq.fire && !reference.reset.toBool, enqCount + 1.U, enqCount)
++  enqCount := Mux(!memFullyDefined && reference.io.enq.fire && !reference.reset.asBool, enqCount + 1.U, enqCount)
+ 
+   // Track the target cycle at which all entries are known
+   val memFullyDefinedCycle = RegInit(1.U(log2Ceil(2*timeout).W))
+diff --git a/sim/midas/src/main/scala/midas/core/FPGATop.scala b/sim/midas/src/main/scala/midas/core/FPGATop.scala
+index c52b5ea8c..1390b403a 100644
+--- a/sim/midas/src/main/scala/midas/core/FPGATop.scala
++++ b/sim/midas/src/main/scala/midas/core/FPGATop.scala
+@@ -7,8 +7,6 @@ import junctions._
+ import midas.widgets._
+ import chisel3._
+ import chisel3.util._
+-import chisel3.core.ActualDirection
+-import chisel3.core.DataMirror.directionOf
+ import freechips.rocketchip.amba.axi4._
+ import freechips.rocketchip.config.{Parameters, Field}
+ import freechips.rocketchip.diplomacy._
+diff --git a/sim/midas/src/main/scala/midas/core/SimWrapper.scala b/sim/midas/src/main/scala/midas/core/SimWrapper.scala
+index 5bcdc5afa..597d36ae2 100644
+--- a/sim/midas/src/main/scala/midas/core/SimWrapper.scala
++++ b/sim/midas/src/main/scala/midas/core/SimWrapper.scala
+@@ -299,7 +299,7 @@ class SimWrapper(val config: SimWrapperConfig)(implicit val p: Parameters) exten
+     TargetBoxAnnotation(target.toAbsoluteTarget)
+   })
+ 
+-  target.io.hostReset := reset.toBool
++  target.io.hostReset := reset.asBool
+   target.io.hostClock := clock
+   import chisel3.ExplicitCompileOptions.NotStrict // FIXME
+ 
+diff --git a/sim/midas/src/main/scala/midas/models/dram/FASEDMemoryTimingModel.scala b/sim/midas/src/main/scala/midas/models/dram/FASEDMemoryTimingModel.scala
+index 65d351641..8253b31ca 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/FASEDMemoryTimingModel.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/FASEDMemoryTimingModel.scala
+@@ -358,9 +358,9 @@ class FASEDMemoryTimingModel(completeConfig: CompleteConfig, hostParams: Paramet
+     writeEgress.io.resp.tReady := model.io.egressResp.bReady
+     model.io.egressResp.bBits := writeEgress.io.resp.tBits
+ 
+-    ingress.reset     := reset.toBool || tReset && tFireHelper.fire(ingressReady)
+-    readEgress.reset  := reset.toBool || tReset && targetFire
+-    writeEgress.reset := reset.toBool || tReset && targetFire
++    ingress.reset     := reset.asBool || tReset && tFireHelper.fire(ingressReady)
++    readEgress.reset  := reset.asBool || tReset && targetFire
++    writeEgress.reset := reset.asBool || tReset && targetFire
+ 
+ 
+     if (cfg.params.localHCycleCount) {
+diff --git a/sim/midas/src/main/scala/midas/models/sram/AsyncMemModel.scala b/sim/midas/src/main/scala/midas/models/sram/AsyncMemModel.scala
+index 7ea5cb769..fdad0ecdc 100644
+--- a/sim/midas/src/main/scala/midas/models/sram/AsyncMemModel.scala
++++ b/sim/midas/src/main/scala/midas/models/sram/AsyncMemModel.scala
+@@ -28,7 +28,7 @@ class AsyncMemChiselRTL(val depth: Int, val dataWidth: Int, val nReads: Int = 2,
+       case (detected, cmd) => detected || collides(cmd)
+     }
+ 
+-    when (write_cmd.active && !reset.toBool() && !collision_detected) {
++    when (write_cmd.active && !reset.asBool() && !collision_detected) {
+       data.write(write_cmd.addr, write_cmd.data)
+     }
+   }
+@@ -68,7 +68,7 @@ class AsyncMemChiselModel(val depth: Int, val dataWidth: Int, val nReads: Int =
+   val active_write_en = Wire(Bool())
+   val read_data_async = data.read(active_read_addr)
+   val read_data = RegNext(read_data_async)
+-  when (active_write_en && !target_reset_value && !reset.toBool()) {
++  when (active_write_en && !target_reset_value && !reset.asBool()) {
+     data.write(active_write_addr, active_write_data)
+   }
+ 
+@@ -110,7 +110,7 @@ class AsyncMemChiselModel(val depth: Int, val dataWidth: Int, val nReads: Int =
+ 
+   // Target reset state management
+   channels.reset.ready := !target_reset_fired
+-  when (advance_cycle || reset.toBool()) {
++  when (advance_cycle || reset.asBool()) {
+     target_reset_fired := false.B
+   } .elsewhen (channels.reset.fire) {
+     target_reset_fired := true.B
+@@ -126,7 +126,7 @@ class AsyncMemChiselModel(val depth: Int, val dataWidth: Int, val nReads: Int =
+     channels.read_resps(i).bits := Mux(read_state(i) === active, read_data, read_resp_data(i))
+     channels.read_resps(i).valid := read_state(i) === active || read_state(i) === generated
+ 
+-    when (advance_cycle || reset.toBool()) {
++    when (advance_cycle || reset.asBool()) {
+       read_state(i) := start
+     } .elsewhen (read_state(i) === start && read_access_granted(i)) {
+       read_state(i) := active
+@@ -144,7 +144,7 @@ class AsyncMemChiselModel(val depth: Int, val dataWidth: Int, val nReads: Int =
+   active_write_en := false.B
+   for (i <- 0 until nWrites) {
+     channels.write_cmds(i).ready := write_prereqs_met(i) && !write_complete(i)
+-    when (advance_cycle || reset.toBool()) {
++    when (advance_cycle || reset.asBool()) {
+       write_complete(i) := false.B
+     } .elsewhen (channels.write_cmds(i).fire) {
+       write_complete(i) := true.B
+diff --git a/sim/midas/src/main/scala/midas/models/sram/RegfileModel.scala b/sim/midas/src/main/scala/midas/models/sram/RegfileModel.scala
+index 34ecbd6ba..fd902d267 100644
+--- a/sim/midas/src/main/scala/midas/models/sram/RegfileModel.scala
++++ b/sim/midas/src/main/scala/midas/models/sram/RegfileModel.scala
+@@ -38,7 +38,7 @@ class RegfileChiselRTL(val depth: Int, val dataWidth: Int, val nReads: Int, val
+   val data = Reg(Vec(depth, UInt(dataWidth.W)))
+ 
+   data.foreach({
+-    d => when (reset.toBool()) { d := 0.U }
++    d => when (reset.asBool()) { d := 0.U }
+   })
+ 
+   (channels.read_cmds zip channels.read_resps).foreach({
+@@ -46,7 +46,7 @@ class RegfileChiselRTL(val depth: Int, val dataWidth: Int, val nReads: Int, val
+   })
+ 
+   channels.write_cmds.foreach({
+-    c => when (c.active && !reset.toBool()) { data(c.addr) := c.data }
++    c => when (c.active && !reset.asBool()) { data(c.addr) := c.data }
+   })
+ }
+ 
+@@ -135,7 +135,7 @@ class RegfileChiselModel(val depth: Int, val dataWidth: Int, val nReads: Int, va
+     // reset, as it is next-ed during host reset. Regardless, early
+     // reset is necessary to guard the first read.
+     // Also, only reset after reads are done
+-    when (reset.toBool() || (has_reset_token && read_resps_done_next_cycle && reset_token)) {
++    when (reset.asBool() || (has_reset_token && read_resps_done_next_cycle && reset_token)) {
+       d := 0.U
+     }
+   }
+@@ -146,7 +146,7 @@ class RegfileChiselModel(val depth: Int, val dataWidth: Int, val nReads: Int, va
+   // State updates
+   val done = read_resps_done_next_cycle && writes_done_next_cycle && has_reset_token
+   def updateState(fired: Bool, fire: Bool): Unit = {
+-    fired := Mux(reset.toBool() || done, false.B, fired || fire)
++    fired := Mux(reset.asBool() || done, false.B, fired || fire)
+   }
+ 
+   (reads_cmd_fired zip reads_cmd_fire).foreach { case (fired, fire) => updateState(fired, fire) }
+diff --git a/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala b/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala
+index 112c9c7ee..65a783e35 100644
+--- a/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala
++++ b/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala
+@@ -6,7 +6,6 @@ package passes
+ import midas.core._
+ 
+ import freechips.rocketchip.config.Parameters
+-import chisel3.core.DataMirror.directionOf
+ 
+ import firrtl._
+ import firrtl.annotations._
+diff --git a/sim/midas/src/main/scala/midas/widgets/Lib.scala b/sim/midas/src/main/scala/midas/widgets/Lib.scala
+index 96888bef5..27bd27cb4 100644
+--- a/sim/midas/src/main/scala/midas/widgets/Lib.scala
++++ b/sim/midas/src/main/scala/midas/widgets/Lib.scala
+@@ -8,8 +8,7 @@ import junctions._
+ 
+ import chisel3._
+ import chisel3.util._
+-import chisel3.core.ActualDirection
+-import chisel3.core.DataMirror.directionOf
++import chisel3.experimental.DataMirror
+ import freechips.rocketchip.config.Parameters
+ import scala.collection.mutable.{ArrayBuffer, LinkedHashMap}
+ 
+@@ -21,7 +20,7 @@ object FlattenData {
+   def apply[T <: Data](gen: T): Seq[(Data, ActualDirection)] = {
+     gen match {
+       case a : Aggregate => a.getElements flatMap(e => this(e))
+-      case e : Element => Seq((e, directionOf(e)))
++      case e : Element => Seq((e, DataMirror.directionOf(e)))
+       case _ => throw new RuntimeException("Cannot handle this type")
+     }
+   }
+@@ -37,10 +36,10 @@ object ScanRegister {
+   def apply(data: Seq[Data], scanEnable: Bool, scanIn: Bool): Bool = {
+     val leaves = data flatMap FlattenData.apply
+     leaves.foldLeft(scanIn)((in: Bool, leaf: (Data, ActualDirection)) => {
+-      val r = Reg(VecInit(leaf._1.asUInt.toBools).cloneType)
++      val r = Reg(VecInit(leaf._1.asUInt.asBools).cloneType)
+       (leaf._2) match {
+         case ActualDirection.Output =>
+-          r := VecInit(leaf._1.asUInt.toBools)
++          r := VecInit(leaf._1.asUInt.asBools)
+         case ActualDirection.Input =>
+           leaf._1 := r.asUInt
+         case _ => throw new RuntimeException("Directions on all elements must be specified")
+diff --git a/sim/midas/src/main/scala/midas/widgets/Widget.scala b/sim/midas/src/main/scala/midas/widgets/Widget.scala
+index eef72b5eb..50ec9624f 100644
+--- a/sim/midas/src/main/scala/midas/widgets/Widget.scala
++++ b/sim/midas/src/main/scala/midas/widgets/Widget.scala
+@@ -5,8 +5,7 @@ package widgets
+ 
+ import chisel3._
+ import chisel3.util._
+-import chisel3.core.ActualDirection
+-import chisel3.core.DataMirror.directionOf
++import chisel3.experimental.DataMirror
+ import junctions._
+ import freechips.rocketchip.config.{Parameters, Field}
+ import freechips.rocketchip.diplomacy._
+@@ -77,7 +76,7 @@ abstract class WidgetImp(wrapper: Widget) extends LazyModuleImp(wrapper) {
+   //   For outputs, direct binds the wire to the map
+   def attachIO(io: Record, prefix: String = ""): Unit = {
+     def innerAttachIO(node: Data, name: String): Unit = node match {
+-      case (b: Bits) => (directionOf(b): @unchecked) match {
++      case (b: Bits) => (DataMirror.directionOf(b): @unchecked) match {
+         case ActualDirection.Output => attach(b, s"${name}", ReadOnly)
+         case ActualDirection.Input => genWOReg(b, name)
+       }
+diff --git a/sim/midas/targetutils/src/main/scala/midas/annotations.scala b/sim/midas/targetutils/src/main/scala/midas/annotations.scala
+index 38ffe70bb..79fde313d 100644
+--- a/sim/midas/targetutils/src/main/scala/midas/annotations.scala
++++ b/sim/midas/targetutils/src/main/scala/midas/annotations.scala
+@@ -287,8 +287,8 @@ object TriggerSource {
+     * debits issued while the module's implicit reset is asserted are not
+     * counted.
+     */
+-  def credit(credit: Bool): Unit = annotateCredit(credit, Some(Module.reset.toBool))
+-  def debit(debit: Bool): Unit = annotateDebit(debit, Some(Module.reset.toBool))
++  def credit(credit: Bool): Unit = annotateCredit(credit, Some(Module.reset.asBool))
++  def debit(debit: Bool): Unit = annotateDebit(debit, Some(Module.reset.asBool))
+   def apply(creditSig: Bool, debitSig: Bool): Unit = {
+     credit(creditSig)
+     debit(debitSig)
+diff --git a/sim/src/main/scala/fasedtests/AXI4Fuzzer.scala b/sim/src/main/scala/fasedtests/AXI4Fuzzer.scala
+index 7bfc6655f..4675d671c 100644
+--- a/sim/src/main/scala/fasedtests/AXI4Fuzzer.scala
++++ b/sim/src/main/scala/fasedtests/AXI4Fuzzer.scala
+@@ -73,7 +73,7 @@ class AXI4FuzzerDUT(implicit p: Parameters) extends LazyModule with HasFuzzTarge
+       val nastiKey = NastiParameters(axi4.r.bits.data.getWidth,
+                                      axi4.ar.bits.addr.getWidth,
+                                      axi4.ar.bits.id.getWidth)
+-      val fasedInstance =  FASEDBridge(clock, axi4, reset.toBool,
++      val fasedInstance =  FASEDBridge(clock, axi4, reset.asBool,
+         CompleteConfig(p(firesim.configs.MemModelKey),
+                        nastiKey,
+                        Some(AXI4EdgeSummary(edge)),
+diff --git a/sim/src/main/scala/midasexamples/AutoCounterModule.scala b/sim/src/main/scala/midasexamples/AutoCounterModule.scala
+index 198dafd3f..dfc741db2 100644
+--- a/sim/src/main/scala/midasexamples/AutoCounterModule.scala
++++ b/sim/src/main/scala/midasexamples/AutoCounterModule.scala
+@@ -4,7 +4,6 @@ package firesim.midasexamples
+ 
+ import chisel3._
+ import freechips.rocketchip.config.Parameters
+-import chisel3.core.MultiIOModule
+ 
+ import midas.targetutils.{PerfCounter, AutoCounterCoverModuleAnnotation}
+ import freechips.rocketchip.util.property._
+@@ -48,7 +47,7 @@ class AutoCounterModuleDUT(
+   }
+ }
+ 
+-class AutoCounterModuleChild extends MultiIOModule {
++class AutoCounterModuleChild extends Module {
+   val io =  IO(new Bundle {
+     val c = Input(Bool())
+     val oddlfsr = Output(Bool())
+diff --git a/sim/src/main/scala/midasexamples/GCD.scala b/sim/src/main/scala/midasexamples/GCD.scala
+index a30367a19..7c5f142a5 100644
+--- a/sim/src/main/scala/midasexamples/GCD.scala
++++ b/sim/src/main/scala/midasexamples/GCD.scala
+@@ -4,8 +4,7 @@ package firesim.midasexamples
+ 
+ import chisel3._
+ import freechips.rocketchip.config.Parameters
+-import chisel3.util.unless
+-import chisel3.experimental.{withClock, annotate}
++import chisel3.experimental.annotate
+ 
+ import midas.widgets.PeekPokeBridge
+ import midas.targetutils.FAMEModelAnnotation
+@@ -23,7 +22,7 @@ class GCDInner extends Module {
+   val x  = Reg(UInt())
+   val y  = Reg(UInt())
+   when   (x > y) { x := x - y }
+-  unless (x > y) { y := y - x }
++  when (x <= y) { y := y - x }
+   when (io.e) { x := io.a; y := io.b }
+   io.z := x
+   io.v := y === 0.U
+diff --git a/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala b/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala
+index 5a5a83b5f..68b42c89a 100644
+--- a/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala
++++ b/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala
+@@ -16,7 +16,7 @@ class MulticlockAutoCounterModule(implicit p: Parameters) extends RawModule {
+   val clockBridge = RationalClockBridge(RationalClock("ThirdRate", 1, 3))
+   val List(refClock, div2Clock) = clockBridge.io.clocks.toList
+   val reset = WireInit(false.B)
+-  val resetHalfRate = ResetCatchAndSync(div2Clock, reset.toBool)
++  val resetHalfRate = ResetCatchAndSync(div2Clock, reset.asBool)
+   // Used to let printfs that emit the correct validation output
+   val instPath = "MulticlockAutoCounterModule_AutoCounterModuleDUT"
+   withClockAndReset(refClock, reset) {
+diff --git a/sim/src/main/scala/midasexamples/MulticlockPrintfModule.scala b/sim/src/main/scala/midasexamples/MulticlockPrintfModule.scala
+index 43253b539..31f860da6 100644
+--- a/sim/src/main/scala/midasexamples/MulticlockPrintfModule.scala
++++ b/sim/src/main/scala/midasexamples/MulticlockPrintfModule.scala
+@@ -16,7 +16,7 @@ class MulticlockPrintfModule(implicit p: Parameters) extends RawModule {
+   val clockBridge = RationalClockBridge(RationalClock("HalfRate",1 , 2))
+   val List(refClock, div2Clock) = clockBridge.io.clocks.toList
+   val reset = WireInit(false.B)
+-  val resetHalfRate = ResetCatchAndSync(div2Clock, reset.toBool)
++  val resetHalfRate = ResetCatchAndSync(div2Clock, reset.asBool)
+   withClockAndReset(refClock, reset) {
+     val lfsr = chisel3.util.random.LFSR(16)
+     val fullRateMod = Module(new PrintfModuleDUT)
+diff --git a/sim/src/main/scala/midasexamples/PointerChaser.scala b/sim/src/main/scala/midasexamples/PointerChaser.scala
+index fed873a66..6ae9e53af 100644
+--- a/sim/src/main/scala/midasexamples/PointerChaser.scala
++++ b/sim/src/main/scala/midasexamples/PointerChaser.scala
+@@ -4,7 +4,6 @@ package firesim.midasexamples
+ 
+ import chisel3._
+ import chisel3.util._
+-import chisel3.experimental.{withClock}
+ import junctions._
+ import freechips.rocketchip.config.{Parameters, Field}
+ 
+diff --git a/sim/src/main/scala/midasexamples/TriggerWiringModule.scala b/sim/src/main/scala/midasexamples/TriggerWiringModule.scala
+index 0523224d5..f2d252bd8 100644
+--- a/sim/src/main/scala/midasexamples/TriggerWiringModule.scala
++++ b/sim/src/main/scala/midasexamples/TriggerWiringModule.scala
+@@ -42,8 +42,8 @@ class TriggerSourceModule extends MultiIOModule {
+   // Note one could alternatively write: TriggerSource(start, stop)
+   // DOC include end: TriggerSource Usage
+ 
+-  referenceCredit := ~reset.toBool && start
+-  referenceDebit := ~reset.toBool && stop
++  referenceCredit := ~reset.asBool && start
++  referenceDebit := ~reset.asBool && stop
+ }
+ 
+ class LevelSensitiveTriggerSourceModule extends MultiIOModule {
+@@ -104,7 +104,7 @@ class TriggerWiringModule(implicit p: Parameters) extends RawModule {
+   val refSourceCounts = new mutable.ArrayBuffer[ReferenceSourceCounters]()
+   val refSinks = new mutable.ArrayBuffer[Bool]()
+   val reset = WireInit(false.B)
+-  val resetHalfRate = ResetCatchAndSync(div2Clock, reset.toBool)
++  val resetHalfRate = ResetCatchAndSync(div2Clock, reset.asBool)
+   withClockAndReset(refClock, reset) {
+     val peekPokeBridge = PeekPokeBridge(refClock, reset)
+     val src  = Module(new TriggerSourceModule)
+diff --git a/sim/src/main/scala/midasexamples/TwoAdders.scala b/sim/src/main/scala/midasexamples/TwoAdders.scala
+index 06b96f966..c95c32f53 100644
+--- a/sim/src/main/scala/midasexamples/TwoAdders.scala
++++ b/sim/src/main/scala/midasexamples/TwoAdders.scala
+@@ -4,8 +4,7 @@ package firesim.midasexamples
+ 
+ import chisel3._
+ import freechips.rocketchip.config.Parameters
+-import chisel3.util.unless
+-import chisel3.experimental.{withClock, annotate}
++import chisel3.experimental.annotate
+ 
+ import midas.widgets.PeekPokeBridge
+ import midas.targetutils._
+diff --git a/sim/src/main/scala/midasexamples/VerilogAccumulator.scala b/sim/src/main/scala/midasexamples/VerilogAccumulator.scala
+index 0f5ae6ef0..aa7b6eb4b 100644
+--- a/sim/src/main/scala/midasexamples/VerilogAccumulator.scala
++++ b/sim/src/main/scala/midasexamples/VerilogAccumulator.scala
+@@ -4,8 +4,7 @@ package firesim.midasexamples
+ 
+ import chisel3._
+ import freechips.rocketchip.config.Parameters
+-import chisel3.util.{unless, HasBlackBoxInline}
+-import chisel3.experimental.{withClockAndReset}
++import chisel3.util.HasBlackBoxInline
+ 
+ import midas.widgets.PeekPokeBridge
+ 
+
+From 875eb04b1ed3f29c2b6b814bdd31357a29825cc3 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 6 Apr 2021 02:32:10 +0000
+Subject: [PATCH 2/5] remove io
+
+This patch removes `Module.io` reference with
+`chisel3.experimental.DataMirror.modulePorts(dut)` which was broken by
+chipsalliance/chisel3#1745
+---
+ sim/src/main/scala/midasexamples/Util.scala | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/sim/src/main/scala/midasexamples/Util.scala b/sim/src/main/scala/midasexamples/Util.scala
+index 97e3ccf49..f2859f204 100644
+--- a/sim/src/main/scala/midasexamples/Util.scala
++++ b/sim/src/main/scala/midasexamples/Util.scala
+@@ -3,7 +3,6 @@
+ package firesim.midasexamples
+ 
+ import chisel3._
+-import chisel3.experimental.{withClock}
+ 
+ import midas.widgets.{RationalClockBridge, PeekPokeBridge}
+ 
+@@ -16,6 +15,8 @@ class PeekPokeMidasExampleHarness(dutGen: () => Module) extends RawModule {
+ 
+   withClockAndReset(clock, reset) {
+     val dut = Module(dutGen())
+-    val peekPokeBridge = PeekPokeBridge(clock, reset, ("io", dut.io))
++    val peekPokeBridge = PeekPokeBridge(clock, reset, chisel3.experimental.DataMirror.modulePorts(dut).filterNot {
++      case (name, _) => name == "clock" | name == "reset"
++    }:_*)
+   }
+ }
+
+From 9e9749423ae2322332819677d2d2c15e77eb3b3a Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 23 Mar 2021 06:59:06 +0000
+Subject: [PATCH 3/5] remove reference to chisel3.Driver
+
+---
+ .../src/main/scala/passes/AsyncResetReg.scala       |  2 +-
+ .../src/main/scala/midas/models/dram/Util.scala     |  3 ++-
+ .../midas/stage/RuntimeConfigGenerationPhase.scala  |  2 +-
+ .../src/main/scala/rocketchip/GeneratorUtils.scala  | 13 +++++++++++--
+ 4 files changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/sim/firesim-lib/src/main/scala/passes/AsyncResetReg.scala b/sim/firesim-lib/src/main/scala/passes/AsyncResetReg.scala
+index 764b0ba44..961f0388e 100644
+--- a/sim/firesim-lib/src/main/scala/passes/AsyncResetReg.scala
++++ b/sim/firesim-lib/src/main/scala/passes/AsyncResetReg.scala
+@@ -34,7 +34,7 @@ object AsyncResetRegPass extends firrtl.Transform {
+   def renameClockReset(s: Statement): Statement =
+     s map renameClockResetExp map renameClockReset
+ 
+-  private val chirrtl = Parser.parse(chisel3.Driver.emit(() => new AsyncResetReg))
++  private val chirrtl = chisel3.stage.ChiselStage.convert(new AsyncResetReg)
+   private val circuit = (new MiddleFirrtlCompiler).compile(
+     CircuitState(chirrtl, ChirrtlForm), Nil).circuit
+   private val module = (circuit.modules collect {
+diff --git a/sim/midas/src/main/scala/midas/models/dram/Util.scala b/sim/midas/src/main/scala/midas/models/dram/Util.scala
+index bf8809496..f4db7398d 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/Util.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/Util.scala
+@@ -8,6 +8,7 @@ import freechips.rocketchip.unittest.UnitTest
+ import junctions._
+ 
+ import chisel3._
++import chisel3.stage.ChiselGeneratorAnnotation
+ import chisel3.util._
+ 
+ // From MIDAS
+@@ -587,7 +588,7 @@ object AddressRangeCounter {
+ 
+ object AddressCollisionCheckMain extends App {
+   implicit val p = Parameters.empty.alterPartial({case NastiKey => NastiParameters(64,32,4)})
+-  chisel3.Driver.execute(args, () => new AddressCollisionChecker(4,4,16))
++  (new chisel3.stage.ChiselStage).execute(args, Seq(ChiselGeneratorAnnotation(() => new AddressCollisionChecker(4,4,16))))
+ }
+ 
+ class CounterTableUnitTest extends UnitTest {
+diff --git a/sim/midas/src/main/scala/midas/stage/RuntimeConfigGenerationPhase.scala b/sim/midas/src/main/scala/midas/stage/RuntimeConfigGenerationPhase.scala
+index ecd4fba80..90e1f95c9 100644
+--- a/sim/midas/src/main/scala/midas/stage/RuntimeConfigGenerationPhase.scala
++++ b/sim/midas/src/main/scala/midas/stage/RuntimeConfigGenerationPhase.scala
+@@ -34,7 +34,7 @@ class RuntimeConfigGenerationPhase extends Phase with ConfigLookup {
+     // FASED BridgeAnnotation, and use that to elaborate a memory model
+     fasedBridges.headOption.map({ lm =>
+       lazy val fasedBridge = lm.module
+-      chisel3.Driver.elaborate(() => fasedBridge)
++      chisel3.stage.ChiselStage.elaborate(fasedBridge)
+       fasedBridge.getSettings(runtimeConfigName)
+     })
+     annotations
+diff --git a/sim/midas/src/main/scala/rocketchip/GeneratorUtils.scala b/sim/midas/src/main/scala/rocketchip/GeneratorUtils.scala
+index 6e40c3db3..b4ec8b452 100644
+--- a/sim/midas/src/main/scala/rocketchip/GeneratorUtils.scala
++++ b/sim/midas/src/main/scala/rocketchip/GeneratorUtils.scala
+@@ -5,6 +5,8 @@ package midas.rocketchip.util
+ import Chisel._
+ import chisel3.RawModule
+ import chisel3.internal.firrtl.Circuit
++import chisel3.stage.ChiselCircuitAnnotation
++import firrtl.{EmittedFirrtlCircuitAnnotation, EmittedFirrtlModuleAnnotation}
+ // TODO: better job of Makefrag generation for non-RocketChip testing platforms
+ import java.io.{File, FileWriter}
+ 
+@@ -58,7 +60,7 @@ trait HasGeneratorUtilities {
+         case l: LazyModule => LazyModule(l).module
+       }
+ 
+-    Driver.elaborate(top)
++    chisel3.stage.ChiselStage.elaborate(top())
+   }
+ 
+   def enumerateROMs(circuit: Circuit): String = {
+@@ -110,7 +112,14 @@ trait GeneratorApp extends App with HasGeneratorUtilities {
+ 
+   /** Output FIRRTL, which an external compiler can turn into Verilog. */
+   def generateFirrtl {
+-    Driver.dumpFirrtl(circuit, Some(new File(td, s"$longName.fir"))) // FIRRTL
++    val w = new FileWriter(new File(s"$longName.fir"))
++    w.write((new chisel3.stage.ChiselStage).execute(Array("-X", "high") ++ args, Seq(ChiselCircuitAnnotation(circuit)))
++      .collect {
++        case EmittedFirrtlCircuitAnnotation(a) => a
++        case EmittedFirrtlModuleAnnotation(a)  => a
++      }.map(_.value)
++      .mkString(""))
++    w.close()
+   }
+ 
+   def generateAnno {
+
+From d3f22e024964cbd60de7dde74e89dc7b6917f6e4 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 23 Mar 2021 07:07:29 +0000
+Subject: [PATCH 4/5] fix driver, but depends on chipsalliance/chisel3#1854
+
+---
+ .../src/main/scala/midas/passes/SimulationMapping.scala      | 4 ++--
+ .../main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala  | 5 ++---
+ 2 files changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala b/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
+index 5689076ac..eb8ce6a18 100644
+--- a/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
++++ b/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
+@@ -93,8 +93,8 @@ private[passes] class SimulationMapping(targetName: String) extends firrtl.Trans
+ 
+     // Generate the encapsulating simulator RTL
+     lazy val shim = PlatformShim(innerState.annotations, portTypeMap)
+-    val c3circuit = chisel3.Driver.elaborate(() => LazyModule(shim).module)
+-    val chirrtl = Parser.parse(chisel3.Driver.emit(c3circuit))
++    val c3circuit = chisel3.stage.ChiselStage.elaborate(LazyModule(shim).module)
++    val chirrtl = chisel3.stage.ChiselStage.convert(c3circuit)
+     val annos = PreLinkRenamingAnnotation(Namespace(innerCircuit)) +: c3circuit.annotations.map(_.toFirrtl)
+ 
+     val transforms = Seq(
+diff --git a/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala b/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
+index 12d0c7f5e..137a37ed0 100644
+--- a/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
++++ b/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
+@@ -192,9 +192,8 @@ class RAMModelInst(name: String, val readPorts: Seq[ReadPort], val writePorts: S
+   }
+ 
+   def elaborateModel(parentCircuitNS: Namespace): Module = {
+-    val c3circuit = chisel3.Driver.elaborate(() =>
+-      new midas.models.sram.AsyncMemChiselModel(depth.toInt, dataWidth, readPorts.size, writePorts.size))
+-    val chirrtl = Parser.parse(chisel3.Driver.emit(c3circuit))
++    val c3circuit = chisel3.stage.ChiselStage.elaborate(new midas.models.sram.AsyncMemChiselModel(depth.toInt, dataWidth, readPorts.size, writePorts.size))
++    val chirrtl = chisel3.stage.ChiselStage.convert(c3circuit)
+     val state = new MiddleFirrtlCompiler().compile(CircuitState(chirrtl, ChirrtlForm, Nil), Nil)
+     require(state.circuit.modules.length == 1)
+     state.circuit.modules.collectFirst({
+
+From 09acf9b5da89d17a1fe032fff576b74379df11fe Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 23 Mar 2021 06:55:56 +0000
+Subject: [PATCH 5/5] remove QoRShimGenerator, seems to be dead code, not used
+ anymore.
+
+---
+ .../scala/midas/FPGAQoRShimGenerator.scala    | 38 -------------------
+ 1 file changed, 38 deletions(-)
+
+diff --git a/sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala b/sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala
+index fda419aac..1c612444b 100644
+--- a/sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala
++++ b/sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala
+@@ -35,41 +35,3 @@ class Midas2QoRTargets extends Config((site, here, up) => {
+   }
+ })
+ 
+-
+-// Generates synthesizable unit tests for key modules, such as simulation channels
+-// See: src/main/cc/unittest/Makefile for the downstream RTL-simulation flow
+-//
+-// TODO: Make the core of this generator a trait that can be mixed into
+-// FireSim's ScalaTests for more type safety
+-object QoRShimGenerator extends App with midas.rocketchip.util.HasGeneratorUtilities {
+-
+- case class QoRShimOptions(
+-      configProject: String = "midas.unittest",
+-      config: String = "Midas2QoRTargets") {
+-    val fullConfigClasses: Seq[String] = Seq(configProject + "." + config)
+-  }
+-
+-  trait HasUnitTestOptions {
+-    self: ExecutionOptionsManager =>
+-    var qorOptions = QoRShimOptions()
+-    parser.note("MIDAS Unit Test Generator Options")
+-    parser.opt[String]("config-project")
+-      .abbr("cp")
+-      .valueName("<config-project>")
+-      .foreach { d => qorOptions = qorOptions.copy(configProject = d) }
+-    parser.opt[String]("config")
+-      .abbr("conf")
+-      .valueName("<configClassName>")
+-      .foreach { cfg => qorOptions = qorOptions.copy(config = cfg) }
+-  }
+-
+-  val exOptions = new ExecutionOptionsManager("qor")
+-    with HasChiselExecutionOptions
+-    with HasFirrtlOptions
+-    with HasUnitTestOptions
+-
+-  exOptions.parse(args)
+-
+-  val params = getConfig(exOptions.qorOptions.fullConfigClasses).toInstance
+-  Driver.execute(exOptions, () => new QoRShim()(params))
+-}

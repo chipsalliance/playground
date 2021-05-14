@@ -1,0 +1,94 @@
+From b8803fb8e1e66ed69f5ec5be4b7b2da72619a876 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sun, 4 Apr 2021 05:17:47 +0000
+Subject: [PATCH] fix for deprecation.
+
+---
+ src/main/scala/dcc-mem.scala  |  2 +-
+ src/main/scala/vmu-addr.scala |  6 +++---
+ src/main/scala/vmu.scala      | 18 +++++++++---------
+ 3 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/src/main/scala/dcc-mem.scala b/src/main/scala/dcc-mem.scala
+index 5746920..b857c6d 100644
+--- a/src/main/scala/dcc-mem.scala
++++ b/src/main/scala/dcc-mem.scala
+@@ -500,7 +500,7 @@ class VLU(implicit p: Parameters) extends VXUModule()(p)
+   val wb_pred = pred << pred_shift
+   predq.io.deq.ready := !(pcnt_end || pidx_end)
+ 
+-  unless (busy) {
++  when (!busy) {
+     assert(wb === Bits(0), "VLU: non-zero quiescent wb")
+     assert(bias_tail === SInt(0), "VLU: non-zero quiescent bias_tail")
+     assert(pcnt === UInt(0), "VLU: non-zero quiescent pcnt")
+diff --git a/src/main/scala/vmu-addr.scala b/src/main/scala/vmu-addr.scala
+index ce6eaaa..8433fb5 100644
+--- a/src/main/scala/vmu-addr.scala
++++ b/src/main/scala/vmu-addr.scala
+@@ -71,7 +71,7 @@ class ABox0(implicit p: Parameters) extends VMUModule()(p) {
+   private val mask = io.mask.bits
+   val pred = mask.pred
+ 
+-  unless (op.mode.unit) {
++  when (!op.mode.unit) {
+     assert(!io.mask.valid || !pred || (mask.nonunit.shift === UInt(0)),
+       "ABox0: simultaneous true predicate and non-zero stride shift")
+   }
+@@ -119,7 +119,7 @@ class ABox0(implicit p: Parameters) extends VMUModule()(p) {
+     }
+ 
+     is (s_busy) {
+-      unless (stall || io.xcpt.prop.vmu.stall) {
++      when (!(stall || io.xcpt.prop.vmu.stall)) {
+         io.mask.ready := fire(io.mask.valid)
+         io.vvaq.ready := fire(vvaq_valid, vvaq_en)
+         io.vpaq.valid := fire(vpaq_ready, pred, !io.tlb.resp.xcpt)
+@@ -128,7 +128,7 @@ class ABox0(implicit p: Parameters) extends VMUModule()(p) {
+         io.agu.in.valid := op.mode.indexed || !mask.last
+ 
+         when (fire(null)) {
+-          unless (op.mode.indexed || (op.mode.unit && !mask.unit.page)) {
++          when (!(op.mode.indexed || (op.mode.unit && !mask.unit.page))) {
+             op.base := io.agu.out.bits.addr
+           }
+           when (io.tlb.resp.xcpt && pred) {
+diff --git a/src/main/scala/vmu.scala b/src/main/scala/vmu.scala
+index 82e5175..035ce93 100644
+--- a/src/main/scala/vmu.scala
++++ b/src/main/scala/vmu.scala
+@@ -133,17 +133,17 @@ class IBox(implicit p: Parameters) extends VMUModule()(p) {
+       _agent.io.id := io.id
+       _agent.io.cfg <> io.cfg
+       io.agu <> _agent.io.agu
+-      _agent
+-  } else Module(new IBoxSL)
++      _agent.io
++  } else (Module(new IBoxSL)).io
+ 
+-  agent.io.op.bits := op
+-  agent.io.op.valid := opq.io.deq.valid
+-  opq.io.deq.ready := agent.io.op.ready
+-  io.aret := agent.io.aret
++  agent.op.bits := op
++  agent.op.valid := opq.io.deq.valid
++  opq.io.deq.ready := agent.op.ready
++  io.aret := agent.aret
+ 
+   val issue = Seq(io.abox(0), io.pbox(0),
+-    agent.io.span(io.abox(1), io.pbox(1)), io.abox(2))
+-  issue zip agent.io.issue map {case(s,d) => s <> d}
++    agent.span(io.abox(1), io.pbox(1)), io.abox(2))
++  issue zip agent.issue map {case(s,d) => s <> d}
+ }
+ 
+ class IBoxSL(implicit p: Parameters) extends VMUModule()(p) {
+@@ -248,7 +248,7 @@ class IBoxML(implicit p: Parameters) extends VMUModule()(p) {
+       enq.valid := !aret_pending && (indexed || io.agu.out.valid)
+ 
+       when (enq.fire()) {
+-        unless (indexed) {
++        when (!indexed) {
+           op.base := io.agu.out.bits.addr
+         }
+         op.vlen := vlen_next.asUInt()

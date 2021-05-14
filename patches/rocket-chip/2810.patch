@@ -1,0 +1,29 @@
+From de5153339d7fa24d6073d11174d13e2eddb04e6f Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sat, 10 Apr 2021 18:39:19 +0000
+Subject: [PATCH] use HasBlackBoxResource for EICG_wrapper
+
+---
+ src/main/scala/util/ClockGate.scala | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/main/scala/util/ClockGate.scala b/src/main/scala/util/ClockGate.scala
+index 4cc66838896..acf6dd70cd6 100644
+--- a/src/main/scala/util/ClockGate.scala
++++ b/src/main/scala/util/ClockGate.scala
+@@ -3,6 +3,7 @@
+ package freechips.rocketchip.util
+ 
+ import chisel3._
++import chisel3.util.HasBlackBoxResource
+ import freechips.rocketchip.config.{Field, Parameters}
+ 
+ case object ClockGateImpl extends Field[() => ClockGate](() => new EICG_wrapper)
+@@ -37,4 +38,6 @@ object ClockGate {
+ }
+ 
+ // behavioral model of Integrated Clock Gating cell
+-class EICG_wrapper extends ClockGate
++class EICG_wrapper extends ClockGate with HasBlackBoxResource {
++  addResource("/vsrc/EICG_wrapper.v")
++}

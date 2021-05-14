@@ -1,0 +1,59 @@
+From 8392b287ab162cf4d14bf50a30705c2f63c6440b Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sat, 3 Apr 2021 18:08:41 +0000
+Subject: [PATCH 1/2] fix for chipsalliance/firrtl#2095
+
+---
+ macros/src/main/scala/barstools/macros/MacroCompiler.scala | 2 +-
+ macros/src/main/scala/barstools/macros/SynFlops.scala      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/macros/src/main/scala/barstools/macros/MacroCompiler.scala b/macros/src/main/scala/barstools/macros/MacroCompiler.scala
+index bfcf78d..bc69103 100644
+--- a/macros/src/main/scala/barstools/macros/MacroCompiler.scala
++++ b/macros/src/main/scala/barstools/macros/MacroCompiler.scala
+@@ -8,7 +8,7 @@
+ package barstools.macros
+ 
+ import barstools.macros.Utils._
+-import firrtl.Utils._
++import firrtl.Utils.{and => _, or => _, not => _, _}
+ import firrtl.annotations._
+ import firrtl.ir._
+ import firrtl.stage.{FirrtlSourceAnnotation, FirrtlStage, Forms, OutputFileAnnotation, RunFirrtlTransformAnnotation}
+diff --git a/macros/src/main/scala/barstools/macros/SynFlops.scala b/macros/src/main/scala/barstools/macros/SynFlops.scala
+index 77ea4c9..ffec6c4 100644
+--- a/macros/src/main/scala/barstools/macros/SynFlops.scala
++++ b/macros/src/main/scala/barstools/macros/SynFlops.scala
+@@ -3,7 +3,7 @@
+ package barstools.macros
+ 
+ import barstools.macros.Utils._
+-import firrtl.Utils._
++import firrtl.Utils.{and => _, or => _, not => _, _}
+ import firrtl._
+ import firrtl.ir._
+ import firrtl.passes.MemPortUtils.memPortField
+
+From 8b0df5e7dcf9323866ae53b9d38e4d620883efd1 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sat, 3 Apr 2021 18:13:50 +0000
+Subject: [PATCH 2/2] fix for chipsalliance/chisel3#1730
+
+---
+ iocell/src/main/scala/barstools/iocell/chisel/IOCell.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/iocell/src/main/scala/barstools/iocell/chisel/IOCell.scala b/iocell/src/main/scala/barstools/iocell/chisel/IOCell.scala
+index d244d29..160f343 100644
+--- a/iocell/src/main/scala/barstools/iocell/chisel/IOCell.scala
++++ b/iocell/src/main/scala/barstools/iocell/chisel/IOCell.scala
+@@ -141,7 +141,7 @@ object IOCell {
+     * @param name An optional name or name prefix to use for naming IO cells
+     * @return A Seq of all generated IO cell instances
+     */
+-  val toSyncReset:  (Reset) => Bool = _.toBool
++  val toSyncReset:  (Reset) => Bool = _.asBool
+   val toAsyncReset: (Reset) => AsyncReset = _.asAsyncReset
+   def generateFromSignal[T <: Data, R <: Reset](
+     coreSignal:        T,

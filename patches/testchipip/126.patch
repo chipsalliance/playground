@@ -1,0 +1,78 @@
+From 5bd2ea211aff70de9cb8d825740616605c510990 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 23 Mar 2021 08:28:54 +0000
+Subject: [PATCH] update for latest chisel, remove toBool and chisel3.core.
+
+---
+ src/main/scala/ClockUtil.scala             | 3 +--
+ src/main/scala/ClockUtilTests.scala        | 6 +++---
+ src/main/scala/NoDebug.scala               | 2 +-
+ src/main/scala/tsiHost/TsiHostWidget.scala | 2 +-
+ 4 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/src/main/scala/ClockUtil.scala b/src/main/scala/ClockUtil.scala
+index 3e2a0c3..28c5279 100644
+--- a/src/main/scala/ClockUtil.scala
++++ b/src/main/scala/ClockUtil.scala
+@@ -2,8 +2,7 @@ package testchipip
+ 
+ import chisel3._
+ import chisel3.util._
+-import chisel3.core.IntParam
+-import chisel3.experimental.{Analog}
++import chisel3.experimental.{Analog, IntParam}
+ 
+ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.util.{AsyncResetSynchronizerShiftReg, ClockGate, ClockGateImpl}
+diff --git a/src/main/scala/ClockUtilTests.scala b/src/main/scala/ClockUtilTests.scala
+index 1d951cd..865a8e3 100644
+--- a/src/main/scala/ClockUtilTests.scala
++++ b/src/main/scala/ClockUtilTests.scala
+@@ -22,12 +22,12 @@ class ClockMutexMuxTest(timeout: Int = 200000) extends UnitTest(timeout) {
+     minMonitor.io.clock := mux.io.clockOut
+     minMonitor.io.enable := true.B
+ 
+-    val syncReset = ResetCatchAndSync(clocks(0), this.reset.toBool)
++    val syncReset = ResetCatchAndSync(clocks(0), this.reset.asBool)
+ 
+     val state = withClockAndReset(clocks(0), syncReset) { RegInit(sReset) }
+ 
+     withClock(mux.io.clockOut) {
+-        assert(!this.reset.toBool, "Should not get any clock edges while in reset")
++        assert(!this.reset.asBool, "Should not get any clock edges while in reset")
+     }
+ 
+     withClockAndReset(clocks(0), syncReset) {
+@@ -67,7 +67,7 @@ class ClockDividerTest(timeout: Int = 200000) extends UnitTest(timeout) {
+     val myClock = Module(new ClockGenerator(base)).io.clock
+     val monitors = divs.map(x => if (x == 0) 0 else (x + 1)*base).map(x => Module(new PeriodMonitor(x, Some(x))))
+ 
+-    val syncReset = ResetCatchAndSync(myClock, this.reset.toBool)
++    val syncReset = ResetCatchAndSync(myClock, this.reset.asBool)
+ 
+     val divider = withClock(myClock) { Module(new ClockDivider(log2Ceil(divs.max))) }
+ 
+diff --git a/src/main/scala/NoDebug.scala b/src/main/scala/NoDebug.scala
+index 9a41e1e..95610ec 100644
+--- a/src/main/scala/NoDebug.scala
++++ b/src/main/scala/NoDebug.scala
+@@ -18,5 +18,5 @@ trait HasNoDebugModuleImp {
+   debugIO.get.dmi.req.valid := false.B
+   debugIO.get.dmi.resp.ready := false.B
+   debugIO.get.dmiClock := clock
+-  debugIO.get.dmiReset := reset.toBool
++  debugIO.get.dmiReset := reset.asBool
+ }
+diff --git a/src/main/scala/tsiHost/TsiHostWidget.scala b/src/main/scala/tsiHost/TsiHostWidget.scala
+index 41d50db..340d3c5 100644
+--- a/src/main/scala/tsiHost/TsiHostWidget.scala
++++ b/src/main/scala/tsiHost/TsiHostWidget.scala
+@@ -240,7 +240,7 @@ class TLTSIHostWidget(val beatBytes: Int, val params: TSIHostParams)(implicit p:
+     val mmioSinkMod = mmioSink.module
+     val clientSourceMod = clientSource.module
+ 
+-    val syncReset = ResetCatchAndSync(io.serial_clock, reset.toBool)
++    val syncReset = ResetCatchAndSync(io.serial_clock, reset.asBool)
+ 
+     // connect other modules to the different clock domain
+     Seq(backendMod, mmioMod, mmioSinkMod, clientSourceMod).foreach { m =>
