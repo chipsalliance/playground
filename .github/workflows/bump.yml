@@ -8,7 +8,7 @@ jobs:
     container: archlinux/archlinux:latest
     steps:
       - name: Install dependencies
-        run: pacman -Syu --noconfirm make parallel cmake ninja python mill dtc verilator git llvm clang lld
+        run: pacman -Syu --noconfirm make parallel wget cmake ninja python mill dtc verilator git llvm clang lld
       - uses: actions/checkout@v2
         with:
           submodules: 'true'

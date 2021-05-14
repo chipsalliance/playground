@@ -48,6 +48,9 @@ Currently, only support **Arch Linux and Debian** sid, you can PR your own distr
   - Debian: git
 * mill
   - Arch Linux: mill
+* wget
+  - Arch Linux: wget
+  - Debian: wget
 * GNU Parallel
   - Arch Linux: parallel
   - Debian: parallel
