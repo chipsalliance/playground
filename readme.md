@@ -48,6 +48,9 @@ Currently, only support **Arch Linux and Debian** sid, you can PR your own distr
   - Debian: git
 * mill
   - Arch Linux: mill
+* GNU Parallel
+  - Arch Linux: parallel
+  - Debian: parallel
 ## SanityTests
 This package is the standalone tests to check is bumping correct or not, served as the unittest, this also can be a great example to illustrate usages.
 

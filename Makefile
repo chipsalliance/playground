@@ -4,8 +4,9 @@ init:
 	mkdir -p playground/src
 	touch playground/src/Playground.scala
 
+
 patch:
-	sed '/BEGIN-PATCH/,/END-PATCH/!d;//d' readme.md | awk '{print("(cd dependencies/" $$1 " && echo " $$2 " && curl -s -L " $$2 ".patch | git apply --index)" )}' | sh 
+	find patches -type f | awk -F/ '{print("(cd dependencies/" $$2 " && git apply ../../" $$0 ")")}' | sh
 
 depatch:
 	git submodule foreach git reset --hard
@@ -15,6 +16,11 @@ bump:
 	git submodule update --remote
 	git add dependencies
 
+update-patches:
+	rm -rf patches
+	sed '/BEGIN-PATCH/,/END-PATCH/!d;//d' readme.md | awk '{print("mkdir -p patches/" $$1 " && wget " $$2 ".patch -P patches/" $$1 )}' | parallel
+	git add patches
+
 bsp:
 	mill -i mill.bsp.BSP/install
 
@@ -23,5 +29,6 @@ compile:
 
 test:
 	mill -i -j 0 sanitytests.rocketchip
+
 clean:
 	git clean -fd
