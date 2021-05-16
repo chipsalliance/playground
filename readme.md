@@ -56,6 +56,7 @@ Currently, only support **Arch Linux and Debian** sid, you can PR your own distr
 * GNU Parallel
   - Arch Linux: parallel
   - Debian: parallel
+
 ## SanityTests
 This package is the standalone tests to check is bumping correct or not, served as the unittest, this also can be a great example to illustrate usages.
 
@@ -84,3 +85,16 @@ This package is the standalone tests to check is bumping correct or not, served 
 * dtc -> dependent by spike
   - Arch Linux: dtc
   - Debian: device-tree-compiler
+
+### rocketchip
+This package is a replacement to RocketChip Makefile based generator, it directly generate a simple RocketChip emulator with verilator and linked to spike. 
+```
+mill sanitytests.rocketchip
+```
+
+### vcu118
+This package uses rocketchip and fpga-shells to elaborate FPGA bitstream generator and debug script with board [VCU118](https://www.xilinx.com/products/boards-and-kits/vcu118.html)
+```
+mill sanitytests.vcu118
+```
+If you wanna alter this to your own board, you can choose implmenting your own Shell to replace `VCU118Shell` in this test.
