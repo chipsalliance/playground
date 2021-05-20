@@ -1,0 +1,35 @@
+From dfbae14e25318997595fa6b126d103fc13633904 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 20 May 2021 01:47:15 +0000
+Subject: [PATCH] fix #224
+
+---
+ rocket/src/main/scala/jtag2mm/TestMultiplexer.scala | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/rocket/src/main/scala/jtag2mm/TestMultiplexer.scala b/rocket/src/main/scala/jtag2mm/TestMultiplexer.scala
+index 0978d9b7..d2204db6 100644
+--- a/rocket/src/main/scala/jtag2mm/TestMultiplexer.scala
++++ b/rocket/src/main/scala/jtag2mm/TestMultiplexer.scala
+@@ -57,8 +57,9 @@ class Jtag2TLMultiplexer(
+       sourceBits = 16,
+       sinkBits = 16,
+       sizeBits = 3,
+-      aUserBits = 0,
+-      dUserBits = 0,
++      echoFields = Nil,
++      requestFields = Nil,
++      responseFields = Nil,
+       hasBCE = false
+     )
+ 
+@@ -74,8 +75,7 @@ class Jtag2TLMultiplexer(
+       supportsGet = TransferSizes(1, beatBytes),
+       supportsPutFull = TransferSizes(1, beatBytes),
+       supportsPutPartial = TransferSizes(1, beatBytes),
+-      supportsHint = TransferSizes(1, beatBytes),
+-      userBits = Nil
++      supportsHint = TransferSizes(1, beatBytes)
+     )
+ 
+     val ioMem = mem.map { m =>
