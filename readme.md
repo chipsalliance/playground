@@ -62,9 +62,6 @@ Currently, only support **Arch Linux and Debian** sid, you can PR your own distr
 This package is the standalone tests to check is bumping correct or not, served as the unittest, this also can be a great example to illustrate usages.
 
 **NOTICE: SanityTests also contains additional system dependencies:**
-* python: execute `vlsi_mem_gen`
-  - Arch Linux: python
-  - Debian: python3
 * clang: bootrom cross compiling and veriltor C++ -> binary compiling
   - Arch Linux: clang
   - Debian: clang
