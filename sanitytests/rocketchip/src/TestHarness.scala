@@ -4,7 +4,7 @@ import chipsalliance.rocketchip.config.Config
 import chisel3.RawModule
 import firrtl.AnnotationSeq
 import firrtl.options.TargetDirAnnotation
-import firrtl.passes.memlib.{InferReadWrite, InferReadWriteAnnotation, ReplSeqMem, ReplSeqMemAnnotation}
+import firrtl.passes.memlib.{InferReadWriteAnnotation, GenVerilogMemBehaviorModelAnno}
 import firrtl.stage.{FirrtlStage, OutputFileAnnotation, RunFirrtlTransformAnnotation}
 import freechips.rocketchip.stage._
 import freechips.rocketchip.system.RocketChipStage
@@ -31,29 +31,18 @@ case class TestHarness[M <: RawModule](
           new TopModuleAnnotation(testHarness),
           new ConfigsAnnotation(configs.map(_.getName)),
           InferReadWriteAnnotation,
-          RunFirrtlTransformAnnotation(new InferReadWrite),
-          ReplSeqMemAnnotation("", (outputDirectory / "TestHarness.conf").toString),
-          RunFirrtlTransformAnnotation(new ReplSeqMem),
+          GenVerilogMemBehaviorModelAnno(false),
           RunFirrtlTransformAnnotation(new firrtl.passes.InlineInstances),
           new OutputBaseNameAnnotation("TestHarness")
         )
       )
     ) { case (annos, stage) => stage.transform(annos) }
     logger.warn(s"$testHarness with configs: ${configs.mkString("_")} generated.")
-    val ramBehavior = annotations.collect {
-      case firrtl.passes.memlib.MemLibOutConfigFileAnnotation(file, _) => file
-    }.map { conf =>
-      val ramBehavior = os.temp(suffix = ".v", deleteOnExit = false)
-      os.proc(resource("vlsi_mem_gen.py"), conf).call(stdout = ramBehavior)
-      ramBehavior
-    }
-    logger.warn(s"ram behavior model generated: ${ramBehavior.mkString(" ")}")
     val duts = annotations.collect {
       case OutputFileAnnotation(file) => outputDirectory / s"$file.v"
     }
     val blackbox =
       os.read.lines(outputDirectory / firrtl.transforms.BlackBoxSourceHelper.defaultFileListName).map(Path(_))
-    logger.warn(s"simulation black boxes:\n ${ramBehavior.mkString("\n")}")
     val verilatorBuildDir = outputDirectory / "build"
     val cmakefilelist = verilatorBuildDir / "CMakeLists.txt"
     os.makeDir(verilatorBuildDir)
@@ -72,7 +61,7 @@ case class TestHarness[M <: RawModule](
     val csrcs = Seq("csrc/emulator.cc", "csrc/SimDTM.cc", "csrc/SimJTAG.cc", "csrc/remote_bitbang.cc")
       .map(resource(_).toString)
       .mkString(" ")
-    val vsrcs = (ramBehavior ++ duts ++ blackbox)
+    val vsrcs = (duts ++ blackbox)
       .filter(f => f.ext == "v" | f.ext == "sv")
       .map(_.toString)
       .mkString(" ")
