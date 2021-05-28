@@ -20,11 +20,13 @@ This repository always tracks remote developing branches, it may need some patch
 barstools https://github.com/ucb-bar/barstools/pull/101  
 dsptools https://github.com/ucb-bar/dsptools/pull/231  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2839  
 firesim https://github.com/firesim/firesim/pull/747  
 firesim https://github.com/firesim/firesim/pull/749  
 firesim https://github.com/firesim/firesim/pull/750  
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
 testchipip https://github.com/ucb-bar/testchipip/pull/126  
+treadle https://github.com/chipsalliance/treadle/pull/332  
 fpga-shells https://github.com/sifive/fpga-shells/pull/161  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
 <!-- END-PATCH -->
