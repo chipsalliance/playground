@@ -15,10 +15,8 @@ case class TestHarness[M <: RawModule](
   targetDir: Option[Path] = None)
     extends LazyLogging {
   lazy val filelist: Path = {
-    val testHarness = classOf[sifive.fpgashells.shell.xilinx.VCU118Shell]
-    val outputDirectory: Path = targetDir.getOrElse(os.temp.dir(deleteOnExit = false))
     logger.warn(s"start to elaborate fpga designs in $outputDirectory")
-    val annotations = Seq(
+    Seq(
       new RocketChipStage,
       new FirrtlStage
     ).foldLeft(
@@ -27,23 +25,12 @@ case class TestHarness[M <: RawModule](
           TargetDirAnnotation(outputDirectory.toString),
           new TopModuleAnnotation(testHarness),
           new ConfigsAnnotation(configs.map(_.getName)),
-          InferReadWriteAnnotation,
-          RunFirrtlTransformAnnotation(new InferReadWrite),
-          ReplSeqMemAnnotation("", (outputDirectory / "TestHarness.conf").toString),
-          RunFirrtlTransformAnnotation(new ReplSeqMem),
           RunFirrtlTransformAnnotation(new firrtl.passes.InlineInstances),
           new OutputBaseNameAnnotation("TestHarness")
         )
       )
     ) { case (annos, stage) => stage.transform(annos) }
     logger.warn(s"$testHarness with configs: ${configs.mkString("_")} generated.")
-    val ramBehavior = annotations.collect {
-      case firrtl.passes.memlib.MemLibOutConfigFileAnnotation(file, _) => file
-    }.map { conf =>
-      os.proc(resource("vlsi_mem_gen.py"), conf).call(stdout = outputDirectory / "ramBehavior.v")
-      outputDirectory / "ramBehavior.v"
-    }
-    logger.warn(s"ram behavior model generated: ${ramBehavior.mkString(" ")}")
     val filelist = outputDirectory / "filelist"
     os.write(filelist, os.walk(outputDirectory).filter(_.ext == "v").map(_.toString).mkString("\n"))
     filelist
