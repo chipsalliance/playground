@@ -59,6 +59,9 @@ trait CommonModule extends ScalaModule {
 
 object myfirrtl extends dependencies.firrtl.build.firrtlCrossModule(ivys.sv) {
   override def millSourcePath = os.pwd / "dependencies" / "firrtl"
+  override def ivyDeps = super.ivyDeps() ++ Agg(
+    ivys.pprint
+  )
 }
 
 object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) {
