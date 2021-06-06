@@ -32,6 +32,13 @@ object ivys {
   val breeze = ivy"org.scalanlp::breeze:1.1"
 }
 
+object helper extends Module {
+  def seed = T(s"${os.pwd.baseName}_${System.getProperty("user.name")}")
+  def sync(server: String) = T.command {
+    os.proc("rsync", "-avP", "--delete" , "--exclude=.git/", "--exclude=out/", s"${os.pwd.toString()}/", s"$server:/tmp/${seed()}").call()
+  }
+}
+
 // For modules not support mill yet, need to have a ScalaModule depend on our own repositories.
 trait CommonModule extends ScalaModule {
   override def scalaVersion = ivys.sv
