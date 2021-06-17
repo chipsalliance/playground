@@ -1,7 +1,7 @@
-From 412104cf8845c798b84ccb229afe40f86f27dded Mon Sep 17 00:00:00 2001
+From 365cce1697ff5e34939715f230849bd4d571bf07 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 23 Mar 2021 06:46:23 +0000
-Subject: [PATCH 1/5] remove deprecations.
+Subject: [PATCH 1/6] remove deprecations.
 
 This commit remove all reference to chisel3.core, toBool, unless in firesim,
 which was broken by chipsalliance/chisel3#1730.
@@ -252,7 +252,7 @@ index 34ecbd6ba..fd902d267 100644
  
    (reads_cmd_fired zip reads_cmd_fire).foreach { case (fired, fire) => updateState(fired, fire) }
 diff --git a/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala b/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala
-index 112c9c7ee..65a783e35 100644
+index 024243389..1d963ad71 100644
 --- a/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala
 +++ b/sim/midas/src/main/scala/midas/passes/MidasTransforms.scala
 @@ -6,7 +6,6 @@ package passes
@@ -323,10 +323,10 @@ index eef72b5eb..50ec9624f 100644
          case ActualDirection.Input => genWOReg(b, name)
        }
 diff --git a/sim/midas/targetutils/src/main/scala/midas/annotations.scala b/sim/midas/targetutils/src/main/scala/midas/annotations.scala
-index 38ffe70bb..79fde313d 100644
+index e9886fcd1..fe42fe1e8 100644
 --- a/sim/midas/targetutils/src/main/scala/midas/annotations.scala
 +++ b/sim/midas/targetutils/src/main/scala/midas/annotations.scala
-@@ -287,8 +287,8 @@ object TriggerSource {
+@@ -292,8 +292,8 @@ object TriggerSource {
      * debits issued while the module's implicit reset is asserted are not
      * counted.
      */
@@ -351,7 +351,7 @@ index 7bfc6655f..4675d671c 100644
                         nastiKey,
                         Some(AXI4EdgeSummary(edge)),
 diff --git a/sim/src/main/scala/midasexamples/AutoCounterModule.scala b/sim/src/main/scala/midasexamples/AutoCounterModule.scala
-index 198dafd3f..dfc741db2 100644
+index e844a1186..edfc76cc8 100644
 --- a/sim/src/main/scala/midasexamples/AutoCounterModule.scala
 +++ b/sim/src/main/scala/midasexamples/AutoCounterModule.scala
 @@ -4,7 +4,6 @@ package firesim.midasexamples
@@ -362,7 +362,7 @@ index 198dafd3f..dfc741db2 100644
  
  import midas.targetutils.{PerfCounter, AutoCounterCoverModuleAnnotation}
  import freechips.rocketchip.util.property._
-@@ -48,7 +47,7 @@ class AutoCounterModuleDUT(
+@@ -70,7 +69,7 @@ class AutoCounterModuleDUT(
    }
  }
  
@@ -395,7 +395,7 @@ index a30367a19..7c5f142a5 100644
    io.z := x
    io.v := y === 0.U
 diff --git a/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala b/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala
-index 5a5a83b5f..68b42c89a 100644
+index c2c574388..a85cc412e 100644
 --- a/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala
 +++ b/sim/src/main/scala/midasexamples/MulticlockAutoCounterModule.scala
 @@ -16,7 +16,7 @@ class MulticlockAutoCounterModule(implicit p: Parameters) extends RawModule {
@@ -471,7 +471,7 @@ index 06b96f966..c95c32f53 100644
  import midas.widgets.PeekPokeBridge
  import midas.targetutils._
 diff --git a/sim/src/main/scala/midasexamples/VerilogAccumulator.scala b/sim/src/main/scala/midasexamples/VerilogAccumulator.scala
-index 0f5ae6ef0..aa7b6eb4b 100644
+index e1d570ab4..ad238d2be 100644
 --- a/sim/src/main/scala/midasexamples/VerilogAccumulator.scala
 +++ b/sim/src/main/scala/midasexamples/VerilogAccumulator.scala
 @@ -4,8 +4,7 @@ package firesim.midasexamples
@@ -485,10 +485,10 @@ index 0f5ae6ef0..aa7b6eb4b 100644
  import midas.widgets.PeekPokeBridge
  
 
-From 875eb04b1ed3f29c2b6b814bdd31357a29825cc3 Mon Sep 17 00:00:00 2001
+From 4be8d56e9113f2ede72eb6afd110e979aa5f01c7 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 6 Apr 2021 02:32:10 +0000
-Subject: [PATCH 2/5] remove io
+Subject: [PATCH 2/6] remove io
 
 This patch removes `Module.io` reference with
 `chisel3.experimental.DataMirror.modulePorts(dut)` which was broken by
@@ -520,10 +520,10 @@ index 97e3ccf49..f2859f204 100644
    }
  }
 
-From 9e9749423ae2322332819677d2d2c15e77eb3b3a Mon Sep 17 00:00:00 2001
+From 15dfcc71006f04207c3e56917259575c9e689aa3 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 23 Mar 2021 06:59:06 +0000
-Subject: [PATCH 3/5] remove reference to chisel3.Driver
+Subject: [PATCH 3/6] remove reference to chisel3.Driver
 
 ---
  .../src/main/scala/passes/AsyncResetReg.scala       |  2 +-
@@ -618,10 +618,10 @@ index 6e40c3db3..b4ec8b452 100644
  
    def generateAnno {
 
-From d3f22e024964cbd60de7dde74e89dc7b6917f6e4 Mon Sep 17 00:00:00 2001
+From 4367d0b1101349dada7b33f2d725b3002a70d9a4 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 23 Mar 2021 07:07:29 +0000
-Subject: [PATCH 4/5] fix driver, but depends on chipsalliance/chisel3#1854
+Subject: [PATCH 4/6] fix driver, but depends on chipsalliance/chisel3#1854
 
 ---
  .../src/main/scala/midas/passes/SimulationMapping.scala      | 4 ++--
@@ -629,7 +629,7 @@ Subject: [PATCH 4/5] fix driver, but depends on chipsalliance/chisel3#1854
  2 files changed, 4 insertions(+), 5 deletions(-)
 
 diff --git a/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala b/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
-index 5689076ac..eb8ce6a18 100644
+index d8625dd21..b32d89775 100644
 --- a/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
 +++ b/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
 @@ -93,8 +93,8 @@ private[passes] class SimulationMapping(targetName: String) extends firrtl.Trans
@@ -644,10 +644,10 @@ index 5689076ac..eb8ce6a18 100644
  
      val transforms = Seq(
 diff --git a/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala b/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
-index 12d0c7f5e..137a37ed0 100644
+index a6c9ee77b..91f142e3a 100644
 --- a/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
 +++ b/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
-@@ -192,9 +192,8 @@ class RAMModelInst(name: String, val readPorts: Seq[ReadPort], val writePorts: S
+@@ -191,9 +191,8 @@ class RAMModelInst(name: String, val readPorts: Seq[ReadPort], val writePorts: S
    }
  
    def elaborateModel(parentCircuitNS: Namespace): Module = {
@@ -660,10 +660,10 @@ index 12d0c7f5e..137a37ed0 100644
      require(state.circuit.modules.length == 1)
      state.circuit.modules.collectFirst({
 
-From 09acf9b5da89d17a1fe032fff576b74379df11fe Mon Sep 17 00:00:00 2001
+From e0ed987e2c9e60c3c2f4e2cb8e594d6317d37c55 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 23 Mar 2021 06:55:56 +0000
-Subject: [PATCH 5/5] remove QoRShimGenerator, seems to be dead code, not used
+Subject: [PATCH 5/6] remove QoRShimGenerator, seems to be dead code, not used
  anymore.
 
 ---
@@ -716,3 +716,40 @@ index fda419aac..1c612444b 100644
 -  val params = getConfig(exOptions.qorOptions.fullConfigClasses).toInstance
 -  Driver.execute(exOptions, () => new QoRShim()(params))
 -}
+
+From 85bd81ff7841d04a63bdd36ff2bc08f47a943460 Mon Sep 17 00:00:00 2001
+From: David Biancolin <david.biancolin@gmail.com>
+Date: Fri, 11 Jun 2021 04:06:49 +0000
+Subject: [PATCH 6/6] Readd deprecated Driver invocation for now
+
+---
+ sim/midas/src/main/scala/midas/passes/SimulationMapping.scala   | 2 +-
+ .../src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala b/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
+index b32d89775..b7880181e 100644
+--- a/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
++++ b/sim/midas/src/main/scala/midas/passes/SimulationMapping.scala
+@@ -94,7 +94,7 @@ private[passes] class SimulationMapping(targetName: String) extends firrtl.Trans
+     // Generate the encapsulating simulator RTL
+     lazy val shim = PlatformShim(innerState.annotations, portTypeMap)
+     val c3circuit = chisel3.stage.ChiselStage.elaborate(LazyModule(shim).module)
+-    val chirrtl = chisel3.stage.ChiselStage.convert(c3circuit)
++    val chirrtl = Parser.parse(chisel3.Driver.emit(c3circuit))
+     val annos = PreLinkRenamingAnnotation(Namespace(innerCircuit)) +: c3circuit.annotations.map(_.toFirrtl)
+ 
+     val transforms = Seq(
+diff --git a/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala b/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
+index 91f142e3a..b656a29ec 100644
+--- a/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
++++ b/sim/midas/src/main/scala/midas/passes/fame/EmitAndWrapRAMModels.scala
+@@ -192,7 +192,7 @@ class RAMModelInst(name: String, val readPorts: Seq[ReadPort], val writePorts: S
+ 
+   def elaborateModel(parentCircuitNS: Namespace): Module = {
+     val c3circuit = chisel3.stage.ChiselStage.elaborate(new midas.models.sram.AsyncMemChiselModel(depth.toInt, dataWidth, readPorts.size, writePorts.size))
+-    val chirrtl = chisel3.stage.ChiselStage.convert(c3circuit)
++    val chirrtl = Parser.parse(chisel3.Driver.emit(c3circuit))
+     val state = new MiddleFirrtlCompiler().compile(CircuitState(chirrtl, ChirrtlForm, Nil), Nil)
+     require(state.circuit.modules.length == 1)
+     state.circuit.modules.collectFirst({
