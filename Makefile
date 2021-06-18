@@ -1,9 +1,5 @@
 init:
 	git submodule update --init
-	# your sources codes lays here
-	mkdir -p playground/src
-	touch playground/src/Playground.scala
-
 
 patch:
 	find patches -type f | awk -F/ '{print("(cd dependencies/" $$2 " && git apply ../../" $$0 ")")}' | sh
