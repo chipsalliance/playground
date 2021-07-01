@@ -18,7 +18,6 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 barstools https://github.com/ucb-bar/barstools/pull/101  
-dsptools https://github.com/ucb-bar/dsptools/pull/231  
 firrtl https://github.com/chipsalliance/firrtl/pull/2276  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
