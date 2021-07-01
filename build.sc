@@ -265,13 +265,13 @@ object dsptools extends CommonModule with SbtModule { dt =>
     ivys.spire,
     ivys.breeze
   )
+}
 
-  object dspblocks extends CommonModule with SbtModule {
-    // TODO: FIX
-    override def scalacOptions = Seq("-Xsource:2.11")
-    override def millSourcePath = dt.millSourcePath / "rocket"
-    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools)
-  }
+object rocketdsputils extends CommonModule with SbtModule {
+  // TODO: FIX
+  override def scalacOptions = Seq("-Xsource:2.11")
+  override def millSourcePath = os.pwd / "dependencies" / "rocket-dsp-utils"
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools)
 }
 
 object gemmini extends CommonModule with SbtModule {
@@ -337,7 +337,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
   override def scalacOptions = Seq("-Xsource:2.11")
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, dsptools.dspblocks, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3)
 
   object tracegen extends CommonModule with SbtModule {
     // TODO: FIX
@@ -402,7 +402,7 @@ object spike extends Module {
 // Dummy
 
 object playground extends CommonModule {
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, rocketdsputils, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities)
 
   // add some scala ivy module you like here.
   override def ivyDeps = Agg(

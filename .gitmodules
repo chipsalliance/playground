@@ -105,3 +105,6 @@
 [submodule "dependencies/riscv-isa-sim"]
 	path = dependencies/riscv-isa-sim
 	url = git@github.com:riscv/riscv-isa-sim.git
+[submodule "dependencies/rocket-dsp-utils"]
+	path = dependencies/rocket-dsp-utils
+	url = git@github.com:ucb-bar/rocket-dsp-utils.git
