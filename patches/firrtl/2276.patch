@@ -1,14 +1,14 @@
-From 8754de46df996c19d96c12c841e5e965c3de54fd Mon Sep 17 00:00:00 2001
+From ea2aabc4030a9380717d24ebf179d12564d6b651 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 19 Jun 2021 19:10:51 +0800
-Subject: [PATCH] If exist protoc in the $PATH, prefer to using it.
+Subject: [PATCH 1/2] If exist protoc in the $PATH, prefer to using it.
 
 ---
  build.sc | 148 ++++++++++++++++++++++++++++++++++---------------------
  1 file changed, 93 insertions(+), 55 deletions(-)
 
 diff --git a/build.sc b/build.sc
-index 094dc0bb8a..1d25078b29 100644
+index 094dc0bb8a..3a713b1fb3 100644
 --- a/build.sc
 +++ b/build.sc
 @@ -91,21 +91,47 @@ class firrtlCrossModule(val crossScalaVersion: String) extends CrossSbtModule wi
@@ -125,7 +125,7 @@ index 094dc0bb8a..1d25078b29 100644
 -    // Download Linux/Mac binary doesn't have x.
 -    if (!isWindows) os.perms.set(bin, "rwx------")
 -    PathRef(bin)
-+    PathRef(os.proc("bash", "-c", "command -v protoc").call(check=false).out.lines.headOption match {
++    PathRef(os.proc("bash", "-c", "command -v protoc").call().out.lines.headOption match {
 +      case Some(bin) =>
 +        println(s"Use system protoc: $bin")
 +        os.Path(bin)
@@ -177,3 +177,129 @@ index 094dc0bb8a..1d25078b29 100644
    }
  
    def generatedProtoSources = T.sources {
+
+From d7d1115a0d840eaa29d5eaa8026f8e0fce09c5a9 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Mon, 12 Jul 2021 12:40:21 +0800
+Subject: [PATCH 2/2] add checkSystemAntlr4Version and checkSystemProtocVersion
+
+---
+ build.sc | 59 +++++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 41 insertions(+), 18 deletions(-)
+
+diff --git a/build.sc b/build.sc
+index 3a713b1fb3..43729370f7 100644
+--- a/build.sc
++++ b/build.sc
+@@ -8,6 +8,8 @@ import mill.modules.Util
+ import $ivy.`com.lihaoyi::mill-contrib-buildinfo:$MILL_VERSION`
+ import mill.contrib.buildinfo.BuildInfo
+ 
++import java.io.IOException
++
+ object firrtl extends mill.Cross[firrtlCrossModule]("2.12.13", "2.13.4")
+ 
+ class firrtlCrossModule(val crossScalaVersion: String) extends CrossSbtModule with ScalafmtModule with PublishModule with BuildInfo {
+@@ -91,28 +93,36 @@ class firrtlCrossModule(val crossScalaVersion: String) extends CrossSbtModule wi
+     millSourcePath / "src" / "main" / "antlr4" / "FIRRTL.g4"
+   }
+ 
+-  def downloadAntlr4 = T.persistent {
++  /** override this to false will force FIRRTL using system protoc. */
++  val checkSystemAntlr4Version: Boolean = true
++
++  def antlr4Path = T.persistent {
+     // Linux distro package antlr4 as antlr4, while brew package as antlr
+-    PathRef(Seq("antlr4", "antlr")
+-    .flatMap(f => os.proc("bash", "-c", s"command -v $f")
+-      .call(check=false)
+-      .out
+-      .lines
+-      .headOption
+-    ).headOption match {
+-      case Some(bin) => 
++    PathRef(Seq("antlr4", "antlr").flatMap { f =>
++      try {
++        val systemAntlr4Version = os.proc(f).call(check = false).out.lines.head.split(" ").last
++        if (systemAntlr4Version == antlr4Version || !checkSystemAntlr4Version)
++          Some(os.Path(os.proc("bash", "-c", s"command -v $f").call().out.lines.head))
++        else
++          None
++      } catch {
++        case _: IOException =>
++          None
++      }
++    }.headOption match {
++      case Some(bin) =>
+         println(s"Use system antlr4: $bin")
+-        os.Path(bin)
++        bin
+       case None =>
+         println("Download antlr4 from Internet")
+-        if (!os.isFile( T.ctx.dest / "antlr4" ))
++        if (!os.isFile(T.ctx.dest / "antlr4"))
+           Util.download(s"https://www.antlr.org/download/antlr-$antlr4Version-complete.jar", os.rel / "antlr4.jar")
+         T.ctx.dest / "antlr4.jar"
+     })
+   }
+ 
+   def generatedAntlr4Source = T.sources {
+-    downloadAntlr4().path match {
++    antlr4Path().path match {
+       case f if f.last == "antlr4.jar" =>
+         os.proc("java",
+           "-jar", f.toString,
+@@ -122,8 +132,8 @@ class firrtlCrossModule(val crossScalaVersion: String) extends CrossSbtModule wi
+           "-no-listener", "-visitor",
+           antlrSource().path.toString
+         ).call()
+-      case _ => 
+-        os.proc(downloadAntlr4().path.toString,
++      case _ =>
++        os.proc(antlr4Path().path.toString,
+           "-o", T.ctx.dest.toString,
+           "-lib", antlrSource().path.toString,
+           "-package", "firrtl.antlr",
+@@ -149,17 +159,30 @@ class firrtlCrossModule(val crossScalaVersion: String) extends CrossSbtModule wi
+     System.getProperty("os.name")
+   }
+ 
++  /** override this to false will force FIRRTL using system protoc. */
++  val checkSystemProtocVersion: Boolean = true
+   // For Mac users:
+   // MacOS ARM 64-bit supports native binaries via brew:
+   // you can install protoc via `brew install protobuf`,
+   // If you don't use brew installed protoc
+   // It still supports x86_64 binaries via Rosetta 2
+   // install via `/usr/sbin/softwareupdate --install-rosetta --agree-to-license`.
+-  def downloadProtoc = T.persistent {
+-    PathRef(os.proc("bash", "-c", "command -v protoc").call().out.lines.headOption match {
++  def protocPath = T.persistent {
++    PathRef({
++      try {
++        val systemProtocVersion = os.proc("protoc", "--version").call(check = false).out.lines.head.split(" ").last
++        if (systemProtocVersion == protocVersion || !checkSystemProtocVersion)
++          Some(os.Path(os.proc("bash", "-c", "command -v protoc").call().out.lines.head))
++        else
++          None
++      } catch {
++        case _: IOException =>
++          None
++      }
++    } match {
+       case Some(bin) =>
+         println(s"Use system protoc: $bin")
+-        os.Path(bin)
++        bin
+       case None =>
+         println("Download protoc from Internet")
+         val isMac = operationSystem().toLowerCase.startsWith("mac")
+@@ -209,7 +232,7 @@ class firrtlCrossModule(val crossScalaVersion: String) extends CrossSbtModule wi
+ 
+   def generatedProtoSources = T.sources {
+     os.proc(
+-      downloadProtoc().path.toString,
++      protocPath().path.toString,
+       "-I", protobufSource().path / os.up,
+       s"--java_out=${T.ctx.dest.toString}",
+       protobufSource().path.toString()
