@@ -1,4 +1,4 @@
-From 3363b583b6432e519937117399b2bac96a5b5786 Mon Sep 17 00:00:00 2001
+From 40bfd71a61e102fa1003c918b39dcdbcd3ad77d7 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 3 Apr 2021 18:08:41 +0000
 Subject: [PATCH] fix for chipsalliance/firrtl#2095 and
