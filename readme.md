@@ -63,6 +63,14 @@ Currently, only support **Arch Linux, macOS and Debian sid**, you can PR your ow
   - Arch Linux: dtc
   - Debian: device-tree-compiler
   - Homebrew: dtc
+* protobuf
+  - Arch Linux: protobuf
+  - Debian: protobuf-compiler
+  - Homebrew: protobuf
+* antlr4
+  - Arch Linux: antlr4
+  - Debian: antlr4
+  - Homebrew: antlr
 
 ## SanityTests
 This package is the standalone tests to check is bumping correct or not, served as the unittest, this also can be a great example to illustrate usages.

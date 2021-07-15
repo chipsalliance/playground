@@ -62,6 +62,8 @@ object myfirrtl extends dependencies.firrtl.build.firrtlCrossModule(ivys.sv) {
   override def ivyDeps = super.ivyDeps() ++ Agg(
     ivys.pprint
   )
+  override val checkSystemAntlr4Version = false
+  override val checkSystemProtocVersion = false
 }
 
 object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) {
