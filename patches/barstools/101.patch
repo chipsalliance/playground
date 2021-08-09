@@ -1,7 +1,7 @@
 From 40bfd71a61e102fa1003c918b39dcdbcd3ad77d7 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 3 Apr 2021 18:08:41 +0000
-Subject: [PATCH] fix for chipsalliance/firrtl#2095 and
+Subject: [PATCH 1/2] fix for chipsalliance/firrtl#2095 and
  chipsalliance/chisel3#1730
 
 ---
@@ -49,3 +49,43 @@ index 77ea4c9..5184949 100644
  import firrtl._
  import firrtl.ir._
  import firrtl.passes.MemPortUtils.memPortField
+
+From 22423dca40ef04d7e60a5048bdb4f7fe1f5f7d3c Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 10 Aug 2021 03:21:32 +0800
+Subject: [PATCH 2/2] remove MacroCompilerOptimizations
+
+1. this class is not used in any public projects.
+2. passes.Legalize was removed by chipsalliance/firrtl#2304
+---
+ .../scala/barstools/macros/MacroCompiler.scala  | 17 -----------------
+ 1 file changed, 17 deletions(-)
+
+diff --git a/macros/src/main/scala/barstools/macros/MacroCompiler.scala b/macros/src/main/scala/barstools/macros/MacroCompiler.scala
+index 4366ed5..edf7a8a 100644
+--- a/macros/src/main/scala/barstools/macros/MacroCompiler.scala
++++ b/macros/src/main/scala/barstools/macros/MacroCompiler.scala
+@@ -772,23 +772,6 @@ class MacroCompilerTransform extends Transform with DependencyAPIMigration {
+   }
+ }
+ 
+-class MacroCompilerOptimizations extends SeqTransform with DependencyAPIMigration {
+-  override def prerequisites = Forms.LowForm
+-  override def optionalPrerequisites = Forms.LowFormOptimized
+-  override def optionalPrerequisiteOf = Forms.LowEmitters
+-  override def invalidates(a: Transform) = false
+-
+-  def transforms: Seq[Transform] = Seq(
+-    passes.RemoveValidIf,
+-    new firrtl.transforms.ConstantPropagation,
+-    passes.memlib.VerilogMemDelays,
+-    new firrtl.transforms.ConstantPropagation,
+-    passes.Legalize,
+-    passes.SplitExpressions,
+-    passes.CommonSubexpressionElimination
+-  )
+-}
+-
+ object MacroCompiler extends App {
+   sealed trait MacroParam
+   case object Macros extends MacroParam
