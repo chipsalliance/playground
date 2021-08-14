@@ -108,3 +108,6 @@
 [submodule "dependencies/rocket-dsp-utils"]
 	path = dependencies/rocket-dsp-utils
 	url = git@github.com:ucb-bar/rocket-dsp-utils.git
+[submodule "dependencies/maltese-smt.git"]
+	path = dependencies/maltese-smt
+	url = git@github.com:ucb-bar/maltese-smt.git

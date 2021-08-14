@@ -10,6 +10,7 @@ import $file.dependencies.chisel3.build
 import $file.dependencies.firrtl.build
 import $file.dependencies.treadle.build
 import $file.dependencies.`chisel-testers2`.build
+import $file.dependencies.`maltese-smt`.build
 import $file.dependencies.`api-config-chipsalliance`.`build-rules`.mill.build
 import $file.dependencies.`berkeley-hardfloat`.build
 import $file.dependencies.`rocket-chip`.common
@@ -145,6 +146,16 @@ object mychiseltest extends dependencies.`chisel-testers2`.build.chiseltestCross
   override def millSourcePath = os.pwd /  "dependencies" / "chisel-testers2"
 
   def chisel3Module: Option[PublishModule] = Some(mychisel3)
+
+  def treadleModule: Option[PublishModule] = Some(mytreadle)
+
+  def malteseModule: Option[PublishModule] = Some(mymaltese)
+}
+
+object mymaltese extends dependencies.`maltese-smt`.build.malteseCrossModule(ivys.sv) {
+  override def millSourcePath = os.pwd / "dependencies" / "maltese-smt"
+
+  def firrtlModule: Option[PublishModule] = Some(myfirrtl)
 
   def treadleModule: Option[PublishModule] = Some(mytreadle)
 }
