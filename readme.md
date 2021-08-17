@@ -1,4 +1,4 @@
-# chipsallinace-playground
+# playground
 
 ## Introduction
 This is a template repository for those who want to develop RTL based on rocket-chip and even chipyard, being able to edit all sources from chisel environments without publish them to local ivy.
