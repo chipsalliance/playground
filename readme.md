@@ -24,7 +24,6 @@ testchipip https://github.com/ucb-bar/testchipip/pull/126
 fpga-shells https://github.com/sifive/fpga-shells/pull/161  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
 maltese-smt https://github.com/ucb-bar/maltese-smt/pull/1  
-chisel-testers2 https://github.com/ucb-bar/chisel-testers2/pull/375  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
