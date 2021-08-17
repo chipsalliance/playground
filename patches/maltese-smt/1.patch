@@ -125,7 +125,7 @@ index c32c3cb..3a61bfa 100644
  # IDE
  .project
 
-From 3ba817d3d4cbe729cf11229f84f254feb3acbdab Mon Sep 17 00:00:00 2001
+From 648ffdfcdaba0852fcf7da3f343f9e48af64cf0e Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 17 Aug 2021 19:37:19 +0800
 Subject: [PATCH 3/3] add mill to CI.
@@ -135,7 +135,7 @@ Subject: [PATCH 3/3] add mill to CI.
  1 file changed, 18 insertions(+)
 
 diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
-index 395a36f..81bbd51 100644
+index 395a36f..cc256b7 100644
 --- a/.github/workflows/test.yml
 +++ b/.github/workflows/test.yml
 @@ -107,6 +107,24 @@ jobs:
@@ -147,7 +147,7 @@ index 395a36f..81bbd51 100644
 +    runs-on: ubuntu-latest
 +    strategy:
 +      matrix:
-+        scala: [2.13.4, 2.12.13]
++        scala: [2.13.5, 2.12.13]
 +    steps:
 +      - name: Checkout
 +        uses: actions/checkout@v2
