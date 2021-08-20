@@ -4,7 +4,7 @@ on:
   push:
 jobs:
   bump:
-    if: github.repository == 'sequencer/chipsalliance-playground'
+    if: github.repository == 'sequencer/playground'
     runs-on: ubuntu-latest
     container: archlinux/archlinux:latest
     steps:
