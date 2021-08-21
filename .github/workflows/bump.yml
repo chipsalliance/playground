@@ -16,12 +16,6 @@ jobs:
           fetch-depth: '0'
       - name: Coursier Cache
         uses: coursier/cache-action@v5
-      - name: Mill Cache
-        uses: actions/cache@v2
-        with:
-          path: out
-          key: mill-${{ hashFiles('**/build.sc') }}
-          restore-keys: mill-
       - name: Init
         run: |
           git config --global user.email "liu@jiuyang.me"
