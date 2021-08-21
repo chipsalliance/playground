@@ -125,20 +125,20 @@ index c32c3cb..3a61bfa 100644
  # IDE
  .project
 
-From 648ffdfcdaba0852fcf7da3f343f9e48af64cf0e Mon Sep 17 00:00:00 2001
+From b4c7835afa4d338fb07f343eee6fc8275af6a9c1 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 17 Aug 2021 19:37:19 +0800
 Subject: [PATCH 3/3] add mill to CI.
 
 ---
- .github/workflows/test.yml | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ .github/workflows/test.yml | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
 
 diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
-index 395a36f..cc256b7 100644
+index 395a36f..bef33ae 100644
 --- a/.github/workflows/test.yml
 +++ b/.github/workflows/test.yml
-@@ -107,6 +107,24 @@ jobs:
+@@ -107,13 +107,31 @@ jobs:
        - name: Check Formatting
          run: sbt scalafmtCheckAll
  
@@ -163,3 +163,11 @@ index 395a36f..cc256b7 100644
    # Sentinel job to simplify how we specify which checks need to pass in branch
    # protection and in Mergify
    #
+   # When adding new jobs, please add them to `needs` below
+   all_tests_passed:
+     name: "all tests passed"
+-    needs: [test, doc]
++    needs: [test, doc, mill]
+     runs-on: ubuntu-latest
+     steps:
+       - run: echo Success!
