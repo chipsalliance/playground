@@ -11,7 +11,7 @@ import $file.dependencies.firrtl.build
 import $file.dependencies.treadle.build
 import $file.dependencies.`chisel-testers2`.build
 import $file.dependencies.`maltese-smt`.build
-import $file.dependencies.`api-config-chipsalliance`.`build-rules`.mill.build
+import $file.dependencies.`api-config-chipsalliance`.build
 import $file.dependencies.`berkeley-hardfloat`.build
 import $file.dependencies.`rocket-chip`.common
 
@@ -81,14 +81,8 @@ object mytreadle extends dependencies.treadle.build.treadleCrossModule(ivys.sv) 
   def firrtlModule: Option[PublishModule] = Some(myfirrtl)
 }
 
-object myconfig extends dependencies.`api-config-chipsalliance`.`build-rules`.mill.build.config with PublishModule {
-  override def millSourcePath = os.pwd /  "dependencies" / "api-config-chipsalliance" / "design" / "craft"
-
-  override def scalaVersion = ivys.sv
-
-  override def pomSettings = myrocketchip.pomSettings()
-
-  override def publishVersion = myrocketchip.publishVersion()
+object mycde extends dependencies.`api-config-chipsalliance`.build.cde(ivys.sv) with PublishModule {
+  override def millSourcePath = os.pwd /  "dependencies" / "api-config-chipsalliance" / "cde"
 }
 
 object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
@@ -107,7 +101,7 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 
   def hardfloatModule: PublishModule = myhardfloat
 
-  def configModule: PublishModule = myconfig
+  def configModule: PublishModule = mycde
 }
 
 
@@ -415,7 +409,7 @@ object spike extends Module {
 // Dummy
 
 object playground extends CommonModule {
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, rocketdsputils, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, rocketdsputils, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities, mychiseltest)
 
   // add some scala ivy module you like here.
   override def ivyDeps = Agg(
