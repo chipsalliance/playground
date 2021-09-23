@@ -19,7 +19,6 @@ This repository always tracks remote developing branches, it may need some patch
 <!-- BEGIN-PATCH -->
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
-testchipip https://github.com/ucb-bar/testchipip/pull/126  
 fpga-shells https://github.com/sifive/fpga-shells/pull/161  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
 <!-- END-PATCH -->
