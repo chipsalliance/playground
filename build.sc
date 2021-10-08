@@ -180,6 +180,10 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
   override def scalaVersion = ivys.sv
 
   def chisel3Module: Option[PublishModule] = Some(mychisel3)
+
+  override def scalacPluginClasspath = super.scalacPluginClasspath() ++ Agg(
+    mychisel3.plugin.jar()
+  )
 }
 
 object testchipip extends CommonModule with SbtModule {
