@@ -1,0 +1,75 @@
+From 431affe12aea0b147939df91731a04b7a518cc1f Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:59:12 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/Network.scala | 4 ----
+ src/main/scala/Ring.scala    | 4 ----
+ src/main/scala/Serdes.scala  | 3 ---
+ 3 files changed, 11 deletions(-)
+
+diff --git a/src/main/scala/Network.scala b/src/main/scala/Network.scala
+index efb4071..b0da686 100644
+--- a/src/main/scala/Network.scala
++++ b/src/main/scala/Network.scala
+@@ -29,8 +29,6 @@ class NetworkBundle[T <: Data](
+   val payload = payloadTyp.cloneType
+   val last = Bool()
+ 
+-  override def cloneType =
+-    new NetworkBundle(nNodes, payloadTyp).asInstanceOf[this.type]
+ }
+ 
+ class NetworkIO[T <: Data](
+@@ -43,8 +41,6 @@ class NetworkIO[T <: Data](
+   val in = Flipped(Vec(nIn, Decoupled(bundleType())))
+   val out = Vec(nOut, Decoupled(bundleType()))
+ 
+-  override def cloneType =
+-    new NetworkIO(nIn, nOut, payloadTyp, netIdRange).asInstanceOf[this.type]
+ }
+ 
+ abstract class NetworkInterconnect[T <: Data] extends Module {
+diff --git a/src/main/scala/Ring.scala b/src/main/scala/Ring.scala
+index 6cb588b..7aa7880 100644
+--- a/src/main/scala/Ring.scala
++++ b/src/main/scala/Ring.scala
+@@ -18,16 +18,12 @@ class RingInputNodeIO[T <: Data](bundleType: NetworkBundle[T])
+     extends RingInternalIO(bundleType) {
+   val ext_in = Flipped(Decoupled(bundleType))
+ 
+-  override def cloneType =
+-    new RingInputNodeIO(bundleType).asInstanceOf[this.type]
+ }
+ 
+ class RingOutputNodeIO[T <: Data](bundleType: NetworkBundle[T])
+     extends RingInternalIO(bundleType) {
+   val ext_out = Decoupled(bundleType)
+ 
+-  override def cloneType =
+-    new RingOutputNodeIO(bundleType).asInstanceOf[this.type]
+ }
+ 
+ class RingInputNode[T <: Data](
+diff --git a/src/main/scala/Serdes.scala b/src/main/scala/Serdes.scala
+index cccd6a8..5e5fe6c 100644
+--- a/src/main/scala/Serdes.scala
++++ b/src/main/scala/Serdes.scala
+@@ -160,8 +160,6 @@ class ValidStreamIO(w: Int) extends Bundle {
+     other.in <> out
+   }
+ 
+-  override def cloneType =
+-    new ValidStreamIO(w).asInstanceOf[this.type]
+ }
+ 
+ class GenericSerializer[T <: Data](t: T, w: Int) extends Module {
+@@ -239,7 +237,6 @@ class TLMergedBundle(params: TLBundleParameters, hasCorruptDenied: Boolean = tru
+   def isD(dummy: Int = 0) = (chanId === TLMergedBundle.TL_CHAN_ID_D)
+   def isE(dummy: Int = 0) = (chanId === TLMergedBundle.TL_CHAN_ID_E)
+ 
+-  override def cloneType: this.type = new TLMergedBundle(params, hasCorruptDenied).asInstanceOf[this.type]
+ }
+ 
+ object TLMergedBundle {

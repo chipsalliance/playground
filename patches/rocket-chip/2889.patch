@@ -1,0 +1,332 @@
+From 938827015fb2bcd6ffc12cc471acee9b41b348ac Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:54:54 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/amba/axis/Bundles.scala            | 2 --
+ src/main/scala/devices/debug/DMI.scala            | 1 -
+ src/main/scala/devices/debug/DebugTransport.scala | 2 --
+ src/main/scala/jtag/JtagShifter.scala             | 1 -
+ src/main/scala/jtag/JtagTap.scala                 | 4 ----
+ src/main/scala/regmapper/RegisterCrossing.scala   | 2 --
+ src/main/scala/rocket/ICache.scala                | 1 -
+ src/main/scala/rocket/Multiplier.scala            | 2 --
+ src/main/scala/rocket/NBDcache.scala              | 1 -
+ src/main/scala/rocket/PTW.scala                   | 1 -
+ src/main/scala/rocket/TLB.scala                   | 1 -
+ src/main/scala/tile/FPU.scala                     | 4 ----
+ src/main/scala/util/CreditedIO.scala              | 1 -
+ src/main/scala/util/HeterogeneousBag.scala        | 1 -
+ src/main/scala/util/RationalCrossing.scala        | 1 -
+ src/main/scala/util/ReadyValidCancel.scala        | 2 --
+ src/main/scala/util/ReorderQueue.scala            | 6 ------
+ 17 files changed, 33 deletions(-)
+
+diff --git a/src/main/scala/amba/axis/Bundles.scala b/src/main/scala/amba/axis/Bundles.scala
+index 472723e2385..be107726cab 100644
+--- a/src/main/scala/amba/axis/Bundles.scala
++++ b/src/main/scala/amba/axis/Bundles.scala
+@@ -24,7 +24,6 @@ case class AXISDataField(width: Int) extends BundleField(AXISData) {
+ }
+ 
+ class AXISBundleBits(val params: AXISBundleParameters) extends BundleMap(AXISBundle.keys(params)) {
+-  override def cloneType: this.type = (new AXISBundleBits(params)).asInstanceOf[this.type]
+   def last = if (params.hasLast) apply(AXISLast) else true.B
+   def id   = if (params.hasId)   apply(AXISId)   else 0.U
+   def dest = if (params.hasDest) apply(AXISDest) else 0.U
+@@ -34,7 +33,6 @@ class AXISBundleBits(val params: AXISBundleParameters) extends BundleMap(AXISBun
+ }
+ 
+ class AXISBundle(val params: AXISBundleParameters) extends IrrevocableIO(new AXISBundleBits(params)) {
+-  override def cloneType: this.type = (new AXISBundle(params)).asInstanceOf[this.type]
+ }
+ 
+ object AXISBundle {
+diff --git a/src/main/scala/devices/debug/DMI.scala b/src/main/scala/devices/debug/DMI.scala
+index 5561c485035..67164fb4398 100644
+--- a/src/main/scala/devices/debug/DMI.scala
++++ b/src/main/scala/devices/debug/DMI.scala
+@@ -42,7 +42,6 @@ class DMIReq(addrBits : Int) extends Bundle {
+   val data = UInt(DMIConsts.dmiDataSize.W)
+   val op   = UInt(DMIConsts.dmiOpSize.W)
+ 
+-  override def cloneType = new DMIReq(addrBits).asInstanceOf[this.type]
+ }
+ 
+ /** Structure to define the contents of a Debug Bus Response
+diff --git a/src/main/scala/devices/debug/DebugTransport.scala b/src/main/scala/devices/debug/DebugTransport.scala
+index 02659b4f949..6461f87e32c 100644
+--- a/src/main/scala/devices/debug/DebugTransport.scala
++++ b/src/main/scala/devices/debug/DebugTransport.scala
+@@ -40,7 +40,6 @@ class DMIAccessUpdate(addrBits: Int) extends Bundle {
+   val data = UInt(DMIConsts.dmiDataSize.W)
+   val op = UInt(DMIConsts.dmiOpSize.W)
+ 
+-  override def cloneType = new DMIAccessUpdate(addrBits).asInstanceOf[this.type]
+ }
+ 
+ class DMIAccessCapture(addrBits: Int) extends Bundle {
+@@ -48,7 +47,6 @@ class DMIAccessCapture(addrBits: Int) extends Bundle {
+   val data = UInt(DMIConsts.dmiDataSize.W)
+   val resp = UInt(DMIConsts.dmiRespSize.W)
+ 
+-  override def cloneType = new DMIAccessCapture(addrBits).asInstanceOf[this.type]
+ 
+ }
+ 
+diff --git a/src/main/scala/jtag/JtagShifter.scala b/src/main/scala/jtag/JtagShifter.scala
+index fea94ab8213..701984583eb 100644
+--- a/src/main/scala/jtag/JtagShifter.scala
++++ b/src/main/scala/jtag/JtagShifter.scala
+@@ -36,7 +36,6 @@ trait ChainIO extends Bundle {
+ class Capture[+T <: Data](gen: T) extends Bundle {
+   val bits = Input(gen)  // data to capture, should be always valid
+   val capture = Output(Bool())  // will be high in capture state (single cycle), captured on following rising edge
+-  override def cloneType = Capture(gen).asInstanceOf[this.type]
+ }
+ 
+ object Capture {
+diff --git a/src/main/scala/jtag/JtagTap.scala b/src/main/scala/jtag/JtagTap.scala
+index ec5669c9779..c76fee8db16 100644
+--- a/src/main/scala/jtag/JtagTap.scala
++++ b/src/main/scala/jtag/JtagTap.scala
+@@ -16,7 +16,6 @@ class JTAGIO(hasTRSTn: Boolean = false) extends Bundle {
+   val TDI   = Output(Bool())
+   val TDO   = Input(new Tristate())
+ 
+-  override def cloneType = new JTAGIO(hasTRSTn).asInstanceOf[this.type]
+ }
+ 
+ /** JTAG block output signals.
+@@ -26,7 +25,6 @@ class JtagOutput(irLength: Int) extends Bundle {
+   val instruction = Output(UInt(irLength.W))  // current active instruction
+   val tapIsInTestLogicReset = Output(Bool())  // synchronously asserted in Test-Logic-Reset state, should NOT hold the FSM in reset
+ 
+-  override def cloneType = new JtagOutput(irLength).asInstanceOf[this.type]
+ }
+ 
+ class JtagControl extends Bundle {
+@@ -42,7 +40,6 @@ class JtagBlockIO(irLength: Int, hasIdcode:Boolean = true) extends Bundle {
+   val output = new JtagOutput(irLength)
+   val idcode = if (hasIdcode) Some(Input(new JTAGIdcodeBundle())) else None
+ 
+-  override def cloneType = new JtagBlockIO(irLength, hasIdcode).asInstanceOf[this.type]
+ }
+ 
+ /** Internal controller block IO with data shift outputs.
+@@ -51,7 +48,6 @@ class JtagControllerIO(irLength: Int) extends JtagBlockIO(irLength, false) {
+   val dataChainOut = Output(new ShifterIO)
+   val dataChainIn = Input(new ShifterIO)
+ 
+-  override def cloneType = new JtagControllerIO(irLength).asInstanceOf[this.type]
+ }
+ 
+ /** JTAG TAP controller internal block, responsible for instruction decode and data register chain
+diff --git a/src/main/scala/regmapper/RegisterCrossing.scala b/src/main/scala/regmapper/RegisterCrossing.scala
+index 67ee1211ca4..f98beb7e407 100644
+--- a/src/main/scala/regmapper/RegisterCrossing.scala
++++ b/src/main/scala/regmapper/RegisterCrossing.scala
+@@ -53,7 +53,6 @@ class RegisterWriteIO[T <: Data](gen: T) extends Bundle {
+   val request  = Decoupled(gen).flip
+   val response = Irrevocable(Bool()) // ignore .bits
+ 
+-  override def cloneType = new RegisterWriteIO(gen).asInstanceOf[this.type]
+ }
+ 
+ // To turn off=>on a domain:
+@@ -129,7 +128,6 @@ class RegisterReadIO[T <: Data](gen: T) extends Bundle {
+   val request  = Decoupled(Bool()).flip // ignore .bits
+   val response = Irrevocable(gen)
+ 
+-  override def cloneType = new RegisterReadIO(gen).asInstanceOf[this.type]
+ }
+ 
+ class RegisterReadCrossingIO[T <: Data](gen: T) extends Bundle {
+diff --git a/src/main/scala/rocket/ICache.scala b/src/main/scala/rocket/ICache.scala
+index ce30bc3c145..dfc226c3013 100644
+--- a/src/main/scala/rocket/ICache.scala
++++ b/src/main/scala/rocket/ICache.scala
+@@ -104,7 +104,6 @@ class ICacheResp(outer: ICache) extends Bundle {
+   val replay = Bool()
+   val ae = Bool()
+ 
+-  override def cloneType = new ICacheResp(outer).asInstanceOf[this.type]
+ }
+ 
+ class ICachePerfEvents extends Bundle {
+diff --git a/src/main/scala/rocket/Multiplier.scala b/src/main/scala/rocket/Multiplier.scala
+index 8b6b4e85dd8..e7d70c477cf 100644
+--- a/src/main/scala/rocket/Multiplier.scala
++++ b/src/main/scala/rocket/Multiplier.scala
+@@ -15,13 +15,11 @@ class MultiplierReq(dataBits: Int, tagBits: Int) extends Bundle {
+   val in1 = Bits(dataBits.W)
+   val in2 = Bits(dataBits.W)
+   val tag = UInt(tagBits.W)
+-  override def cloneType = new MultiplierReq(dataBits, tagBits).asInstanceOf[this.type]
+ }
+ 
+ class MultiplierResp(dataBits: Int, tagBits: Int) extends Bundle {
+   val data = Bits(dataBits.W)
+   val tag = UInt(tagBits.W)
+-  override def cloneType = new MultiplierResp(dataBits, tagBits).asInstanceOf[this.type]
+ }
+ 
+ class MultiplierIO(val dataBits: Int, val tagBits: Int) extends Bundle {
+diff --git a/src/main/scala/rocket/NBDcache.scala b/src/main/scala/rocket/NBDcache.scala
+index d60bbccd5d2..e5cc4ba6092 100644
+--- a/src/main/scala/rocket/NBDcache.scala
++++ b/src/main/scala/rocket/NBDcache.scala
+@@ -48,7 +48,6 @@ class WritebackReq(params: TLBundleParameters)(implicit p: Parameters) extends L
+   val way_en = Bits(width = nWays)
+   val voluntary = Bool()
+ 
+-  override def cloneType = new WritebackReq(params)(p).asInstanceOf[this.type]
+ }
+ 
+ class IOMSHR(id: Int)(implicit edge: TLEdgeOut, p: Parameters) extends L1HellaCacheModule()(p) {
+diff --git a/src/main/scala/rocket/PTW.scala b/src/main/scala/rocket/PTW.scala
+index 115ef719c47..bbf7ed139d4 100644
+--- a/src/main/scala/rocket/PTW.scala
++++ b/src/main/scala/rocket/PTW.scala
+@@ -92,7 +92,6 @@ class L2TLBEntry(nSets: Int)(implicit p: Parameters) extends CoreBundle()(p)
+   val w = Bool()
+   val r = Bool()
+ 
+-  override def cloneType = new L2TLBEntry(nSets).asInstanceOf[this.type]
+ }
+ 
+ @chiselName
+diff --git a/src/main/scala/rocket/TLB.scala b/src/main/scala/rocket/TLB.scala
+index abb3aaaf738..6a7847577a3 100644
+--- a/src/main/scala/rocket/TLB.scala
++++ b/src/main/scala/rocket/TLB.scala
+@@ -32,7 +32,6 @@ class TLBReq(lgMaxSize: Int)(implicit p: Parameters) extends CoreBundle()(p) {
+   val size = UInt(width = log2Ceil(lgMaxSize + 1))
+   val cmd  = Bits(width = M_SZ)
+ 
+-  override def cloneType = new TLBReq(lgMaxSize).asInstanceOf[this.type]
+ }
+ 
+ class TLBExceptions extends Bundle {
+diff --git a/src/main/scala/tile/FPU.scala b/src/main/scala/tile/FPU.scala
+index 729180feb4d..83809b3922c 100644
+--- a/src/main/scala/tile/FPU.scala
++++ b/src/main/scala/tile/FPU.scala
+@@ -231,7 +231,6 @@ class FPInput(implicit p: Parameters) extends CoreBundle()(p) with HasFPUCtrlSig
+   val in2 = Bits(width = fLen+1)
+   val in3 = Bits(width = fLen+1)
+ 
+-  override def cloneType = new FPInput().asInstanceOf[this.type]
+ }
+ 
+ case class FType(exp: Int, sig: Int) {
+@@ -283,7 +282,6 @@ case class FType(exp: Int, sig: Int) {
+       val sign = Bool()
+       val exp = UInt(expWidth.W)
+       val sig = UInt((ieeeWidth-expWidth-1).W)
+-      override def cloneType = new IEEEBundle().asInstanceOf[this.type]
+     }
+     new IEEEBundle
+   }
+@@ -452,7 +450,6 @@ class FPToInt(implicit p: Parameters) extends FPUModule()(p) with ShouldBeRetime
+     val store = Bits(width = fLen)
+     val toint = Bits(width = xLen)
+     val exc = Bits(width = FPConstants.FLAGS_SZ)
+-    override def cloneType = new Output().asInstanceOf[this.type]
+   }
+   val io = new Bundle {
+     val in = Valid(new FPInput).flip
+@@ -903,7 +900,6 @@ class FPU(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
+     val typeTag = UInt(width = log2Up(floatTypes.size))
+     val cp = Bool()
+     val pipeid = UInt(width = log2Ceil(pipes.size))
+-    override def cloneType: this.type = new WBInfo().asInstanceOf[this.type]
+   }
+ 
+   val wen = Reg(init=Bits(0, maxLatency-1))
+diff --git a/src/main/scala/util/CreditedIO.scala b/src/main/scala/util/CreditedIO.scala
+index 19a5d2c1a67..5b9b77a0d96 100644
+--- a/src/main/scala/util/CreditedIO.scala
++++ b/src/main/scala/util/CreditedIO.scala
+@@ -37,7 +37,6 @@ case class CreditedDelay(debit: Int, credit: Int)
+   */
+ final class CreditedIO[T <: Data](gen: T) extends Bundle
+ {
+-  override def cloneType: this.type = new CreditedIO(genType).asInstanceOf[this.type]
+   def genType: T = gen
+ 
+   val credit = Input (Bool()) // 1: a credit is given to the sender by the receiver
+diff --git a/src/main/scala/util/HeterogeneousBag.scala b/src/main/scala/util/HeterogeneousBag.scala
+index 2a0ae72dbbf..339b24ce09a 100644
+--- a/src/main/scala/util/HeterogeneousBag.scala
++++ b/src/main/scala/util/HeterogeneousBag.scala
+@@ -12,7 +12,6 @@ final case class HeterogeneousBag[T <: Data](elts: Seq[T]) extends Record with c
+ 
+   val elements = ListMap(elts.zipWithIndex.map { case (n,i) => (i.toString, n) }:_*)
+   override def cloneType: this.type = (new HeterogeneousBag(elts.map(_.chiselCloneType))).asInstanceOf[this.type]
+-
+   // IndexedSeq has its own hashCode/equals that we must not use
+   override def hashCode: Int = super[Record].hashCode
+   override def equals(that: Any): Boolean = super[Record].equals(that)
+diff --git a/src/main/scala/util/RationalCrossing.scala b/src/main/scala/util/RationalCrossing.scala
+index 48ecbf03a70..7d89ef967e8 100644
+--- a/src/main/scala/util/RationalCrossing.scala
++++ b/src/main/scala/util/RationalCrossing.scala
+@@ -57,7 +57,6 @@ final class RationalIO[T <: Data](gen: T) extends Bundle
+   val ready  = Input(Bool())
+   val sink   = Input(UInt(2.W))
+ 
+-  override def cloneType: this.type = new RationalIO(gen).asInstanceOf[this.type]
+ }
+ 
+ object RationalIO
+diff --git a/src/main/scala/util/ReadyValidCancel.scala b/src/main/scala/util/ReadyValidCancel.scala
+index 13ca6502fe4..231cae0f0a6 100644
+--- a/src/main/scala/util/ReadyValidCancel.scala
++++ b/src/main/scala/util/ReadyValidCancel.scala
+@@ -19,7 +19,6 @@ class ValidCancel[+T <: Data](gen: T) extends Bundle {
+   val lateCancel = Output(Bool())
+   val bits       = Output(gen)
+   def validQual(): Bool = earlyValid && !lateCancel
+-  override def cloneType: this.type = ValidCancel(gen).asInstanceOf[this.type]
+ 
+   /** Down-converts a ValidCancel output to a Valid bundle, dropping early/late timing split. */
+   def andNotCancel(): Valid[T] = {
+@@ -48,7 +47,6 @@ class ReadyValidCancel[+T <: Data](gen: T) extends ValidCancel(gen)
+   val ready = Input(Bool())
+   def mightFire(): Bool = ready && earlyValid
+   def fire():      Bool = ready && validQual()
+-  override def cloneType: this.type = ReadyValidCancel(gen).asInstanceOf[this.type]
+ 
+   /** Down-converts a ReadyValidCancel output to a DecoupledIO bundle, dropping early/late timing split. */
+   def asDecoupled(): DecoupledIO[T] = {
+diff --git a/src/main/scala/util/ReorderQueue.scala b/src/main/scala/util/ReorderQueue.scala
+index f40c95b9501..bcda4043f25 100644
+--- a/src/main/scala/util/ReorderQueue.scala
++++ b/src/main/scala/util/ReorderQueue.scala
+@@ -9,15 +9,11 @@ class ReorderQueueWrite[T <: Data](dType: T, tagWidth: Int) extends Bundle {
+   val data = dType.cloneType
+   val tag = UInt(width = tagWidth)
+ 
+-  override def cloneType =
+-    new ReorderQueueWrite(dType, tagWidth).asInstanceOf[this.type]
+ }
+ 
+ class ReorderEnqueueIO[T <: Data](dType: T, tagWidth: Int)
+   extends DecoupledIO(new ReorderQueueWrite(dType, tagWidth)) {
+ 
+-  override def cloneType =
+-    new ReorderEnqueueIO(dType, tagWidth).asInstanceOf[this.type]
+ }
+ 
+ class ReorderDequeueIO[T <: Data](dType: T, tagWidth: Int) extends Bundle {
+@@ -26,8 +22,6 @@ class ReorderDequeueIO[T <: Data](dType: T, tagWidth: Int) extends Bundle {
+   val data = dType.cloneType.asOutput
+   val matches = Bool(OUTPUT)
+ 
+-  override def cloneType =
+-    new ReorderDequeueIO(dType, tagWidth).asInstanceOf[this.type]
+ }
+ 
+ class ReorderQueue[T <: Data](dType: T, tagWidth: Int, size: Option[Int] = None)

@@ -1,0 +1,78 @@
+From 95adc9a8cae268b4c22252d81992c724fc8f8db9 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 20:06:05 +0800
+Subject: [PATCH] remove property
+
+---
+ .../main/scala/midas/passes/AutoCounterTransform.scala    | 6 +++---
+ sim/src/main/scala/midasexamples/AutoCounterModule.scala  | 8 ++++----
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/sim/midas/src/main/scala/midas/passes/AutoCounterTransform.scala b/sim/midas/src/main/scala/midas/passes/AutoCounterTransform.scala
+index 898830f93..fe7037dd0 100644
+--- a/sim/midas/src/main/scala/midas/passes/AutoCounterTransform.scala
++++ b/sim/midas/src/main/scala/midas/passes/AutoCounterTransform.scala
+@@ -10,7 +10,7 @@ import firrtl.Utils.{throwInternalError, BoolType, one, zero}
+ import firrtl.annotations._
+ import firrtl.analyses.InstanceGraph
+ import firrtl.transforms.TopWiring._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import freechips.rocketchip.util.WideCounter
+ import freechips.rocketchip.config.{Parameters, Field}
+ import midas.{EnableAutoCounter, AutoCounterUsePrintfImpl}
+@@ -22,12 +22,12 @@ import java.io._
+ import scala.io.Source
+ import collection.mutable
+ 
+-class FireSimPropertyLibrary extends BasePropertyLibrary {
++class FireSimPropertyLibrary extends property.BasePropertyLibrary {
+   import chisel3._
+   import chisel3.experimental.DataMirror.internal.isSynthesizable
+   import chisel3.internal.sourceinfo.{SourceInfo}
+   import chisel3.experimental.{annotate,ChiselAnnotation}
+-  def generateProperty(prop_param: BasePropertyParameters)(implicit sourceInfo: SourceInfo) {
++  def generateProperty(prop_param: property.BasePropertyParameters)(implicit sourceInfo: SourceInfo) {
+     //requireIsHardware(prop_param.cond, "condition covered for counter is not hardware!")
+     if (!(prop_param.cond.isLit) && chisel3.experimental.DataMirror.internal.isSynthesizable(prop_param.cond)) {
+       annotate(new ChiselAnnotation {
+diff --git a/sim/src/main/scala/midasexamples/AutoCounterModule.scala b/sim/src/main/scala/midasexamples/AutoCounterModule.scala
+index edfc76cc8..518d99de8 100644
+--- a/sim/src/main/scala/midasexamples/AutoCounterModule.scala
++++ b/sim/src/main/scala/midasexamples/AutoCounterModule.scala
+@@ -6,7 +6,7 @@ import chisel3._
+ import freechips.rocketchip.config.Parameters
+ 
+ import midas.targetutils.{PerfCounter, AutoCounterCoverModuleAnnotation}
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ /**
+   * Demonstrates how to instantiate autocounters, and validates those
+@@ -84,7 +84,7 @@ class AutoCounterModuleChild extends Module {
+   io.oddlfsr := odd_lfsr
+ }
+ 
+-/** Demonstrate explicit instrumentation of AutoCounters via PerfCounter 
++/** Demonstrate explicit instrumentation of AutoCounters via PerfCounter
+  *
+  * Toplevel Chisel class suitable for use as a GoldenGate 'target' as described by the docs
+  *
+@@ -96,7 +96,7 @@ class AutoCounterModuleChild extends Module {
+ class AutoCounterModule(implicit p: Parameters) extends PeekPokeMidasExampleHarness(() => new AutoCounterModuleDUT)
+ 
+ class AutoCounterCoverModuleDUT extends Module {
+-  cover.setPropLib(new midas.passes.FireSimPropertyLibrary())
++  property.cover.setPropLib(new midas.passes.FireSimPropertyLibrary())
+   val io = IO(new Bundle {
+     val a = Input(Bool())
+   })
+@@ -109,7 +109,7 @@ class AutoCounterCoverModuleDUT extends Module {
+   cycle := cycle + 1.U
+   val cycle8 = ~cycle(2) & ~cycle(1) & ~cycle(0)
+ 
+-  cover(cycle8 , "CYCLES_DIV_8", "Count the number of times the cycle count is divisible by 8. Should be equal to number of cycles divided by 8")
++  property.cover(cycle8 , "CYCLES_DIV_8", "Count the number of times the cycle count is divisible by 8. Should be equal to number of cycles divided by 8")
+ 
+   chisel3.experimental.annotate(AutoCounterCoverModuleAnnotation("AutoCounterCoverModuleDUT"))
+ 

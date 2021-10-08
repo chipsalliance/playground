@@ -1,0 +1,802 @@
+From 63c40fe756c8b79ed03878d9eea7606ea5bce404 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Kevin=20L=C3=A4ufer?= <laeufer@cs.berkeley.edu>
+Date: Mon, 27 Sep 2021 15:05:43 -0700
+Subject: [PATCH 1/2] cover: prefix with `property.` to avoid clashes with
+ `chisel3.cover`
+
+---
+ .../scala/devices/debug/DebugTransport.scala  | 14 ++++----
+ src/main/scala/devices/debug/SBA.scala        | 36 +++++++++----------
+ src/main/scala/jtag/JtagShifter.scala         | 10 +++---
+ src/main/scala/jtag/JtagStateMachine.scala    | 12 +++----
+ src/main/scala/rocket/PMP.scala               | 11 +++---
+ src/main/scala/tilelink/SRAM.scala            |  2 +-
+ 6 files changed, 42 insertions(+), 43 deletions(-)
+
+diff --git a/src/main/scala/devices/debug/DebugTransport.scala b/src/main/scala/devices/debug/DebugTransport.scala
+index 02659b4f949..cb60f8a4a29 100644
+--- a/src/main/scala/devices/debug/DebugTransport.scala
++++ b/src/main/scala/devices/debug/DebugTransport.scala
+@@ -7,7 +7,7 @@ import chisel3.util._
+ 
+ import freechips.rocketchip.config._
+ import freechips.rocketchip.jtag._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ 
+ case class JtagDTMConfig (
+@@ -178,8 +178,8 @@ class DebugTransportModuleJTAG(debugAddrBits: Int, c: JtagDTMConfig)
+   // so that we don't consider junk in the FIFO to be an error response.
+   // The current specification says that any non-zero response is an error.
+   nonzeroResp := stickyNonzeroRespReg | (io.dmi.resp.valid & (io.dmi.resp.bits.resp =/= 0.U))
+-  cover(!nonzeroResp, "Should see a non-zero response (e.g. when accessing most DM registers when dmactive=0)")
+-  cover(!stickyNonzeroRespReg, "Should see a sticky non-zero response (e.g. when accessing most DM registers when dmactive=0)")
++  property.cover(!nonzeroResp, "Should see a non-zero response (e.g. when accessing most DM registers when dmactive=0)")
++  property.cover(!stickyNonzeroRespReg, "Should see a sticky non-zero response (e.g. when accessing most DM registers when dmactive=0)")
+ 
+   busyResp.addr  := 0.U
+   busyResp.resp  := ~(0.U(DMIConsts.dmiRespSize.W)) // Generalizing busy to 'all-F'
+@@ -231,14 +231,14 @@ class DebugTransportModuleJTAG(debugAddrBits: Int, c: JtagDTMConfig)
+       dmiAccessChain.io.capture.capture & !busy)
+ 
+   // incorrect operation - not enough time was spent in JTAG Idle state after DMI Write
+-  cover(dmiReqReg.op === DMIConsts.dmi_OP_WRITE & dmiAccessChain.io.capture.capture & busy, "Not enough Idle after DMI Write");
++  property.cover(dmiReqReg.op === DMIConsts.dmi_OP_WRITE & dmiAccessChain.io.capture.capture & busy, "Not enough Idle after DMI Write");
+   // correct operation - enough time was spent in JTAG Idle state after DMI Write
+-  cover(dmiReqReg.op === DMIConsts.dmi_OP_WRITE & dmiAccessChain.io.capture.capture & !busy, "Enough Idle after DMI Write");
++  property.cover(dmiReqReg.op === DMIConsts.dmi_OP_WRITE & dmiAccessChain.io.capture.capture & !busy, "Enough Idle after DMI Write");
+ 
+   // incorrect operation - not enough time was spent in JTAG Idle state after DMI Read
+-  cover(dmiReqReg.op === DMIConsts.dmi_OP_READ & dmiAccessChain.io.capture.capture & busy, "Not enough Idle after DMI Read");
++  property.cover(dmiReqReg.op === DMIConsts.dmi_OP_READ & dmiAccessChain.io.capture.capture & busy, "Not enough Idle after DMI Read");
+   // correct operation - enough time was spent in JTAG Idle state after DMI Read
+-  cover(dmiReqReg.op === DMIConsts.dmi_OP_READ & dmiAccessChain.io.capture.capture & !busy, "Enough Idle after DMI Read");
++  property.cover(dmiReqReg.op === DMIConsts.dmi_OP_READ & dmiAccessChain.io.capture.capture & !busy, "Enough Idle after DMI Read");
+ 
+   io.dmi.req.valid := dmiReqValidReg
+ 
+diff --git a/src/main/scala/devices/debug/SBA.scala b/src/main/scala/devices/debug/SBA.scala
+index 623bacbb1d1..33a393b01d9 100644
+--- a/src/main/scala/devices/debug/SBA.scala
++++ b/src/main/scala/devices/debug/SBA.scala
+@@ -9,7 +9,7 @@ import freechips.rocketchip.config._
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.regmapper._
+ import freechips.rocketchip.tilelink._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import freechips.rocketchip.devices.debug._
+ 
+ object SystemBusAccessState extends scala.Enumeration {
+@@ -240,19 +240,19 @@ object SystemBusAccessModule
+       SBCSRdData := 0.U.asTypeOf(new SBCSFields())
+     }
+ 
+-    cover(SBCSFieldsReg.sbbusyerror,    "SBCS Cover", "sberror set")
+-    cover(SBCSFieldsReg.sbbusy === 3.U, "SBCS Cover", "sbbusyerror alignment error")
++    property.cover(SBCSFieldsReg.sbbusyerror,    "SBCS Cover", "sberror set")
++    property.cover(SBCSFieldsReg.sbbusy === 3.U, "SBCS Cover", "sbbusyerror alignment error")
+ 
+-    cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 0.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "8-bit access")
+-    cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 1.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "16-bit access")
+-    cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 2.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "32-bit access")
+-    cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 3.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "64-bit access")
+-    cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 4.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "128-bit access")
++    property.cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 0.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "8-bit access")
++    property.cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 1.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "16-bit access")
++    property.cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 2.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "32-bit access")
++    property.cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 3.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "64-bit access")
++    property.cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess === 4.U && !sbAccessError && !sbAlignmentError, "SBCS Cover", "128-bit access")
+ 
+-    cover(SBCSFieldsReg.sbautoincrement && SBCSFieldsReg.sbbusy,  "SBCS Cover", "Access with autoincrement set")
+-    cover(!SBCSFieldsReg.sbautoincrement && SBCSFieldsReg.sbbusy, "SBCS Cover", "Access without autoincrement set")
++    property.cover(SBCSFieldsReg.sbautoincrement && SBCSFieldsReg.sbbusy,  "SBCS Cover", "Access with autoincrement set")
++    property.cover(!SBCSFieldsReg.sbautoincrement && SBCSFieldsReg.sbbusy, "SBCS Cover", "Access without autoincrement set")
+ 
+-    cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess > 4.U, "SBCS Cover", "Invalid sbaccess value")
++    property.cover((sb2tl.module.io.wrEn || sb2tl.module.io.rdEn) && SBCSFieldsReg.sbaccess > 4.U, "SBCS Cover", "Invalid sbaccess value")
+ 
+     (sbcsfields, sbaddrfields, sbdatafields)
+   }
+@@ -372,14 +372,14 @@ class SBToTL(implicit p: Parameters) extends LazyModule {
+             sbState === SBReadResponse.id.U ||          
+             sbState === SBWriteResponse.id.U, "SBA state machine in undefined state")
+ 
+-    cover (sbState === Idle.id.U,            "SBA State Cover", "SBA Access Idle")
+-    cover (sbState === SBReadRequest.id.U,   "SBA State Cover", "SBA Access Read Req")
+-    cover (sbState === SBWriteRequest.id.U,  "SBA State Cover", "SBA Access Write Req")
+-    cover (sbState === SBReadResponse.id.U,  "SBA State Cover", "SBA Access Read Resp")
+-    cover (sbState === SBWriteResponse.id.U, "SBA State Cover", "SBA Access Write Resp")
++    property.cover (sbState === Idle.id.U,            "SBA State Cover", "SBA Access Idle")
++    property.cover (sbState === SBReadRequest.id.U,   "SBA State Cover", "SBA Access Read Req")
++    property.cover (sbState === SBWriteRequest.id.U,  "SBA State Cover", "SBA Access Write Req")
++    property.cover (sbState === SBReadResponse.id.U,  "SBA State Cover", "SBA Access Read Resp")
++    property.cover (sbState === SBWriteResponse.id.U, "SBA State Cover", "SBA Access Write Resp")
+ 
+-    cover (io.rdEn && !io.rdLegal, "SB Legality Cover", "SBA Rd Address Illegal")
+-    cover (io.wrEn && !io.wrLegal, "SB Legality Cover", "SBA Wr Address Illegal")
++    property.cover (io.rdEn && !io.rdLegal, "SB Legality Cover", "SBA Rd Address Illegal")
++    property.cover (io.wrEn && !io.wrLegal, "SB Legality Cover", "SBA Wr Address Illegal")
+  
+   }
+ }
+diff --git a/src/main/scala/jtag/JtagShifter.scala b/src/main/scala/jtag/JtagShifter.scala
+index fea94ab8213..16b075332b7 100644
+--- a/src/main/scala/jtag/JtagShifter.scala
++++ b/src/main/scala/jtag/JtagShifter.scala
+@@ -8,7 +8,7 @@ import chisel3.internal.firrtl.KnownWidth
+ import chisel3.util.{Cat, Valid}
+ 
+ import freechips.rocketchip.config.Parameters
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ /** Base JTAG shifter IO, viewed from input to shift register chain.
+   * Can be chained together.
+@@ -63,7 +63,7 @@ class JtagBypassChain(implicit val p: Parameters) extends Chain {
+ 
+   io.chainOut.data := reg
+ 
+-  cover(io.chainIn.capture, "bypass_chain_capture", "JTAG; bypass_chain_capture; This Bypass Chain captured data")
++  property.cover(io.chainIn.capture, "bypass_chain_capture", "JTAG; bypass_chain_capture; This Bypass Chain captured data")
+ 
+   when (io.chainIn.capture) {
+     reg := false.B  // 10.1.1b capture logic 0 on TCK rising
+@@ -103,7 +103,7 @@ class CaptureChain[+T <: Data](gen: T)(implicit val p: Parameters) extends Chain
+ 
+   io.chainOut.data := regs(0)
+ 
+-  cover(io.chainIn.capture, "chain_capture", "JTAG; chain_capture; This Chain captured data")
++  property.cover(io.chainIn.capture, "chain_capture", "JTAG; chain_capture; This Chain captured data")
+   
+   when (io.chainIn.capture) {
+     (0 until n) map (x => regs(x) := io.capture.bits.asUInt()(x))
+@@ -161,8 +161,8 @@ class CaptureUpdateChain[+T <: Data, +V <: Data](genCapture: T, genUpdate: V)(im
+ 
+   val captureBits = io.capture.bits.asUInt()
+ 
+-  cover(io.chainIn.capture, "chain_capture", "JTAG;chain_capture; This Chain captured data")
+-  cover(io.chainIn.capture, "chain_update",  "JTAG;chain_update; This Chain updated data")
++  property.cover(io.chainIn.capture, "chain_capture", "JTAG;chain_capture; This Chain captured data")
++  property.cover(io.chainIn.capture, "chain_update",  "JTAG;chain_update; This Chain updated data")
+ 
+   when (io.chainIn.capture) {
+     (0 until math.min(n, captureWidth)) map (x => regs(x) := captureBits(x))
+diff --git a/src/main/scala/jtag/JtagStateMachine.scala b/src/main/scala/jtag/JtagStateMachine.scala
+index 62ba48dccd0..443019ff802 100644
+--- a/src/main/scala/jtag/JtagStateMachine.scala
++++ b/src/main/scala/jtag/JtagStateMachine.scala
+@@ -4,8 +4,8 @@ package freechips.rocketchip.jtag
+ 
+ import chisel3._
+ import chisel3.util._
+-import freechips.rocketchip.config.{Parameters}
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.config.Parameters
++import freechips.rocketchip.util.property
+ 
+ object JtagState {
+   sealed abstract class State(val id: Int) {
+@@ -131,10 +131,10 @@ class JtagStateMachine(implicit val p: Parameters) extends Module() {
+   io.currState := currState
+ 
+   // Generate Coverate Points
+-  JtagState.State.all.foreach { s => 
+-    cover (currState === s.U && io.tms === true.B,  s"${s.toString}_tms_1", s"JTAG; ${s.toString} with TMS = 1; State Transition from ${s.toString} with TMS = 1")
+-    cover (currState === s.U && io.tms === false.B, s"${s.toString}_tms_0", s"JTAG; ${s.toString} with TMS = 0; State Transition from ${s.toString} with TMS = 0")
+-   cover (currState === s.U && reset.asBool === true.B, s"${s.toString}_reset", s"JTAG; ${s.toString} with reset; JTAG Reset asserted during ${s.toString}")
++  JtagState.State.all.foreach { s =>
++    property.cover (currState === s.U && io.tms === true.B,  s"${s.toString}_tms_1", s"JTAG; ${s.toString} with TMS = 1; State Transition from ${s.toString} with TMS = 1")
++    property.cover (currState === s.U && io.tms === false.B, s"${s.toString}_tms_0", s"JTAG; ${s.toString} with TMS = 0; State Transition from ${s.toString} with TMS = 0")
++    property.cover (currState === s.U && reset.asBool === true.B, s"${s.toString}_reset", s"JTAG; ${s.toString} with reset; JTAG Reset asserted during ${s.toString}")
+  
+   }
+ 
+diff --git a/src/main/scala/rocket/PMP.scala b/src/main/scala/rocket/PMP.scala
+index d9511112267..c16cee9a955 100644
+--- a/src/main/scala/rocket/PMP.scala
++++ b/src/main/scala/rocket/PMP.scala
+@@ -8,7 +8,6 @@ import Chisel.ImplicitConversions._
+ import freechips.rocketchip.config._
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
+ 
+ class PMPConfig extends Bundle {
+   val l = Bool()
+@@ -166,17 +165,17 @@ class PMPChecker(lgMaxSize: Int)(implicit val p: Parameters) extends Module
+     val aligned = pmp.aligned(io.addr, io.size, lgMaxSize, prevPMP)
+ 
+     for ((name, idx) <- Seq("no", "TOR", if (pmpGranularity <= 4) "NA4" else "", "NAPOT").zipWithIndex; if name.nonEmpty)
+-        cover(pmp.cfg.a === idx, s"The cfg access is set to ${name} access ", "Cover PMP access mode setting")
++      property.cover(pmp.cfg.a === idx, s"The cfg access is set to ${name} access ", "Cover PMP access mode setting")
+ 
+-    cover(pmp.cfg.l === 0x1, s"The cfg lock is set to high ", "Cover PMP lock mode setting")
++    property.cover(pmp.cfg.l === 0x1, s"The cfg lock is set to high ", "Cover PMP lock mode setting")
+    
+     // Not including Write and no Read permission as the combination is reserved
+     for ((name, idx) <- Seq("no", "RO", "", "RW", "X", "RX", "", "RWX").zipWithIndex; if name.nonEmpty)
+-      cover((Cat(pmp.cfg.x, pmp.cfg.w, pmp.cfg.r) === idx), s"The permission is set to ${name} access ", "Cover PMP access permission setting") 
++      property.cover((Cat(pmp.cfg.x, pmp.cfg.w, pmp.cfg.r) === idx), s"The permission is set to ${name} access ", "Cover PMP access permission setting")
+ 
+     for ((name, idx) <- Seq("", "TOR", if (pmpGranularity <= 4) "NA4" else "", "NAPOT").zipWithIndex; if name.nonEmpty) {
+-        cover(!ignore && hit && aligned && pmp.cfg.a === idx, s"The access matches ${name} mode ", "Cover PMP access")
+-        cover(pmp.cfg.l && hit && aligned && pmp.cfg.a === idx, s"The access matches ${name} mode with lock bit high", "Cover PMP access with lock bit")
++      property.cover(!ignore && hit && aligned && pmp.cfg.a === idx, s"The access matches ${name} mode ", "Cover PMP access")
++      property.cover(pmp.cfg.l && hit && aligned && pmp.cfg.a === idx, s"The access matches ${name} mode with lock bit high", "Cover PMP access with lock bit")
+     }
+ 
+     val cur = WireInit(pmp)
+diff --git a/src/main/scala/tilelink/SRAM.scala b/src/main/scala/tilelink/SRAM.scala
+index 5ccf1bc5818..61229b897ff 100644
+--- a/src/main/scala/tilelink/SRAM.scala
++++ b/src/main/scala/tilelink/SRAM.scala
+@@ -222,7 +222,7 @@ class TLRAM(
+       CoverBoolean(d_error && in.d.bits.corrupt, Seq("data_uncorrectable_error_reported")))
+ 
+     val error_cross_covers = new CrossProperty(Seq(mem_active_valid, data_error), Seq(), "Ecc Covers")
+-    cover(error_cross_covers)
++    property.cover(error_cross_covers)
+ 
+     // Does the D stage want to perform a write?
+     // It's important this reduce to false.B when eccBytes=1 && atomics=false && canCorrect=false
+
+From 9fc9b740fe9f5ec45fe7f287d96bc60960c8e6d7 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 20:00:52 +0800
+Subject: [PATCH 2/2] remove property
+
+---
+ src/main/scala/devices/tilelink/Plic.scala  | 10 +++---
+ src/main/scala/regmapper/RegMapper.scala    | 10 +++---
+ src/main/scala/rocket/CSR.scala             | 14 ++++----
+ src/main/scala/rocket/DCache.scala          | 40 ++++++++++-----------
+ src/main/scala/rocket/Events.scala          |  4 +--
+ src/main/scala/rocket/Frontend.scala        |  4 +--
+ src/main/scala/rocket/ICache.scala          | 28 +++++++--------
+ src/main/scala/rocket/PTW.scala             |  4 +--
+ src/main/scala/rocket/RocketCore.scala      |  4 +--
+ src/main/scala/rocket/TLB.scala             |  4 +--
+ src/main/scala/tile/BusErrorUnit.scala      |  4 +--
+ src/main/scala/tile/FPU.scala               |  4 +--
+ src/main/scala/tilelink/AsyncCrossing.scala | 22 ++++++------
+ src/main/scala/tilelink/FIFOFixer.scala     | 14 ++++----
+ src/main/scala/tilelink/SRAM.scala          | 12 +++----
+ 15 files changed, 89 insertions(+), 89 deletions(-)
+
+diff --git a/src/main/scala/devices/tilelink/Plic.scala b/src/main/scala/devices/tilelink/Plic.scala
+index 5b3950bc45e..91daa36270f 100644
+--- a/src/main/scala/devices/tilelink/Plic.scala
++++ b/src/main/scala/devices/tilelink/Plic.scala
+@@ -12,7 +12,7 @@ import freechips.rocketchip.regmapper._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.interrupts._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import freechips.rocketchip.prci.{ClockSinkDomain}
+ import chisel3.internal.sourceinfo.SourceInfo
+ import freechips.rocketchip.diplomaticobjectmodel.model._
+@@ -311,13 +311,13 @@ class TLPLIC(params: PLICParams, beatBytes: Int)(implicit p: Parameters) extends
+     if (nDevices >= 2) {
+       val claimed = claimer(0) && maxDevs(0) > 0
+       val completed = completer(0)
+-      cover(claimed && RegEnable(claimed, false.B, claimed || completed), "TWO_CLAIMS", "two claims with no intervening complete")
+-      cover(completed && RegEnable(completed, false.B, claimed || completed), "TWO_COMPLETES", "two completes with no intervening claim")
++      property.cover(claimed && RegEnable(claimed, false.B, claimed || completed), "TWO_CLAIMS", "two claims with no intervening complete")
++      property.cover(completed && RegEnable(completed, false.B, claimed || completed), "TWO_COMPLETES", "two completes with no intervening claim")
+ 
+       val ep = enables(0).asUInt & pending.asUInt
+       val ep2 = RegNext(ep)
+       val diff = ep & ~ep2
+-      cover((diff & (diff - 1)) =/= 0, "TWO_INTS_PENDING", "two enabled interrupts became pending on same cycle")
++      property.cover((diff & (diff - 1)) =/= 0, "TWO_INTS_PENDING", "two enabled interrupts became pending on same cycle")
+ 
+       if (nPriorities > 0)
+         ccover(maxDevs(0) > (UInt(1) << priority(0).getWidth) && maxDevs(0) <= Cat(UInt(1), threshold(0)),
+@@ -325,7 +325,7 @@ class TLPLIC(params: PLICParams, beatBytes: Int)(implicit p: Parameters) extends
+     }
+ 
+     def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+-      cover(cond, s"PLIC_$label", "Interrupts;;" + desc)
++      property.cover(cond, s"PLIC_$label", "Interrupts;;" + desc)
+   }
+ }
+ 
+diff --git a/src/main/scala/regmapper/RegMapper.scala b/src/main/scala/regmapper/RegMapper.scala
+index 23520e7957e..ac3019696c2 100644
+--- a/src/main/scala/regmapper/RegMapper.scala
++++ b/src/main/scala/regmapper/RegMapper.scala
+@@ -6,7 +6,7 @@ import Chisel._
+ 
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import chisel3.internal.sourceinfo.SourceInfo
+ 
+ // A bus agnostic register interface to a register-based device
+@@ -154,12 +154,12 @@ object RegMapper
+ 
+       val facct = field.desc.map{_.access}.getOrElse("")
+       if((facct == RegFieldAccessType.R) || (facct == RegFieldAccessType.RW)) {
+-        cover(f_rivalid && f_riready, fname + "_Reg_read_start",  fdesc + " RegField Read Request Initiate")
+-        cover(f_rovalid && f_roready, fname + "_Reg_read_out",    fdesc + " RegField Read Request Complete")
++        property.cover(f_rivalid && f_riready, fname + "_Reg_read_start",  fdesc + " RegField Read Request Initiate")
++        property.cover(f_rovalid && f_roready, fname + "_Reg_read_out",    fdesc + " RegField Read Request Complete")
+       }
+       if((facct == RegFieldAccessType.W) || (facct == RegFieldAccessType.RW)) {
+-        cover(f_wivalid && f_wiready, fname + "_Reg_write_start", fdesc + " RegField Write Request Initiate")
+-        cover(f_wovalid && f_woready, fname + "_Reg_write_out",   fdesc + " RegField Write Request Complete")
++        property.cover(f_wivalid && f_wiready, fname + "_Reg_write_start", fdesc + " RegField Write Request Initiate")
++        property.cover(f_wovalid && f_woready, fname + "_Reg_write_out",   fdesc + " RegField Write Request Complete")
+       }
+ 
+       def litOR(x: Bool, y: Bool) = if (x.isLit && x.litValue == 1) Bool(true) else x || y
+diff --git a/src/main/scala/rocket/CSR.scala b/src/main/scala/rocket/CSR.scala
+index 609e828f106..00438aa2b21 100644
+--- a/src/main/scala/rocket/CSR.scala
++++ b/src/main/scala/rocket/CSR.scala
+@@ -10,7 +10,7 @@ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.devices.debug.DebugModuleKey
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import scala.collection.mutable.LinkedHashMap
+ import Instructions._
+ 
+@@ -793,8 +793,8 @@ class CSRFile(
+   for (i <- 0 until supported_interrupts.getWidth) {
+     val en = exception && (supported_interrupts & (BigInt(1) << i).U) =/= 0 && cause === (BigInt(1) << (xLen - 1)).U + i
+     val delegable = (delegable_interrupts & (BigInt(1) << i).U) =/= 0
+-    cover(en && !delegate, s"INTERRUPT_M_$i")
+-    cover(en && delegable && delegate, s"INTERRUPT_S_$i")
++    property.cover(en && !delegate, s"INTERRUPT_M_$i")
++    property.cover(en && delegable && delegate, s"INTERRUPT_S_$i")
+   }
+   for (i <- 0 until xLen) {
+     val supported_exceptions: BigInt = 0x8fe |
+@@ -805,8 +805,8 @@ class CSRFile(
+     if (((supported_exceptions >> i) & 1) != 0) {
+       val en = exception && cause === i
+       val delegable = (delegable_exceptions & (BigInt(1) << i).U) =/= 0
+-      cover(en && !delegate, s"EXCEPTION_M_$i")
+-      cover(en && delegable && delegate, s"EXCEPTION_S_$i")
++      property.cover(en && !delegate, s"EXCEPTION_M_$i")
++      property.cover(en && delegable && delegate, s"EXCEPTION_S_$i")
+     }
+   }
+ 
+@@ -860,9 +860,9 @@ class CSRFile(
+   }
+   coverable_counters.foreach( {case (k, v) => {
+     when (!k(11,10).andR) {  // Cover points for RW CSR registers
+-      cover(io.rw.cmd.isOneOf(CSR.W, CSR.S, CSR.C) && io.rw.addr===k, "CSR_access_"+k.toString, "Cover Accessing Core CSR field")
++      property.cover(io.rw.cmd.isOneOf(CSR.W, CSR.S, CSR.C) && io.rw.addr===k, "CSR_access_"+k.toString, "Cover Accessing Core CSR field")
+     } .otherwise { // Cover points for RO CSR registers
+-      cover(io.rw.cmd===CSR.R && io.rw.addr===k, "CSR_access_"+k.toString, "Cover Accessing Core CSR field")
++      property.cover(io.rw.cmd===CSR.R && io.rw.addr===k, "CSR_access_"+k.toString, "Cover Accessing Core CSR field")
+     }
+   }})
+ 
+diff --git a/src/main/scala/rocket/DCache.scala b/src/main/scala/rocket/DCache.scala
+index a70b7aab5dc..52b0b91527d 100644
+--- a/src/main/scala/rocket/DCache.scala
++++ b/src/main/scala/rocket/DCache.scala
+@@ -11,7 +11,7 @@ import freechips.rocketchip.diplomaticobjectmodel.model.OMSRAM
+ import freechips.rocketchip.tile.{CoreBundle, LookupByHartId}
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import chisel3.{DontCare, WireInit, dontTouch, withClock}
+ import chisel3.experimental.{chiselName, NoChiselNamePrefix}
+ import chisel3.internal.sourceinfo.SourceInfo
+@@ -1103,38 +1103,38 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+ 
+   if (usingDataScratchpad) {
+     val data_error_cover = Seq(
+-      CoverBoolean(!data_error, Seq("no_data_error")),
+-      CoverBoolean(data_error && !data_error_uncorrectable, Seq("data_correctable_error")),
+-      CoverBoolean(data_error && data_error_uncorrectable, Seq("data_uncorrectable_error")))
++      property.CoverBoolean(!data_error, Seq("no_data_error")),
++      property.CoverBoolean(data_error && !data_error_uncorrectable, Seq("data_correctable_error")),
++      property.CoverBoolean(data_error && data_error_uncorrectable, Seq("data_uncorrectable_error")))
+     val request_source = Seq(
+-      CoverBoolean(s2_isSlavePortAccess, Seq("from_TL")),
+-      CoverBoolean(!s2_isSlavePortAccess, Seq("from_CPU")))
++      property.CoverBoolean(s2_isSlavePortAccess, Seq("from_TL")),
++      property.CoverBoolean(!s2_isSlavePortAccess, Seq("from_CPU")))
+ 
+-    cover(new CrossProperty(
++    property.cover(new property.CrossProperty(
+       Seq(data_error_cover, request_source),
+       Seq(),
+       "MemorySystem;;Scratchpad Memory Bit Flip Cross Covers"))
+   } else {
+ 
+     val data_error_type = Seq(
+-      CoverBoolean(!s2_valid_data_error, Seq("no_data_error")),
+-      CoverBoolean(s2_valid_data_error && !s2_data_error_uncorrectable, Seq("data_correctable_error")),
+-      CoverBoolean(s2_valid_data_error && s2_data_error_uncorrectable, Seq("data_uncorrectable_error")))
++      property.CoverBoolean(!s2_valid_data_error, Seq("no_data_error")),
++      property.CoverBoolean(s2_valid_data_error && !s2_data_error_uncorrectable, Seq("data_correctable_error")),
++      property.CoverBoolean(s2_valid_data_error && s2_data_error_uncorrectable, Seq("data_uncorrectable_error")))
+     val data_error_dirty = Seq(
+-      CoverBoolean(!s2_victim_dirty, Seq("data_clean")),
+-      CoverBoolean(s2_victim_dirty, Seq("data_dirty")))
++      property.CoverBoolean(!s2_victim_dirty, Seq("data_clean")),
++      property.CoverBoolean(s2_victim_dirty, Seq("data_dirty")))
+     val request_source = if (supports_flush) {
+         Seq(
+-          CoverBoolean(!flushing, Seq("access")),
+-          CoverBoolean(flushing, Seq("during_flush")))
++          property.CoverBoolean(!flushing, Seq("access")),
++          property.CoverBoolean(flushing, Seq("during_flush")))
+       } else {
+-        Seq(CoverBoolean(true.B, Seq("never_flush")))
++        Seq(property.CoverBoolean(true.B, Seq("never_flush")))
+       }
+     val tag_error_cover = Seq(
+-      CoverBoolean( !s2_meta_error, Seq("no_tag_error")),
+-      CoverBoolean( s2_meta_error && !s2_meta_error_uncorrectable, Seq("tag_correctable_error")),
+-      CoverBoolean( s2_meta_error && s2_meta_error_uncorrectable, Seq("tag_uncorrectable_error")))
+-    cover(new CrossProperty(
++      property.CoverBoolean( !s2_meta_error, Seq("no_tag_error")),
++      property.CoverBoolean( s2_meta_error && !s2_meta_error_uncorrectable, Seq("tag_correctable_error")),
++      property.CoverBoolean( s2_meta_error && s2_meta_error_uncorrectable, Seq("tag_uncorrectable_error")))
++    property.cover(new property.CrossProperty(
+       Seq(data_error_type, data_error_dirty, request_source, tag_error_cover),
+       Seq(),
+       "MemorySystem;;Cache Memory Bit Flip Cross Covers"))
+@@ -1159,7 +1159,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+     (isWrite(req.cmd) && (req.cmd === M_PWR || req.size < log2Ceil(eccBytes)))
+ 
+   def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+-    cover(cond, s"DCACHE_$label", "MemorySystem;;" + desc)
++    property.cover(cond, s"DCACHE_$label", "MemorySystem;;" + desc)
+   def ccoverNotScratchpad(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+     if (!usingDataScratchpad) ccover(cond, label, desc)
+ 
+diff --git a/src/main/scala/rocket/Events.scala b/src/main/scala/rocket/Events.scala
+index 5d04aeda627..94914d0d54b 100644
+--- a/src/main/scala/rocket/Events.scala
++++ b/src/main/scala/rocket/Events.scala
+@@ -5,7 +5,7 @@ package freechips.rocketchip.rocket
+ 
+ import Chisel._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ class EventSet(val gate: (UInt, UInt) => Bool, val events: Seq[(String, () => Bool)]) {
+   def size = events.size
+@@ -20,7 +20,7 @@ class EventSet(val gate: (UInt, UInt) => Bool, val events: Seq[(String, () => Bo
+   }
+   def withCovers: Unit = {
+     events.zipWithIndex.foreach {
+-      case ((name, func), i) => cover(gate((1.U << i), (func() << i)), name)
++      case ((name, func), i) => property.cover(gate((1.U << i), (func() << i)), name)
+     }
+   }
+ }
+diff --git a/src/main/scala/rocket/Frontend.scala b/src/main/scala/rocket/Frontend.scala
+index 26822ad6ba9..07f87e8414e 100644
+--- a/src/main/scala/rocket/Frontend.scala
++++ b/src/main/scala/rocket/Frontend.scala
+@@ -12,7 +12,7 @@ import freechips.rocketchip.config._
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import freechips.rocketchip.diplomaticobjectmodel.logicaltree.ICacheLogicalTreeNode
+ 
+ class FrontendReq(implicit p: Parameters) extends CoreBundle()(p) {
+@@ -341,7 +341,7 @@ class FrontendModule(outer: Frontend) extends LazyModuleImp(outer)
+   def alignPC(pc: UInt) = ~(~pc | (coreInstBytes - 1))
+ 
+   def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+-    cover(cond, s"FRONTEND_$label", "Rocket;;" + desc)
++    property.cover(cond, s"FRONTEND_$label", "Rocket;;" + desc)
+ }
+ 
+ /** Mix-ins for constructing tiles that have an ICache-based pipeline frontend */
+diff --git a/src/main/scala/rocket/ICache.scala b/src/main/scala/rocket/ICache.scala
+index ce30bc3c145..0f02ee875a6 100644
+--- a/src/main/scala/rocket/ICache.scala
++++ b/src/main/scala/rocket/ICache.scala
+@@ -11,7 +11,7 @@ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.util.{DescribedSRAM, _}
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import chisel3.internal.sourceinfo.SourceInfo
+ import chisel3.dontTouch
+ import chisel3.util.random.LFSR
+@@ -492,27 +492,27 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+   ccover(invalidate && refill_valid, "FLUSH_DURING_MISS", "I$ flushed during miss")
+ 
+   def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+-    cover(cond, s"ICACHE_$label", "MemorySystem;;" + desc)
++    property.cover(cond, s"ICACHE_$label", "MemorySystem;;" + desc)
+ 
+-  val mem_active_valid = Seq(CoverBoolean(s2_valid, Seq("mem_active")))
++  val mem_active_valid = Seq(property.CoverBoolean(s2_valid, Seq("mem_active")))
+   val data_error = Seq(
+-    CoverBoolean(!s2_data_decoded.correctable && !s2_data_decoded.uncorrectable, Seq("no_data_error")),
+-    CoverBoolean(s2_data_decoded.correctable, Seq("data_correctable_error")),
+-    CoverBoolean(s2_data_decoded.uncorrectable, Seq("data_uncorrectable_error")))
++    property.CoverBoolean(!s2_data_decoded.correctable && !s2_data_decoded.uncorrectable, Seq("no_data_error")),
++    property.CoverBoolean(s2_data_decoded.correctable, Seq("data_correctable_error")),
++    property.CoverBoolean(s2_data_decoded.uncorrectable, Seq("data_uncorrectable_error")))
+   val request_source = Seq(
+-    CoverBoolean(!s2_slaveValid, Seq("from_CPU")),
+-    CoverBoolean(s2_slaveValid, Seq("from_TL"))
++    property.CoverBoolean(!s2_slaveValid, Seq("from_CPU")),
++    property.CoverBoolean(s2_slaveValid, Seq("from_TL"))
+   )
+   val tag_error = Seq(
+-    CoverBoolean(!s2_tag_disparity, Seq("no_tag_error")),
+-    CoverBoolean(s2_tag_disparity, Seq("tag_error"))
++    property.CoverBoolean(!s2_tag_disparity, Seq("no_tag_error")),
++    property.CoverBoolean(s2_tag_disparity, Seq("tag_error"))
+   )
+   val mem_mode = Seq(
+-    CoverBoolean(s2_scratchpad_hit, Seq("ITIM_mode")),
+-    CoverBoolean(!s2_scratchpad_hit, Seq("cache_mode"))
++    property.CoverBoolean(s2_scratchpad_hit, Seq("ITIM_mode")),
++    property.CoverBoolean(!s2_scratchpad_hit, Seq("cache_mode"))
+   )
+ 
+-  val error_cross_covers = new CrossProperty(
++  val error_cross_covers = new property.CrossProperty(
+     Seq(mem_active_valid, data_error, tag_error, request_source, mem_mode),
+     Seq(
+       // tag error cannot occur in ITIM mode
+@@ -522,5 +522,5 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+     ),
+     "MemorySystem;;Memory Bit Flip Cross Covers")
+ 
+-  cover(error_cross_covers)
++  property.cover(error_cross_covers)
+ }
+diff --git a/src/main/scala/rocket/PTW.scala b/src/main/scala/rocket/PTW.scala
+index a5e9b047c1f..3e91e60f547 100644
+--- a/src/main/scala/rocket/PTW.scala
++++ b/src/main/scala/rocket/PTW.scala
+@@ -13,7 +13,7 @@ import freechips.rocketchip.subsystem.CacheBlockBytes
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import freechips.rocketchip.diplomaticobjectmodel.model.OMSRAM
+ import scala.collection.mutable.ListBuffer
+ 
+@@ -422,7 +422,7 @@ class PTW(n: Int)(implicit edge: TLEdgeOut, p: Parameters) extends CoreModule()(
+   } // leaving gated-clock domain
+ 
+   private def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+-    if (usingVM) cover(cond, s"PTW_$label", "MemorySystem;;" + desc)
++    if (usingVM) property.cover(cond, s"PTW_$label", "MemorySystem;;" + desc)
+ }
+ 
+ /** Mix-ins for constructing tiles that might have a PTW */
+diff --git a/src/main/scala/rocket/RocketCore.scala b/src/main/scala/rocket/RocketCore.scala
+index 4806e0a81c4..2b74604e815 100644
+--- a/src/main/scala/rocket/RocketCore.scala
++++ b/src/main/scala/rocket/RocketCore.scala
+@@ -10,7 +10,7 @@ import chisel3.experimental.{chiselName, NoChiselNamePrefix}
+ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import freechips.rocketchip.scie._
+ import scala.collection.mutable.ArrayBuffer
+ 
+@@ -976,7 +976,7 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
+ 
+   def coverExceptions(exceptionValid: Bool, cause: UInt, labelPrefix: String, coverCausesLabels: Seq[(Int, String)]): Unit = {
+     for ((coverCause, label) <- coverCausesLabels) {
+-      cover(exceptionValid && (cause === UInt(coverCause)), s"${labelPrefix}_${label}")
++      property.cover(exceptionValid && (cause === UInt(coverCause)), s"${labelPrefix}_${label}")
+     }
+   }
+ 
+diff --git a/src/main/scala/rocket/TLB.scala b/src/main/scala/rocket/TLB.scala
+index abb3aaaf738..53fec83e62a 100644
+--- a/src/main/scala/rocket/TLB.scala
++++ b/src/main/scala/rocket/TLB.scala
+@@ -12,7 +12,7 @@ import freechips.rocketchip.diplomacy.RegionType
+ import freechips.rocketchip.tile.{CoreModule, CoreBundle}
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ import freechips.rocketchip.devices.debug.DebugModuleKey
+ import chisel3.internal.sourceinfo.SourceInfo
+ 
+@@ -404,7 +404,7 @@ class TLB(instruction: Boolean, lgMaxSize: Int, cfg: TLBConfig)(implicit edge: T
+   }
+ 
+   def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+-    cover(cond, s"${if (instruction) "I" else "D"}TLB_$label", "MemorySystem;;" + desc)
++    property.cover(cond, s"${if (instruction) "I" else "D"}TLB_$label", "MemorySystem;;" + desc)
+ 
+   def replacementEntry(set: Seq[TLBEntry], alt: UInt) = {
+     val valids = set.map(_.valid.orR).asUInt
+diff --git a/src/main/scala/tile/BusErrorUnit.scala b/src/main/scala/tile/BusErrorUnit.scala
+index 456c86fc4d5..f182ee9c09b 100644
+--- a/src/main/scala/tile/BusErrorUnit.scala
++++ b/src/main/scala/tile/BusErrorUnit.scala
+@@ -13,7 +13,7 @@ import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{BusErrorLogicalTr
+ import freechips.rocketchip.regmapper._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.interrupts._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ trait BusErrors extends Bundle {
+   def toErrorList: List[Option[(Valid[UInt], String, String)]]
+@@ -97,7 +97,7 @@ class BusErrorUnit[T <: BusErrors](t: => T, params: BusErrorUnitParams, logicalT
+           new_cause := i
+           new_value := s.get.bits
+         }
+-        cover(en, s"BusErrorCause_$i", s"Core;;BusErrorCause $i covered")
++        property.cover(en, s"BusErrorCause_$i", s"Core;;BusErrorCause $i covered")
+       }
+     }
+ 
+diff --git a/src/main/scala/tile/FPU.scala b/src/main/scala/tile/FPU.scala
+index 729180feb4d..0b4132fd6c7 100644
+--- a/src/main/scala/tile/FPU.scala
++++ b/src/main/scala/tile/FPU.scala
+@@ -13,7 +13,7 @@ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.rocket._
+ import freechips.rocketchip.rocket.Instructions._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ case class FPUParams(
+   minFLen: Int = 32,
+@@ -1020,5 +1020,5 @@ class FPU(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
+   val fpuImpl = withClock (gated_clock) { new FPUImpl }
+ 
+   def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
+-    cover(cond, s"FPU_$label", "Core;;" + desc)
++    property.cover(cond, s"FPU_$label", "Core;;" + desc)
+ }
+diff --git a/src/main/scala/tilelink/AsyncCrossing.scala b/src/main/scala/tilelink/AsyncCrossing.scala
+index 6e21c432cea..7b58d969fc2 100644
+--- a/src/main/scala/tilelink/AsyncCrossing.scala
++++ b/src/main/scala/tilelink/AsyncCrossing.scala
+@@ -7,7 +7,7 @@ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.subsystem.CrossingWrapper
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ class TLAsyncCrossingSource(sync: Option[Int])(implicit p: Parameters) extends LazyModule
+ {
+@@ -24,16 +24,16 @@ class TLAsyncCrossingSource(sync: Option[Int])(implicit p: Parameters) extends L
+ 
+       out.a <> ToAsyncBundle(in.a, params)
+       in.d <> FromAsyncBundle(out.d, psync)
+-      cover(in.a, "TL_ASYNC_CROSSING_SOURCE_A", "MemorySystem;;TLAsyncCrossingSource Channel A")
+-      cover(in.d, "TL_ASYNC_CROSSING_SOURCE_D", "MemorySystem;;TLAsyncCrossingSource Channel D")
++      property.cover(in.a, "TL_ASYNC_CROSSING_SOURCE_A", "MemorySystem;;TLAsyncCrossingSource Channel A")
++      property.cover(in.d, "TL_ASYNC_CROSSING_SOURCE_D", "MemorySystem;;TLAsyncCrossingSource Channel D")
+ 
+       if (bce) {
+         in.b <> FromAsyncBundle(out.b, psync)
+         out.c <> ToAsyncBundle(in.c, params)
+         out.e <> ToAsyncBundle(in.e, params)
+-        cover(in.b, "TL_ASYNC_CROSSING_SOURCE_B", "MemorySystem;;TLAsyncCrossingSource Channel B")
+-        cover(in.c, "TL_ASYNC_CROSSING_SOURCE_C", "MemorySystem;;TLAsyncCrossingSource Channel C")
+-        cover(in.e, "TL_ASYNC_CROSSING_SOURCE_E", "MemorySystem;;TLAsyncCrossingSource Channel E")
++        property.cover(in.b, "TL_ASYNC_CROSSING_SOURCE_B", "MemorySystem;;TLAsyncCrossingSource Channel B")
++        property.cover(in.c, "TL_ASYNC_CROSSING_SOURCE_C", "MemorySystem;;TLAsyncCrossingSource Channel C")
++        property.cover(in.e, "TL_ASYNC_CROSSING_SOURCE_E", "MemorySystem;;TLAsyncCrossingSource Channel E")
+       } else {
+         in.b.valid := Bool(false)
+         in.c.ready := Bool(true)
+@@ -56,16 +56,16 @@ class TLAsyncCrossingSink(params: AsyncQueueParams = AsyncQueueParams())(implici
+ 
+       out.a <> FromAsyncBundle(in.a, params.sync)
+       in.d <> ToAsyncBundle(out.d, params)
+-      cover(out.a, "TL_ASYNC_CROSSING_SINK_A", "MemorySystem;;TLAsyncCrossingSink Channel A")
+-      cover(out.d, "TL_ASYNC_CROSSING_SINK_D", "MemorySystem;;TLAsyncCrossingSink Channel D")
++      property.cover(out.a, "TL_ASYNC_CROSSING_SINK_A", "MemorySystem;;TLAsyncCrossingSink Channel A")
++      property.cover(out.d, "TL_ASYNC_CROSSING_SINK_D", "MemorySystem;;TLAsyncCrossingSink Channel D")
+ 
+       if (bce) {
+         in.b <> ToAsyncBundle(out.b, params)
+         out.c <> FromAsyncBundle(in.c, params.sync)
+         out.e <> FromAsyncBundle(in.e, params.sync)
+-        cover(out.b, "TL_ASYNC_CROSSING_SINK_B", "MemorySystem;;TLAsyncCrossingSinkChannel B")
+-        cover(out.c, "TL_ASYNC_CROSSING_SINK_C", "MemorySystem;;TLAsyncCrossingSink Channel C")
+-        cover(out.e, "TL_ASYNC_CROSSING_SINK_E", "MemorySystem;;TLAsyncCrossingSink Channel E")
++        property.cover(out.b, "TL_ASYNC_CROSSING_SINK_B", "MemorySystem;;TLAsyncCrossingSinkChannel B")
++        property.cover(out.c, "TL_ASYNC_CROSSING_SINK_C", "MemorySystem;;TLAsyncCrossingSink Channel C")
++        property.cover(out.e, "TL_ASYNC_CROSSING_SINK_E", "MemorySystem;;TLAsyncCrossingSink Channel E")
+       } else {
+         in.b.widx := UInt(0)
+         in.c.ridx := UInt(0)
+diff --git a/src/main/scala/tilelink/FIFOFixer.scala b/src/main/scala/tilelink/FIFOFixer.scala
+index 02eaa6599c1..f8f4f18a889 100644
+--- a/src/main/scala/tilelink/FIFOFixer.scala
++++ b/src/main/scala/tilelink/FIFOFixer.scala
+@@ -5,7 +5,7 @@ package freechips.rocketchip.tilelink
+ import Chisel._
+ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.diplomacy._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ class TLFIFOFixer(policy: TLFIFOFixer.Policy = TLFIFOFixer.all)(implicit p: Parameters) extends LazyModule
+ {
+@@ -102,7 +102,7 @@ class TLFIFOFixer(policy: TLFIFOFixer.Policy = TLFIFOFixer.all)(implicit p: Para
+ 
+ //Functional cover properties
+      
+-      cover(in.a.valid && stall, "COVER FIFOFIXER STALL", "Cover: Stall occured for a valid transaction")
++      property.cover(in.a.valid && stall, "COVER FIFOFIXER STALL", "Cover: Stall occured for a valid transaction")
+ 
+       val SourceIdFIFOed = RegInit(UInt(0, width = edgeIn.client.endSourceId))
+       val SourceIdSet = Wire(init = UInt(0, width = edgeIn.client.endSourceId))
+@@ -118,11 +118,11 @@ class TLFIFOFixer(policy: TLFIFOFixer.Policy = TLFIFOFixer.all)(implicit p: Para
+       SourceIdFIFOed := SourceIdFIFOed | SourceIdSet
+       val allIDs_FIFOed = SourceIdFIFOed===Fill(SourceIdFIFOed.getWidth, 1.U)
+ 
+-      cover(allIDs_FIFOed, "COVER all sources", "Cover: FIFOFIXER covers all Source IDs")
+-    //cover(flight.reduce(_ && _), "COVER full", "Cover: FIFO is full with all Source IDs")
+-      cover(!(flight.reduce(_ || _)), "COVER empty", "Cover: FIFO is empty")
+-      cover(SourceIdSet > 0.U, "COVER at least one push", "Cover: At least one Source ID is pushed")
+-      cover(SourceIdClear > 0.U, "COVER at least one pop", "Cover: At least one Source ID is popped")
++      property.cover(allIDs_FIFOed, "COVER all sources", "Cover: FIFOFIXER covers all Source IDs")
++    //property.cover(flight.reduce(_ && _), "COVER full", "Cover: FIFO is full with all Source IDs")
++      property.cover(!(flight.reduce(_ || _)), "COVER empty", "Cover: FIFO is empty")
++      property.cover(SourceIdSet > 0.U, "COVER at least one push", "Cover: At least one Source ID is pushed")
++      property.cover(SourceIdClear > 0.U, "COVER at least one pop", "Cover: At least one Source ID is popped")
+ 
+     }
+   }
+diff --git a/src/main/scala/tilelink/SRAM.scala b/src/main/scala/tilelink/SRAM.scala
+index 61229b897ff..5ebd9747eb2 100644
+--- a/src/main/scala/tilelink/SRAM.scala
++++ b/src/main/scala/tilelink/SRAM.scala
+@@ -9,7 +9,7 @@ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{BusMemoryLogicalTreeNode, LogicalModuleTree, LogicalTreeNode}
+ import freechips.rocketchip.diplomaticobjectmodel.model.{OMECC, TL_UL}
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.util.property._
++import freechips.rocketchip.util.property
+ 
+ class TLRAMErrors(val params: ECCParams, val addrBits: Int) extends Bundle with CanHaveErrors {
+   val correctable   = (params.code.canCorrect && params.notifyErrors).option(Valid(UInt(addrBits.W)))
+@@ -215,13 +215,13 @@ class TLRAM(
+     in.d.bits.data    := Mux(d_mux, d_corrected, r_uncorrected)
+     in.d.bits.corrupt := Mux(d_mux, d_error, r_error) && out_aad
+ 
+-    val mem_active_valid = Seq(CoverBoolean(in.d.valid, Seq("mem_active")))
++    val mem_active_valid = Seq(property.CoverBoolean(in.d.valid, Seq("mem_active")))
+     val data_error = Seq(
+-      CoverBoolean(!d_need_fix && !d_error , Seq("no_data_error")),
+-      CoverBoolean(d_need_fix && !in.d.bits.corrupt, Seq("data_correctable_error_not_reported")),
+-      CoverBoolean(d_error && in.d.bits.corrupt, Seq("data_uncorrectable_error_reported")))
++      property.CoverBoolean(!d_need_fix && !d_error , Seq("no_data_error")),
++      property.CoverBoolean(d_need_fix && !in.d.bits.corrupt, Seq("data_correctable_error_not_reported")),
++      property.CoverBoolean(d_error && in.d.bits.corrupt, Seq("data_uncorrectable_error_reported")))
+ 
+-    val error_cross_covers = new CrossProperty(Seq(mem_active_valid, data_error), Seq(), "Ecc Covers")
++    val error_cross_covers = new property.CrossProperty(Seq(mem_active_valid, data_error), Seq(), "Ecc Covers")
+     property.cover(error_cross_covers)
+ 
+     // Does the D stage want to perform a write?

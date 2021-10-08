@@ -1,0 +1,212 @@
+From 990a3c7829e4c9ae155100427aa091af65007076 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:22:16 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/common/debug.scala         | 2 --
+ src/main/scala/common/memory.scala        | 3 ---
+ src/main/scala/rv32_1stage/cpath.scala    | 1 -
+ src/main/scala/rv32_1stage/dpath.scala    | 1 -
+ src/main/scala/rv32_2stage/cpath.scala    | 1 -
+ src/main/scala/rv32_2stage/dpath.scala    | 1 -
+ src/main/scala/rv32_3stage/dpath.scala    | 1 -
+ src/main/scala/rv32_3stage/frontend.scala | 5 -----
+ src/main/scala/rv32_5stage/cpath.scala    | 1 -
+ src/main/scala/rv32_5stage/dpath.scala    | 1 -
+ src/main/scala/rv32_ucode/cpath.scala     | 1 -
+ src/main/scala/rv32_ucode/dpath.scala     | 1 -
+ 12 files changed, 19 deletions(-)
+
+diff --git a/src/main/scala/common/debug.scala b/src/main/scala/common/debug.scala
+index 4120f35..8d0c4e0 100644
+--- a/src/main/scala/common/debug.scala
++++ b/src/main/scala/common/debug.scala
+@@ -35,8 +35,6 @@ class DMIReq(addrBits : Int) extends Bundle {
+   val op   = Output(UInt(DMConsts.dmiOpSize.W))
+   val addr = Output(UInt(addrBits.W))
+   val data = Output(UInt(DMConsts.dmiDataSize.W))
+-
+-  override def cloneType = new DMIReq(addrBits).asInstanceOf[this.type]
+ }
+ 
+ /** Structure to define the contents of a Debug Bus Response
+diff --git a/src/main/scala/common/memory.scala b/src/main/scala/common/memory.scala
+index 214cdff..7724dad 100644
+--- a/src/main/scala/common/memory.scala
++++ b/src/main/scala/common/memory.scala
+@@ -47,7 +47,6 @@ class MemPortIo(data_width: Int)(implicit val conf: SodorCoreParams) extends Bun
+ {
+    val req    = new DecoupledIO(new MemReq(data_width))
+    val resp   = Flipped(new ValidIO(new MemResp(data_width)))
+-  override def cloneType = { new MemPortIo(data_width).asInstanceOf[this.type] }
+ }
+ 
+ class MemReq(data_width: Int)(implicit val conf: SodorCoreParams) extends Bundle
+@@ -56,7 +55,6 @@ class MemReq(data_width: Int)(implicit val conf: SodorCoreParams) extends Bundle
+    val data = Output(UInt(data_width.W))
+    val fcn  = Output(UInt(M_X.getWidth.W))  // memory function code
+    val typ  = Output(UInt(MT_X.getWidth.W)) // memory type
+-  override def cloneType = { new MemReq(data_width).asInstanceOf[this.type] }
+    // To convert MemPortIO type to sign and size in TileLink format: subtract 1 from type, then take inversed MSB as signedness
+   // and the remaining two bits as TileLink size
+   def getTLSize = (typ - 1.U)(1, 0)
+@@ -67,7 +65,6 @@ class MemReq(data_width: Int)(implicit val conf: SodorCoreParams) extends Bundle
+ class MemResp(data_width: Int) extends Bundle
+ {
+    val data = Output(UInt(data_width.W))
+-  override def cloneType = { new MemResp(data_width).asInstanceOf[this.type] }
+ }
+ 
+ // Note: All `size` field in this class are base 2 logarithm 
+diff --git a/src/main/scala/rv32_1stage/cpath.scala b/src/main/scala/rv32_1stage/cpath.scala
+index 99d44a1..8420c4c 100644
+--- a/src/main/scala/rv32_1stage/cpath.scala
++++ b/src/main/scala/rv32_1stage/cpath.scala
+@@ -38,7 +38,6 @@ class CpathIo(implicit val conf: SodorCoreParams) extends Bundle()
+    val dmem = new MemPortIo(conf.xprlen)
+    val dat  = Flipped(new DatToCtlIo())
+    val ctl  = new CtlToDatIo()
+-   override def cloneType = { new CpathIo().asInstanceOf[this.type] }
+ }
+ 
+ 
+diff --git a/src/main/scala/rv32_1stage/dpath.scala b/src/main/scala/rv32_1stage/dpath.scala
+index 39f9a53..150e77f 100644
+--- a/src/main/scala/rv32_1stage/dpath.scala
++++ b/src/main/scala/rv32_1stage/dpath.scala
+@@ -28,7 +28,6 @@ class DatToCtlIo(implicit val conf: SodorCoreParams) extends Bundle()
+    val csr_interrupt = Output(Bool())
+    val inst_misaligned = Output(Bool())
+    val mem_address_low = Output(UInt(3.W))
+-   override def cloneType = { new DatToCtlIo().asInstanceOf[this.type] }
+ }
+ 
+ class DpathIo(implicit val p: Parameters, val conf: SodorCoreParams) extends Bundle()
+diff --git a/src/main/scala/rv32_2stage/cpath.scala b/src/main/scala/rv32_2stage/cpath.scala
+index 90e1d50..77dc2ce 100644
+--- a/src/main/scala/rv32_2stage/cpath.scala
++++ b/src/main/scala/rv32_2stage/cpath.scala
+@@ -41,7 +41,6 @@ class CpathIo(implicit val conf: SodorCoreParams) extends Bundle()
+    val dmem = new MemPortIo(conf.xprlen)
+    val dat  = Flipped(new DatToCtlIo())
+    val ctl  = new CtlToDatIo()
+-   override def cloneType = { new CpathIo().asInstanceOf[this.type] }
+ }
+ 
+ 
+diff --git a/src/main/scala/rv32_2stage/dpath.scala b/src/main/scala/rv32_2stage/dpath.scala
+index 0774199..57d2039 100644
+--- a/src/main/scala/rv32_2stage/dpath.scala
++++ b/src/main/scala/rv32_2stage/dpath.scala
+@@ -29,7 +29,6 @@ class DatToCtlIo(implicit val conf: SodorCoreParams) extends Bundle()
+    val mem_store = Output(Bool())
+    val csr_eret = Output(Bool())
+    val csr_interrupt = Output(Bool())
+-   override def cloneType = { new DatToCtlIo().asInstanceOf[this.type] }
+ }
+ 
+ class DpathIo(implicit val p: Parameters, val conf: SodorCoreParams) extends Bundle()
+diff --git a/src/main/scala/rv32_3stage/dpath.scala b/src/main/scala/rv32_3stage/dpath.scala
+index 941c779..9dd2a39 100644
+--- a/src/main/scala/rv32_3stage/dpath.scala
++++ b/src/main/scala/rv32_3stage/dpath.scala
+@@ -34,7 +34,6 @@ class DatToCtlIo(implicit val conf: SodorCoreParams) extends Bundle()
+    val wb_hazard_stall = Output(Bool())
+    val csr_eret = Output(Bool())
+    val csr_interrupt = Output(Bool())
+-   override def cloneType = { new DatToCtlIo().asInstanceOf[this.type] }
+ }
+ 
+ class DpathIo(implicit val p: Parameters, val conf: SodorCoreParams) extends Bundle()
+diff --git a/src/main/scala/rv32_3stage/frontend.scala b/src/main/scala/rv32_3stage/frontend.scala
+index 85979bd..0b4d9c5 100644
+--- a/src/main/scala/rv32_3stage/frontend.scala
++++ b/src/main/scala/rv32_3stage/frontend.scala
+@@ -41,7 +41,6 @@ class FrontEndIO(implicit val conf: SodorCoreParams) extends Bundle
+ 
+    val reset_vector = Input(UInt())
+ 
+-   override def cloneType = { new FrontEndIO().asInstanceOf[this.type] }
+ }
+ 
+ 
+@@ -49,7 +48,6 @@ class FrontEndReq(xprlen: Int) extends Bundle
+ {
+    val pc   = UInt(xprlen.W)
+ 
+-   override def cloneType = { new FrontEndReq(xprlen).asInstanceOf[this.type] }
+ }
+ 
+ 
+@@ -58,14 +56,12 @@ class FrontEndResp(xprlen: Int) extends Bundle
+    val pc   = UInt(xprlen.W)
+    val inst = UInt(xprlen.W)  // only support 32b insts for now
+ 
+-   override def cloneType = { new FrontEndResp(xprlen).asInstanceOf[this.type] }
+ }
+ 
+ class FrontEndDebug(xprlen: Int) extends Bundle
+ {
+    val if_pc   = Output(UInt(xprlen.W))
+    val if_inst = Output(UInt(xprlen.W))
+-   override def cloneType = { new FrontEndDebug(xprlen).asInstanceOf[this.type] }
+ }
+ 
+ class FrontEndCpuIO(implicit val conf: SodorCoreParams) extends Bundle
+@@ -80,7 +76,6 @@ class FrontEndCpuIO(implicit val conf: SodorCoreParams) extends Bundle
+    // Flush the entire pipeline upon exception, including exe stage
+    val exe_kill = Input(Bool())
+ 
+-   override def cloneType = { new FrontEndCpuIO().asInstanceOf[this.type] }
+ }
+ 
+ 
+diff --git a/src/main/scala/rv32_5stage/cpath.scala b/src/main/scala/rv32_5stage/cpath.scala
+index 8a56794..ea614c3 100644
+--- a/src/main/scala/rv32_5stage/cpath.scala
++++ b/src/main/scala/rv32_5stage/cpath.scala
+@@ -52,7 +52,6 @@ class CpathIo(implicit val conf: SodorCoreParams) extends Bundle()
+    val dmem = new MemPortIo(conf.xprlen)
+    val dat  = Flipped(new DatToCtlIo())
+    val ctl  = new CtlToDatIo()
+-   override def cloneType = { new CpathIo().asInstanceOf[this.type] }
+ }
+ 
+ 
+diff --git a/src/main/scala/rv32_5stage/dpath.scala b/src/main/scala/rv32_5stage/dpath.scala
+index 2f7dbb9..76b4bf0 100644
+--- a/src/main/scala/rv32_5stage/dpath.scala
++++ b/src/main/scala/rv32_5stage/dpath.scala
+@@ -35,7 +35,6 @@ class DatToCtlIo(implicit val conf: SodorCoreParams) extends Bundle()
+ 
+    val csr_eret = Output(Bool())
+    val csr_interrupt = Output(Bool())
+-   override def cloneType = { new DatToCtlIo().asInstanceOf[this.type] }
+ }
+ 
+ class DpathIo(implicit val p: Parameters, val conf: SodorCoreParams) extends Bundle
+diff --git a/src/main/scala/rv32_ucode/cpath.scala b/src/main/scala/rv32_ucode/cpath.scala
+index d326f62..b17e1da 100644
+--- a/src/main/scala/rv32_ucode/cpath.scala
++++ b/src/main/scala/rv32_ucode/cpath.scala
+@@ -48,7 +48,6 @@ class CpathIo(implicit val conf: SodorCoreParams) extends Bundle()
+    val mem  = new MemPortIo(conf.xprlen)
+    val dat  = Flipped(new DatToCtlIo())
+    val ctl  = new CtlToDatIo()
+-   override def cloneType = { new CpathIo().asInstanceOf[this.type] }
+  }
+ 
+ class CtlPath(implicit val conf: SodorCoreParams) extends Module
+diff --git a/src/main/scala/rv32_ucode/dpath.scala b/src/main/scala/rv32_ucode/dpath.scala
+index 74aebbe..265cf5f 100644
+--- a/src/main/scala/rv32_ucode/dpath.scala
++++ b/src/main/scala/rv32_ucode/dpath.scala
+@@ -24,7 +24,6 @@ class DatToCtlIo extends Bundle()
+    val csr_eret = Output(Bool())
+    val interrupt = Output(Bool())
+    val addr_exception = Output(Bool())
+-   override def cloneType = { new DatToCtlIo().asInstanceOf[this.type] }
+ }
+ 
+ 

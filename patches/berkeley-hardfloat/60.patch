@@ -1,0 +1,60 @@
+From 25b511d4fe74b00cefd570de45e819bbcc1493a2 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:41:49 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/MulAddRecFN.scala                | 3 ---
+ src/main/scala/common.scala                     | 2 --
+ src/test/scala/ValExec_DivSqrtRecFN_small.scala | 4 ----
+ 3 files changed, 9 deletions(-)
+
+diff --git a/src/main/scala/MulAddRecFN.scala b/src/main/scala/MulAddRecFN.scala
+index beb9ed0..670139b 100644
+--- a/src/main/scala/MulAddRecFN.scala
++++ b/src/main/scala/MulAddRecFN.scala
+@@ -63,9 +63,6 @@ class MulAddRecFN_interIo(expWidth: Int, sigWidth: Int) extends Bundle
+     val highAlignedSigC = UInt(width = sigWidth + 2)
+     val bit0AlignedSigC = UInt(width = 1)
+ 
+-    override def cloneType =
+-        new MulAddRecFN_interIo(
+-                expWidth, sigWidth).asInstanceOf[this.type]
+ }
+ 
+ //----------------------------------------------------------------------------
+diff --git a/src/main/scala/common.scala b/src/main/scala/common.scala
+index af27976..ad75dd9 100644
+--- a/src/main/scala/common.scala
++++ b/src/main/scala/common.scala
+@@ -74,8 +74,6 @@ class RawFloat(val expWidth: Int, val sigWidth: Int) extends Bundle
+     val sExp = SInt(width = expWidth + 2)
+     val sig  = UInt(width = sigWidth + 1)   // 2 m.s. bits cannot both be 0
+ 
+-    override def cloneType =
+-        new RawFloat(expWidth, sigWidth).asInstanceOf[this.type]
+ }
+ 
+ //*** CHANGE THIS INTO A '.isSigNaN' METHOD OF THE 'RawFloat' CLASS:
+diff --git a/src/test/scala/ValExec_DivSqrtRecFN_small.scala b/src/test/scala/ValExec_DivSqrtRecFN_small.scala
+index 0907d3e..9741f19 100644
+--- a/src/test/scala/ValExec_DivSqrtRecFN_small.scala
++++ b/src/test/scala/ValExec_DivSqrtRecFN_small.scala
+@@ -47,8 +47,6 @@ class DivRecFN_io(expWidth: Int, sigWidth: Int) extends Bundle {
+     val out = Bits(width = expWidth + sigWidth)
+     val exceptionFlags = Bits(width = 5)
+ 
+-    override def cloneType =
+-        new DivRecFN_io(expWidth, sigWidth).asInstanceOf[this.type]
+ }
+ 
+ class
+@@ -121,8 +119,6 @@ class SqrtRecFN_io(expWidth: Int, sigWidth: Int) extends Bundle {
+     val out = Bits(width = expWidth + sigWidth)
+     val exceptionFlags = Bits(width = 5)
+ 
+-    override def cloneType =
+-        new SqrtRecFN_io(expWidth, sigWidth).asInstanceOf[this.type]
+ }
+ 
+ class

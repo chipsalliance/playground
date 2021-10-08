@@ -1,0 +1,21 @@
+From 62d34e7a411eaf5071e0c43f4f2d9eaf0c42f4b8 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:51:52 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/lsu/lsu.scala | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/main/scala/lsu/lsu.scala b/src/main/scala/lsu/lsu.scala
+index 06416ae8d..184e9100d 100644
+--- a/src/main/scala/lsu/lsu.scala
++++ b/src/main/scala/lsu/lsu.scala
+@@ -106,7 +106,6 @@ class LSUDMemIO(implicit p: Parameters, edge: TLEdgeOut) extends BoomBundle()(p)
+     val release = Bool()
+   })
+ 
+-  override def cloneType = new LSUDMemIO().asInstanceOf[this.type]
+ }
+ 
+ class LSUCoreIO(implicit p: Parameters) extends BoomBundle()(p)

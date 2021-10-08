@@ -1,0 +1,95 @@
+From ed08130e8c40258f6f715930a44119fa0f5bdb74 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:56:37 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/dspjunctions/Sync.scala                       | 2 --
+ .../scala/freechips/rocketchip/amba/axi4stream/Bundles.scala | 3 ---
+ .../scala/freechips/rocketchip/amba/axi4stream/DMA.scala     | 5 -----
+ src/main/scala/freechips/rocketchip/jtag2mm/JtagIO.scala     | 1 -
+ 4 files changed, 11 deletions(-)
+
+diff --git a/src/main/scala/dspjunctions/Sync.scala b/src/main/scala/dspjunctions/Sync.scala
+index 3c3ae29..5067c30 100644
+--- a/src/main/scala/dspjunctions/Sync.scala
++++ b/src/main/scala/dspjunctions/Sync.scala
+@@ -10,7 +10,6 @@ trait WithSync {
+ }
+ 
+ class ValidWithSync[+T <: Data](gen: T) extends Valid[T](gen) with WithSync {
+-  override def cloneType: this.type = ValidWithSync(gen).asInstanceOf[this.type]
+ }
+ 
+ object ValidWithSync {
+@@ -18,7 +17,6 @@ object ValidWithSync {
+ }
+ 
+ class DecoupledWithSync[+T <: Data](gen: T) extends DecoupledIO[T](gen) with WithSync {
+-  override def cloneType: this.type = DecoupledWithSync(gen).asInstanceOf[this.type]
+ }
+ 
+ object DecoupledWithSync {
+diff --git a/src/main/scala/freechips/rocketchip/amba/axi4stream/Bundles.scala b/src/main/scala/freechips/rocketchip/amba/axi4stream/Bundles.scala
+index 646478c..bb354ee 100644
+--- a/src/main/scala/freechips/rocketchip/amba/axi4stream/Bundles.scala
++++ b/src/main/scala/freechips/rocketchip/amba/axi4stream/Bundles.scala
+@@ -32,7 +32,6 @@ class AXI4StreamBundlePayload(params: AXI4StreamBundleParameters) extends AXI4St
+   * @param params Bundle parameters
+   */
+ class AXI4StreamBundle(val params: AXI4StreamBundleParameters) extends IrrevocableIO(new AXI4StreamBundlePayload(params)) {
+-  override def cloneType= new AXI4StreamBundle(params).asInstanceOf[this.type]
+ }
+ 
+ /**
+@@ -40,7 +39,6 @@ class AXI4StreamBundle(val params: AXI4StreamBundleParameters) extends Irrevocab
+   * @param params Bundle parameters
+   */
+ class AXI4StreamValidBundle(val params: AXI4StreamBundleParameters) extends ValidIO(new AXI4StreamBundlePayload(params)) {
+-  override def cloneType = new AXI4StreamValidBundle(params).asInstanceOf[this.type]
+ }
+ 
+ object AXI4StreamBundle
+@@ -69,7 +67,6 @@ object AXI4StreamValidBundle
+   */
+ class AXI4StreamAsyncBundle(params: AXI4StreamAsyncBundleParameters)
+   extends AsyncBundle(new AXI4StreamBundlePayload(params.base).cloneType, params.async) {
+-  override def cloneType: this.type = new AXI4StreamAsyncBundle(params).asInstanceOf[this.type]
+ }
+ 
+ object AXI4StreamAsyncBundle {
+diff --git a/src/main/scala/freechips/rocketchip/amba/axi4stream/DMA.scala b/src/main/scala/freechips/rocketchip/amba/axi4stream/DMA.scala
+index 8d9fe80..544a72f 100644
+--- a/src/main/scala/freechips/rocketchip/amba/axi4stream/DMA.scala
++++ b/src/main/scala/freechips/rocketchip/amba/axi4stream/DMA.scala
+@@ -60,8 +60,6 @@ class SimpleDMARequest(addrWidth: Int, lenWidth: Int) extends Bundle {
+     */
+   val fixedAddress: UInt = Bool()
+ 
+-  override def cloneType: this.type =
+-    SimpleDMARequest(addrWidth = addrWidth, lenWidth = lenWidth).asInstanceOf[this.type]
+ }
+ object SimpleDMARequest {
+   def apply(addrWidth: Int, lenWidth: Int): SimpleDMARequest =
+@@ -72,9 +70,6 @@ class DMASimplifierIO(addrWidth: Int, complexLenWidth: Int, simpleLenWidth: Int)
+   val in = Flipped(Decoupled(DMARequest(addrWidth, complexLenWidth)))
+   val out = Decoupled(SimpleDMARequest(addrWidth, simpleLenWidth))
+ 
+-  override def cloneType: this.type =
+-    new DMASimplifierIO(addrWidth = addrWidth, complexLenWidth = complexLenWidth, simpleLenWidth = simpleLenWidth).
+-      asInstanceOf[this.type]
+ }
+ class DMASimplifier(val addrWidth: Int, val complexLenWidth: Int, val simpleLenWidth: Int, val beatBytes: Int)
+   extends Module {
+diff --git a/src/main/scala/freechips/rocketchip/jtag2mm/JtagIO.scala b/src/main/scala/freechips/rocketchip/jtag2mm/JtagIO.scala
+index 3abd4b1..98192a3 100644
+--- a/src/main/scala/freechips/rocketchip/jtag2mm/JtagIO.scala
++++ b/src/main/scala/freechips/rocketchip/jtag2mm/JtagIO.scala
+@@ -23,7 +23,6 @@ class JtagOutput(irLength: Int) extends Bundle {
+   val instruction = Output(UInt(irLength.W)) // current active instruction
+   val reset = Output(Bool()) // synchronous reset asserted in Test-Logic-Reset state, should NOT hold the FSM in reset
+ 
+-  override def cloneType = new JtagOutput(irLength).asInstanceOf[this.type]
+ }
+ 
+ class JtagControl extends Bundle {

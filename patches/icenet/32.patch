@@ -1,0 +1,66 @@
+From 1f13623a1eef8fa65472f02e59d2ee8d64e977c9 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:34:56 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/Buffer.scala | 4 ----
+ src/main/scala/NIC.scala    | 2 --
+ src/main/scala/TCAM.scala   | 2 --
+ 3 files changed, 8 deletions(-)
+
+diff --git a/src/main/scala/Buffer.scala b/src/main/scala/Buffer.scala
+index b8a2819..6a3c664 100644
+--- a/src/main/scala/Buffer.scala
++++ b/src/main/scala/Buffer.scala
+@@ -348,8 +348,6 @@ class ReservationBufferAlloc(nXacts: Int, nWords: Int) extends Bundle {
+   val id = UInt(xactIdBits.W)
+   val count = UInt(countBits.W)
+ 
+-  override def cloneType =
+-    new ReservationBufferAlloc(nXacts, nWords).asInstanceOf[this.type]
+ }
+ 
+ class ReservationBufferData(nXacts: Int, dataBits: Int) extends Bundle {
+@@ -358,8 +356,6 @@ class ReservationBufferData(nXacts: Int, dataBits: Int) extends Bundle {
+   val id = UInt(xactIdBits.W)
+   val data = new StreamChannel(dataBits)
+ 
+-  override def cloneType =
+-    new ReservationBufferData(nXacts, dataBits).asInstanceOf[this.type]
+ }
+ 
+ class ReservationBuffer(nXacts: Int, nWords: Int, dataBits: Int) extends Module {
+diff --git a/src/main/scala/NIC.scala b/src/main/scala/NIC.scala
+index 29d3159..6c7bc6b 100644
+--- a/src/main/scala/NIC.scala
++++ b/src/main/scala/NIC.scala
+@@ -395,7 +395,6 @@ class NICIO extends StreamIO(NET_IF_WIDTH) {
+   val rlimit = Input(new RateLimiterSettings)
+   val pauser = Input(new PauserSettings)
+ 
+-  override def cloneType = (new NICIO).asInstanceOf[this.type]
+ }
+ 
+ /* 
+@@ -501,7 +500,6 @@ class NICIOvonly extends Bundle {
+   val rlimit = Input(new RateLimiterSettings)
+   val pauser = Input(new PauserSettings)
+ 
+-  override def cloneType = (new NICIOvonly).asInstanceOf[this.type]
+ }
+ 
+ object NICIOvonly {
+diff --git a/src/main/scala/TCAM.scala b/src/main/scala/TCAM.scala
+index 66daf6c..bb96404 100644
+--- a/src/main/scala/TCAM.scala
++++ b/src/main/scala/TCAM.scala
+@@ -13,8 +13,6 @@ class TCAMMatchIO(n: Int, dataBits: Int) extends Bundle {
+   val addr = Input(UInt(addrBits.W))
+   val found = Input(Bool())
+ 
+-  override def cloneType =
+-    new TCAMMatchIO(n, dataBits).asInstanceOf[this.type]
+ }
+ 
+ class TCAM(address: BigInt, val n: Int, val dataBits: Int, val nPorts: Int)

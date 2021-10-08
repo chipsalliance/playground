@@ -1,0 +1,396 @@
+From def39b93a8baee2674b8546820acb910b695fe86 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:49:40 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/main/scala/gemmini/AccumulatorMem.scala         | 6 ------
+ src/main/scala/gemmini/AccumulatorScale.scala       | 5 -----
+ src/main/scala/gemmini/Controller.scala             | 1 -
+ src/main/scala/gemmini/DMA.scala                    | 2 --
+ src/main/scala/gemmini/DMACommandTracker.scala      | 3 ---
+ src/main/scala/gemmini/Im2Col.scala                 | 2 --
+ src/main/scala/gemmini/LocalAddr.scala              | 1 -
+ src/main/scala/gemmini/MeshWithDelays.scala         | 3 ---
+ src/main/scala/gemmini/PE.scala                     | 1 -
+ src/main/scala/gemmini/ROB.scala                    | 1 -
+ src/main/scala/gemmini/Scratchpad.scala             | 4 ----
+ src/main/scala/gemmini/SyncMem.scala                | 1 -
+ src/main/scala/gemmini/TilerController.scala        | 2 --
+ src/main/scala/gemmini/Util.scala                   | 1 -
+ src/main/scala/gemmini/VectorScalarMultiplier.scala | 3 ---
+ src/main/scala/gemmini/XactTracker.scala            | 2 --
+ src/main/scala/gemmini/ZeroWriter.scala             | 2 --
+ 17 files changed, 40 deletions(-)
+
+diff --git a/src/main/scala/gemmini/AccumulatorMem.scala b/src/main/scala/gemmini/AccumulatorMem.scala
+index 4d7d1e46..ab243f39 100644
+--- a/src/main/scala/gemmini/AccumulatorMem.scala
++++ b/src/main/scala/gemmini/AccumulatorMem.scala
+@@ -14,7 +14,6 @@ class AccumulatorReadReq[T <: Data](n: Int, shift_width: Int, scale_t: T) extend
+ 
+   val fromDMA = Bool()
+ 
+-  override def cloneType: this.type = new AccumulatorReadReq(n, shift_width, scale_t.cloneType).asInstanceOf[this.type]
+ }
+ 
+ class AccumulatorReadResp[T <: Data: Arithmetic, U <: Data](fullDataType: Vec[Vec[T]], scale_t: U, shift_width: Int) extends Bundle {
+@@ -24,14 +23,12 @@ class AccumulatorReadResp[T <: Data: Arithmetic, U <: Data](fullDataType: Vec[Ve
+   val relu6_shift = UInt(shift_width.W)
+   val act = UInt(2.W) // TODO magic number
+   val acc_bank_id = UInt(2.W) // TODO don't hardcode
+-  override def cloneType: this.type = new AccumulatorReadResp(fullDataType.cloneType, scale_t, shift_width).asInstanceOf[this.type]
+ }
+ 
+ class AccumulatorReadIO[T <: Data: Arithmetic, U <: Data](n: Int, shift_width: Int, fullDataType: Vec[Vec[T]], scale_t: U) extends Bundle {
+   val req = Decoupled(new AccumulatorReadReq[U](n, shift_width, scale_t))
+   val resp = Flipped(Decoupled(new AccumulatorReadResp[T, U](fullDataType, scale_t, shift_width)))
+ 
+-  override def cloneType: this.type = new AccumulatorReadIO(n, shift_width, fullDataType.cloneType, scale_t.cloneType).asInstanceOf[this.type]
+ }
+ 
+ class AccumulatorWriteReq[T <: Data: Arithmetic](n: Int, t: Vec[Vec[T]]) extends Bundle {
+@@ -41,7 +38,6 @@ class AccumulatorWriteReq[T <: Data: Arithmetic](n: Int, t: Vec[Vec[T]]) extends
+   val mask = Vec(t.getWidth / 8, Bool()) // TODO Use aligned_to here
+   // val current_waddr = Flipped(Valid(UInt(log2Ceil(n).W))) // This is the raddr that is being fed into the SRAM right now
+ 
+-  override def cloneType: this.type = new AccumulatorWriteReq(n, t).asInstanceOf[this.type]
+ }
+ 
+ class AccumulatorMemIO [T <: Data: Arithmetic, U <: Data](n: Int, t: Vec[Vec[T]], scale_t: U) extends Bundle {
+@@ -49,7 +45,6 @@ class AccumulatorMemIO [T <: Data: Arithmetic, U <: Data](n: Int, t: Vec[Vec[T]]
+   // val write = Flipped(new AccumulatorWriteIO(n, t))
+   val write = Flipped(Decoupled(new AccumulatorWriteReq(n, t)))
+ 
+-  override def cloneType: this.type = new AccumulatorMemIO(n, t, scale_t).asInstanceOf[this.type]
+ }
+ 
+ class AccumulatorMem[T <: Data, U <: Data](
+@@ -124,7 +119,6 @@ class AccumulatorMem[T <: Data, U <: Data](
+         val data = Vec(mask_len, mask_elem)
+         val mask = Vec(mask_len, Bool())
+         val addr = UInt(log2Ceil(n/num_acc_sub_banks).W)
+-        override def cloneType: this.type = new W_Q_Entry(mask_len, mask_elem).asInstanceOf[this.type]
+       }
+       val w_q = Reg(Vec(nEntries, new W_Q_Entry(mask_len, mask_elem)))
+       for (e <- w_q) {
+diff --git a/src/main/scala/gemmini/AccumulatorScale.scala b/src/main/scala/gemmini/AccumulatorScale.scala
+index 2069bc66..d00f042e 100644
+--- a/src/main/scala/gemmini/AccumulatorScale.scala
++++ b/src/main/scala/gemmini/AccumulatorScale.scala
+@@ -8,7 +8,6 @@ import Util._
+ class AccumulatorReadRespWithFullData[T <: Data: Arithmetic, U <: Data](fullDataType: Vec[Vec[T]], scale_t: U, shift_width: Int) extends Bundle {
+   val resp = new AccumulatorReadResp(fullDataType, scale_t, shift_width)
+   val full_data = fullDataType.cloneType
+-  override def cloneType: this.type = new AccumulatorReadRespWithFullData(fullDataType.cloneType, scale_t, shift_width).asInstanceOf[this.type]
+ }
+ 
+ 
+@@ -17,7 +16,6 @@ class AccumulatorScaleResp[T <: Data: Arithmetic](fullDataType: Vec[Vec[T]], rDa
+   val data = rDataType.cloneType
+   val acc_bank_id = UInt(2.W)
+   val fromDMA = Bool()
+-  override def cloneType: this.type = new AccumulatorScaleResp(fullDataType, rDataType).asInstanceOf[this.type]
+ }
+ 
+ class AccumulatorScaleIO[T <: Data: Arithmetic, U <: Data](
+@@ -26,8 +24,6 @@ class AccumulatorScaleIO[T <: Data: Arithmetic, U <: Data](
+ ) extends Bundle {
+   val in = Flipped(Decoupled(new AccumulatorReadResp[T,U](fullDataType, scale_t, shift_width)))
+   val out = Decoupled(new AccumulatorScaleResp[T](fullDataType, rDataType))
+-  override def cloneType: this.type = new AccumulatorScaleIO(fullDataType, scale_t,
+-    shift_width, rDataType).asInstanceOf[this.type]
+ }
+ 
+ class AccScaleDataWithIndex[T <: Data: Arithmetic, U <: Data](t: T, u: U, scale_args: ScaleArguments[T, U]) extends Bundle {
+@@ -40,7 +36,6 @@ class AccScaleDataWithIndex[T <: Data: Arithmetic, U <: Data](t: T, u: U, scale_
+   val full_data = t.cloneType
+   val id = UInt(2.W) // TODO hardcoded
+   val index = UInt()
+-  override def cloneType: this.type = new AccScaleDataWithIndex(t, u, scale_args: ScaleArguments[T, U]).asInstanceOf[this.type]
+ }
+ 
+ class AccScalePipe[T <: Data : Arithmetic, U <: Data](t: T, rDataType: Vec[Vec[T]], scale_args: ScaleArguments[T, U])(implicit ev: Arithmetic[T]) extends Module {
+diff --git a/src/main/scala/gemmini/Controller.scala b/src/main/scala/gemmini/Controller.scala
+index cdb708f1..d540c2e2 100644
+--- a/src/main/scala/gemmini/Controller.scala
++++ b/src/main/scala/gemmini/Controller.scala
+@@ -17,7 +17,6 @@ class GemminiCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
+   val cmd = new RoCCCommand
+   val rob_id = UDValid(UInt(log2Up(rob_entries).W))
+ 
+-  override def cloneType: this.type = new GemminiCmd(rob_entries).asInstanceOf[this.type]
+ }
+ 
+ class Gemmini[T <: Data : Arithmetic, U <: Data, V <: Data](val config: GemminiArrayConfig[T, U, V])
+diff --git a/src/main/scala/gemmini/DMA.scala b/src/main/scala/gemmini/DMA.scala
+index c8e61c1e..aeb7d346 100644
+--- a/src/main/scala/gemmini/DMA.scala
++++ b/src/main/scala/gemmini/DMA.scala
+@@ -27,7 +27,6 @@ class StreamReadRequest[U <: Data](spad_rows: Int, acc_rows: Int, mvin_scale_t_b
+   val block_stride = UInt(16.W) // TODO magic number
+   val cmd_id = UInt(8.W) // TODO magic number
+ 
+-  override def cloneType: StreamReadRequest.this.type = new StreamReadRequest(spad_rows, acc_rows, mvin_scale_t_bits).asInstanceOf[this.type]
+ }
+ 
+ class StreamReadResponse[U <: Data](spadWidth: Int, accWidth: Int, spad_rows: Int, acc_rows: Int, aligned_to: Int, mvin_scale_t_bits: Int)
+@@ -44,7 +43,6 @@ class StreamReadResponse[U <: Data](spadWidth: Int, accWidth: Int, spad_rows: In
+   val bytes_read = UInt(8.W) // TODO magic number
+   val cmd_id = UInt(8.W) // TODO magic number
+ 
+-  override def cloneType: StreamReadResponse.this.type = new StreamReadResponse(spadWidth, accWidth, spad_rows, acc_rows, aligned_to, mvin_scale_t_bits).asInstanceOf[this.type]
+ }
+ 
+ class StreamReader[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V], nXacts: Int, beatBits: Int, maxBytes: Int, spadWidth: Int, accWidth: Int, aligned_to: Int,
+diff --git a/src/main/scala/gemmini/DMACommandTracker.scala b/src/main/scala/gemmini/DMACommandTracker.scala
+index a687e918..84c7d56f 100644
+--- a/src/main/scala/gemmini/DMACommandTracker.scala
++++ b/src/main/scala/gemmini/DMACommandTracker.scala
+@@ -21,7 +21,6 @@ class DMACommandTracker[T <: Data](val nCmds: Int, val maxBytes: Int, tag_t: =>
+         val bytes_to_read = Input(UInt(log2Up(maxBytes+1).W))
+         val cmd_id = Output(cmd_id_t.cloneType)
+ 
+-        override def cloneType: this.type = new BitsT(tag_t.cloneType, cmd_id_t.cloneType).asInstanceOf[this.type]
+       }
+ 
+       val bits = new BitsT(tag_t.cloneType, cmd_id_t.cloneType)
+@@ -34,7 +33,6 @@ class DMACommandTracker[T <: Data](val nCmds: Int, val maxBytes: Int, tag_t: =>
+       val bytes_read = UInt(log2Up(maxBytes+1).W)
+       val cmd_id = cmd_id_t.cloneType
+ 
+-      override def cloneType: this.type = new RequestReturnedT(cmd_id_t.cloneType).asInstanceOf[this.type]
+     }
+ 
+     val request_returned = Flipped(Valid(new RequestReturnedT(cmd_id_t.cloneType)))
+@@ -43,7 +41,6 @@ class DMACommandTracker[T <: Data](val nCmds: Int, val maxBytes: Int, tag_t: =>
+       val cmd_id = cmd_id_t.cloneType
+       val tag = tag_t.cloneType
+ 
+-      override def cloneType: this.type = new CmdCompletedT(cmd_id_t.cloneType, tag_t.cloneType).asInstanceOf[this.type]
+     }
+ 
+     val cmd_completed = Decoupled(new CmdCompletedT(cmd_id_t.cloneType, tag_t.cloneType))
+diff --git a/src/main/scala/gemmini/Im2Col.scala b/src/main/scala/gemmini/Im2Col.scala
+index 5088712c..9f559063 100644
+--- a/src/main/scala/gemmini/Im2Col.scala
++++ b/src/main/scala/gemmini/Im2Col.scala
+@@ -24,7 +24,6 @@ class Im2ColReadReq[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[
+   val weight_triple_bank = Bool()
+   val start_inputting = Bool() //start_inputting_a
+ 
+-  override def cloneType: Im2ColReadReq.this.type = new Im2ColReadReq(config).asInstanceOf[this.type]
+ 
+ }
+ 
+@@ -38,7 +37,6 @@ class Im2ColReadResp[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig
+   //added for sync
+   val im2col_delay = Bool()
+ 
+-  override def cloneType: Im2ColReadResp.this.type = new Im2ColReadResp(config).asInstanceOf[this.type]
+ 
+ }
+ 
+diff --git a/src/main/scala/gemmini/LocalAddr.scala b/src/main/scala/gemmini/LocalAddr.scala
+index b003fd7b..851adf46 100644
+--- a/src/main/scala/gemmini/LocalAddr.scala
++++ b/src/main/scala/gemmini/LocalAddr.scala
+@@ -79,5 +79,4 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
+     data := ~(0.U(maxAddrBits.W))
+   }
+ 
+-  override def cloneType: LocalAddr.this.type = new LocalAddr(sp_banks, sp_bank_entries, acc_banks, acc_bank_entries).asInstanceOf[this.type]
+ }
+diff --git a/src/main/scala/gemmini/MeshWithDelays.scala b/src/main/scala/gemmini/MeshWithDelays.scala
+index acab135d..60fa5b1c 100644
+--- a/src/main/scala/gemmini/MeshWithDelays.scala
++++ b/src/main/scala/gemmini/MeshWithDelays.scala
+@@ -14,7 +14,6 @@ class MeshWithDelaysReq[T <: Data: Arithmetic, TagT <: TagQueueTag with Data](ac
+   val tag = tagType
+   val flush = UInt(2.W) // TODO magic number
+ 
+-  override def cloneType: MeshWithDelaysReq.this.type = new MeshWithDelaysReq(accType, tagType, block_size).asInstanceOf[this.type]
+ }
+ 
+ class MeshWithDelaysResp[T <: Data: Arithmetic, TagT <: TagQueueTag with Data](outType: T, meshCols: Int, tileCols: Int, block_size: Int, tagType: TagT) extends Bundle {
+@@ -23,7 +22,6 @@ class MeshWithDelaysResp[T <: Data: Arithmetic, TagT <: TagQueueTag with Data](o
+   val tag = tagType
+   val last = Bool()
+ 
+-  override def cloneType: MeshWithDelaysResp.this.type = new MeshWithDelaysResp(outType, meshCols, tileCols, block_size, tagType).asInstanceOf[this.type]
+ }
+ 
+ // TODO Add io.out.ready back in. Before it was removed, it didn't work when banking, and it seemed to assume that SRAM outputs stay steady when ren is low
+@@ -217,7 +215,6 @@ class MeshWithDelays[T <: Data: Arithmetic, U <: TagQueueTag with Data]
+       tag.make_this_garbage()
+     }
+ 
+-    override def cloneType: TagWithIdAndTotalRows.this.type = (new TagWithIdAndTotalRows).asInstanceOf[this.type]
+   }
+ 
+   val matmul_id_of_output = wrappingAdd(matmul_id, Mux(io.req.bits.pe_control.dataflow === Dataflow.OS.id.U, 3.U, 2.U), max_simultaneous_matmuls)
+diff --git a/src/main/scala/gemmini/PE.scala b/src/main/scala/gemmini/PE.scala
+index 79944b72..94ce77bd 100644
+--- a/src/main/scala/gemmini/PE.scala
++++ b/src/main/scala/gemmini/PE.scala
+@@ -9,7 +9,6 @@ class PEControl[T <: Data : Arithmetic](accType: T) extends Bundle {
+   val propagate = UInt(1.W) // Which register should be propagated (and which should be accumulated)?
+   val shift = UInt(log2Up(accType.getWidth).W) // TODO this isn't correct for Floats
+ 
+-  override def cloneType: PEControl.this.type = new PEControl(accType).asInstanceOf[this.type]
+ }
+ 
+ // TODO update documentation
+diff --git a/src/main/scala/gemmini/ROB.scala b/src/main/scala/gemmini/ROB.scala
+index 4ee23f6a..58463791 100644
+--- a/src/main/scala/gemmini/ROB.scala
++++ b/src/main/scala/gemmini/ROB.scala
+@@ -17,7 +17,6 @@ class ROBIssue[T <: Data](cmd_t: T, rob_entries: Int) extends Bundle {
+ 
+   def fire(dummy: Int=0) = valid && ready
+ 
+-  override def cloneType: this.type = new ROBIssue(cmd_t, rob_entries).asInstanceOf[this.type]
+ }
+ 
+ // TODO we don't need to store the full command in here. We should be able to release the command directly into the relevant controller and only store the associated metadata in the ROB. This would reduce the size considerably
+diff --git a/src/main/scala/gemmini/Scratchpad.scala b/src/main/scala/gemmini/Scratchpad.scala
+index f9b6293f..c5e15f82 100644
+--- a/src/main/scala/gemmini/Scratchpad.scala
++++ b/src/main/scala/gemmini/Scratchpad.scala
+@@ -24,7 +24,6 @@ class ScratchpadMemReadRequest[U <: Data](local_addr_t: LocalAddr, scale_t_bits:
+   val cmd_id = UInt(8.W) // TODO don't use a magic number here
+   val status = new MStatus
+ 
+-  override def cloneType: this.type = new ScratchpadMemReadRequest(local_addr_t, scale_t_bits).asInstanceOf[this.type]
+ }
+ 
+ class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
+@@ -45,7 +44,6 @@ class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
+   val pool_en = Bool()
+   val store_en = Bool()
+ 
+-  override def cloneType: this.type = new ScratchpadMemWriteRequest(local_addr_t, scale_t_bits).asInstanceOf[this.type]
+ }
+ 
+ class ScratchpadMemWriteResponse extends Bundle {
+@@ -62,7 +60,6 @@ class ScratchpadReadMemIO[U <: Data](local_addr_t: LocalAddr, scale_t_bits: Int)
+   val req = Decoupled(new ScratchpadMemReadRequest(local_addr_t, scale_t_bits))
+   val resp = Flipped(Valid(new ScratchpadMemReadResponse))
+ 
+-  override def cloneType: this.type = new ScratchpadReadMemIO(local_addr_t, scale_t_bits).asInstanceOf[this.type]
+ }
+ 
+ // class ScratchpadWriteMemIO(val nBanks: Int, val nRows: Int, val acc_rows: Int)
+@@ -71,7 +68,6 @@ class ScratchpadWriteMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)
+   val req = Decoupled(new ScratchpadMemWriteRequest(local_addr_t, scale_t_bits))
+   val resp = Flipped(Valid(new ScratchpadMemWriteResponse))
+ 
+-  override def cloneType: this.type = new ScratchpadWriteMemIO(local_addr_t, scale_t_bits).asInstanceOf[this.type]
+ }
+ 
+ class ScratchpadReadReq(val n: Int) extends Bundle {
+diff --git a/src/main/scala/gemmini/SyncMem.scala b/src/main/scala/gemmini/SyncMem.scala
+index 799e45c5..43200015 100644
+--- a/src/main/scala/gemmini/SyncMem.scala
++++ b/src/main/scala/gemmini/SyncMem.scala
+@@ -10,7 +10,6 @@ class SinglePortedSyncMemIO[T <: Data](n: Int, t: T) extends Bundle {
+   val wen = Input(Bool())
+   val ren = Input(Bool())
+ 
+-  override def cloneType = (new SinglePortedSyncMemIO(n, t)).asInstanceOf[this.type]
+ }
+ 
+ class SinglePortSyncMem[T <: Data](n: Int, t: T) extends Module {
+diff --git a/src/main/scala/gemmini/TilerController.scala b/src/main/scala/gemmini/TilerController.scala
+index 87ebff98..f3275790 100644
+--- a/src/main/scala/gemmini/TilerController.scala
++++ b/src/main/scala/gemmini/TilerController.scala
+@@ -26,8 +26,6 @@ class TilerCmd(OTYPE_BITS_IDX: Int)
+   val repeating_bias = Bool()
+   val status         = new MStatus
+ 
+-  override def cloneType: this.type =
+-    (new TilerCmd(OTYPE_BITS_IDX)).asInstanceOf[this.type]
+ }
+ 
+ 
+diff --git a/src/main/scala/gemmini/Util.scala b/src/main/scala/gemmini/Util.scala
+index 511cfee2..6c2fc238 100644
+--- a/src/main/scala/gemmini/Util.scala
++++ b/src/main/scala/gemmini/Util.scala
+@@ -124,7 +124,6 @@ object Util {
+       bits
+     }
+ 
+-    override def cloneType: this.type = new UDValid(t.cloneType).asInstanceOf[this.type]
+   }
+ 
+   object UDValid {
+diff --git a/src/main/scala/gemmini/VectorScalarMultiplier.scala b/src/main/scala/gemmini/VectorScalarMultiplier.scala
+index d1cefcb3..554c80f9 100644
+--- a/src/main/scala/gemmini/VectorScalarMultiplier.scala
++++ b/src/main/scala/gemmini/VectorScalarMultiplier.scala
+@@ -12,7 +12,6 @@ class VectorScalarMultiplierReq[T <: Data, U <: Data, Tag <: Data](block_cols: I
+   val last: Bool = Bool()
+   val tag: Tag = tag_t.cloneType
+ 
+-  override def cloneType: VectorScalarMultiplierReq.this.type = new VectorScalarMultiplierReq(block_cols, t, u, tag_t).asInstanceOf[this.type]
+ }
+ 
+ class VectorScalarMultiplierResp[T <: Data, Tag <: Data](block_cols: Int, t: T, tag_t: Tag) extends Bundle {
+@@ -21,7 +20,6 @@ class VectorScalarMultiplierResp[T <: Data, Tag <: Data](block_cols: Int, t: T,
+   val last: Bool = Bool()
+   val tag: Tag = tag_t.cloneType
+ 
+-  override def cloneType: VectorScalarMultiplierResp.this.type = new VectorScalarMultiplierResp(block_cols, t, tag_t).asInstanceOf[this.type]
+ }
+ 
+ class DataWithIndex[T <: Data, U <: Data](t: T, u: U) extends Bundle {
+@@ -29,7 +27,6 @@ class DataWithIndex[T <: Data, U <: Data](t: T, u: U) extends Bundle {
+   val scale = u.cloneType
+   val id = UInt(2.W) // TODO hardcoded
+   val index = UInt()
+-  override def cloneType: DataWithIndex.this.type = new DataWithIndex(t, u).asInstanceOf[this.type]
+ }
+ 
+ class ScalePipe[T <: Data, U <: Data](t: T, mvin_scale_args: ScaleArguments[T, U]) extends Module {
+diff --git a/src/main/scala/gemmini/XactTracker.scala b/src/main/scala/gemmini/XactTracker.scala
+index efdd7636..da3f76f0 100644
+--- a/src/main/scala/gemmini/XactTracker.scala
++++ b/src/main/scala/gemmini/XactTracker.scala
+@@ -20,7 +20,6 @@ class XactTrackerEntry[U <: Data](maxShift: Int, spadWidth: Int, accWidth: Int,
+   val bytes_to_read = UInt(log2Up(maxReqBytes+1).W)
+   val cmd_id = UInt(log2Up(nCmds).W)
+ 
+-  override def cloneType: XactTrackerEntry.this.type = new XactTrackerEntry(maxShift, spadWidth, accWidth, spadRows, accRows, maxReqBytes, mvin_scale_t_bits, nCmds).asInstanceOf[this.type]
+ }
+ 
+ class XactTrackerAllocIO[U <: Data](nXacts: Int, maxShift: Int, spadWidth: Int, accWidth :Int,
+@@ -33,7 +32,6 @@ class XactTrackerAllocIO[U <: Data](nXacts: Int, maxShift: Int, spadWidth: Int,
+ 
+   def fire(dummy: Int = 0) = valid && ready
+ 
+-  override def cloneType: XactTrackerAllocIO.this.type = new XactTrackerAllocIO(nXacts, maxShift, spadWidth, accWidth, spadRows, accRows, maxReqBytes, mvin_scale_t_bits, nCmds).asInstanceOf[this.type]
+ }
+ 
+ class XactTrackerPeekIO[U <: Data](val nXacts: Int, val maxShift: Int, val spadWidth: Int, val accWidth: Int,
+diff --git a/src/main/scala/gemmini/ZeroWriter.scala b/src/main/scala/gemmini/ZeroWriter.scala
+index 5a30aad5..1b795205 100644
+--- a/src/main/scala/gemmini/ZeroWriter.scala
++++ b/src/main/scala/gemmini/ZeroWriter.scala
+@@ -11,7 +11,6 @@ class ZeroWriterReq[Tag <: Data](laddr_t: LocalAddr, max_cols: Int, tag_t: Tag)
+   val block_stride = UInt(16.W) // TODO magic number
+   val tag = tag_t
+ 
+-  override def cloneType: ZeroWriterReq.this.type = new ZeroWriterReq(laddr_t.cloneType, max_cols, tag_t.cloneType).asInstanceOf[this.type]
+ }
+ 
+ class ZeroWriterResp[Tag <: Data](laddr_t: LocalAddr, block_cols: Int, tag_t: Tag) extends Bundle {
+@@ -20,7 +19,6 @@ class ZeroWriterResp[Tag <: Data](laddr_t: LocalAddr, block_cols: Int, tag_t: Ta
+   val last = Bool()
+   val tag = tag_t
+ 
+-  override def cloneType: ZeroWriterResp.this.type = new ZeroWriterResp(laddr_t, block_cols, tag_t.cloneType).asInstanceOf[this.type]
+ }
+ 
+ class ZeroWriter[T <: Data, U <: Data, V <: Data, Tag <: Data](config: GemminiArrayConfig[T, U, V], tag_t: Tag)

@@ -1,0 +1,223 @@
+From 24e6b9b5e9da038920a140e1145750e179115ea0 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 19:24:54 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ sim/midas/src/main/scala/junctions/ReorderQueue.scala       | 6 ------
+ sim/midas/src/main/scala/junctions/nasti.scala              | 6 ------
+ sim/midas/src/main/scala/midas/core/Channel.scala           | 3 ---
+ sim/midas/src/main/scala/midas/core/Interfaces.scala        | 2 --
+ .../main/scala/midas/models/dram/BankConflictModel.scala    | 2 --
+ sim/midas/src/main/scala/midas/models/dram/DramCommon.scala | 3 ---
+ sim/midas/src/main/scala/midas/models/dram/EgressUnit.scala | 1 -
+ .../src/main/scala/midas/models/dram/LastLevelCache.scala   | 2 --
+ sim/midas/src/main/scala/midas/models/dram/Util.scala       | 1 -
+ sim/midas/src/main/scala/midas/widgets/Lib.scala            | 1 -
+ 10 files changed, 27 deletions(-)
+
+diff --git a/sim/midas/src/main/scala/junctions/ReorderQueue.scala b/sim/midas/src/main/scala/junctions/ReorderQueue.scala
+index 6ffa5bacd..dc78cc043 100644
+--- a/sim/midas/src/main/scala/junctions/ReorderQueue.scala
++++ b/sim/midas/src/main/scala/junctions/ReorderQueue.scala
+@@ -7,15 +7,11 @@ class ReorderQueueWrite[T <: Data](dType: T, tagWidth: Int) extends Bundle {
+   val data = dType.cloneType
+   val tag = UInt(width = tagWidth)
+ 
+-  override def cloneType =
+-    new ReorderQueueWrite(dType, tagWidth).asInstanceOf[this.type]
+ }
+ 
+ class ReorderEnqueueIO[T <: Data](dType: T, tagWidth: Int)
+   extends DecoupledIO(new ReorderQueueWrite(dType, tagWidth)) {
+ 
+-  override def cloneType =
+-    new ReorderEnqueueIO(dType, tagWidth).asInstanceOf[this.type]
+ }
+ 
+ class ReorderDequeueIO[T <: Data](dType: T, tagWidth: Int) extends Bundle {
+@@ -24,8 +20,6 @@ class ReorderDequeueIO[T <: Data](dType: T, tagWidth: Int) extends Bundle {
+   val data = dType.cloneType.asOutput
+   val matches = Bool(OUTPUT)
+ 
+-  override def cloneType =
+-    new ReorderDequeueIO(dType, tagWidth).asInstanceOf[this.type]
+ }
+ 
+ class ReorderQueue[T <: Data](dType: T, tagWidth: Int,
+diff --git a/sim/midas/src/main/scala/junctions/nasti.scala b/sim/midas/src/main/scala/junctions/nasti.scala
+index 291070632..074048df0 100644
+--- a/sim/midas/src/main/scala/junctions/nasti.scala
++++ b/sim/midas/src/main/scala/junctions/nasti.scala
+@@ -258,8 +258,6 @@ object NastiQueue {
+ class NastiArbiterIO(arbN: Int)(implicit p: Parameters) extends Bundle {
+   val master = Vec(arbN, new NastiIO).flip
+   val slave = new NastiIO
+-  override def cloneType =
+-    new NastiArbiterIO(arbN).asInstanceOf[this.type]
+ }
+ 
+ /** Arbitrate among arbN masters requesting to a single slave */
+@@ -409,8 +407,6 @@ class NastiErrorSlave(implicit p: Parameters) extends NastiModule {
+ class NastiRouterIO(nSlaves: Int)(implicit p: Parameters) extends Bundle {
+   val master = (new NastiIO).flip
+   val slave = Vec(nSlaves, new NastiIO)
+-  override def cloneType =
+-    new NastiRouterIO(nSlaves).asInstanceOf[this.type]
+ }
+ 
+ /** Take a single Nasti master and route its requests to various slaves
+@@ -575,8 +571,6 @@ class NastiInterconnectIO(val nMasters: Int, val nSlaves: Int)
+    * a master to the slaves. Hence why the declarations seem to be backwards. */
+   val masters = Vec(nMasters, new NastiIO).flip
+   val slaves = Vec(nSlaves, new NastiIO)
+-  override def cloneType =
+-    new NastiInterconnectIO(nMasters, nSlaves).asInstanceOf[this.type]
+ }
+ 
+ abstract class NastiInterconnect(implicit p: Parameters) extends NastiModule()(p) {
+diff --git a/sim/midas/src/main/scala/midas/core/Channel.scala b/sim/midas/src/main/scala/midas/core/Channel.scala
+index e345cc2a0..7bf1ed9ac 100644
+--- a/sim/midas/src/main/scala/midas/core/Channel.scala
++++ b/sim/midas/src/main/scala/midas/core/Channel.scala
+@@ -21,7 +21,6 @@ case object GenerateTokenIrrevocabilityAssertions extends Field[Boolean](false)
+ class PipeChannelIO[T <: ChLeafType](gen: T)(implicit p: Parameters) extends Bundle {
+   val in    = Flipped(Decoupled(gen))
+   val out   = Decoupled(gen)
+-  override def cloneType = new PipeChannelIO(gen)(p).asInstanceOf[this.type]
+ 
+ }
+ 
+@@ -106,7 +105,6 @@ class SimReadyValidIO[T <: Data](gen: T) extends Bundle {
+   val target = EnqIO(gen)
+   val fwd = new HostReadyValid
+   val rev = Flipped(new HostReadyValid)
+-  override def cloneType = new SimReadyValidIO(gen).asInstanceOf[this.type]
+ 
+   def generateFwdIrrevocabilityAssertions(suggestedName: Option[String] = None): Unit =
+     AssertTokenIrrevocable(fwd.hValid, Cat(target.valid, target.bits.asUInt), fwd.hReady, suggestedName)
+@@ -167,7 +165,6 @@ class ReadyValidChannelIO[T <: Data](gen: T)(implicit p: Parameters) extends Bun
+   val enq = Flipped(SimReadyValid(gen))
+   val deq = SimReadyValid(gen)
+   val targetReset = Flipped(Decoupled(Bool()))
+-  override def cloneType = new ReadyValidChannelIO(gen)(p).asInstanceOf[this.type]
+ }
+ 
+ class ReadyValidChannel[T <: Data](
+diff --git a/sim/midas/src/main/scala/midas/core/Interfaces.scala b/sim/midas/src/main/scala/midas/core/Interfaces.scala
+index 1c8343f07..43ad21b16 100644
+--- a/sim/midas/src/main/scala/midas/core/Interfaces.scala
++++ b/sim/midas/src/main/scala/midas/core/Interfaces.scala
+@@ -13,8 +13,6 @@ class HostDecoupledIO[+T <: Data](gen: T) extends Bundle
+   val hValid = Output(Bool())
+   val hBits  = gen.cloneType
+   def fire(): Bool = hReady && hValid
+-  override def cloneType: this.type =
+-    new HostDecoupledIO(gen).asInstanceOf[this.type]
+ }
+ 
+ /** Adds a ready-valid handshaking protocol to any interface.
+diff --git a/sim/midas/src/main/scala/midas/models/dram/BankConflictModel.scala b/sim/midas/src/main/scala/midas/models/dram/BankConflictModel.scala
+index d5f30b937..cdd1113e8 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/BankConflictModel.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/BankConflictModel.scala
+@@ -55,7 +55,6 @@ class BankConflictIO(cfg: BankConflictConfig)(implicit p: Parameters)
+ class BankQueueEntry(cfg: BankConflictConfig)(implicit p: Parameters) extends Bundle {
+   val xaction = new TransactionMetaData
+   val bankAddr = UInt(log2Ceil(cfg.maxBanks).W)
+-  override def cloneType = new BankQueueEntry(cfg)(p).asInstanceOf[this.type]
+ }
+ 
+ // Appends a target cycle at which this reference should be complete
+@@ -63,7 +62,6 @@ class BankConflictReference(cfg: BankConflictConfig)(implicit p: Parameters) ext
+   val reference = new BankQueueEntry(cfg)
+   val cycle = UInt(cfg.maxLatencyBits.W) // Indicates latency until doneness
+   val done = Bool() // Set high when the cycle count expires
+-  override def cloneType = new BankConflictReference(cfg)(p).asInstanceOf[this.type]
+ }
+ 
+ object BankConflictConstants {
+diff --git a/sim/midas/src/main/scala/midas/models/dram/DramCommon.scala b/sim/midas/src/main/scala/midas/models/dram/DramCommon.scala
+index cd56d4258..61c81de37 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/DramCommon.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/DramCommon.scala
+@@ -102,7 +102,6 @@ class DRAMProgrammableTimings extends Bundle with HasDRAMMASConstants with HasPr
+     }
+   }
+ 
+-  override def cloneType = new DRAMProgrammableTimings().asInstanceOf[this.type]
+ 
+ }
+ 
+@@ -326,7 +325,6 @@ class MASEntry(key: DRAMBaseConfig)(implicit p: Parameters) extends Bundle {
+     rank === rankAddr && bank === bankAddr && rowHit
+   }
+ 
+-  override def cloneType = new MASEntry(key)(p).asInstanceOf[this.type]
+ }
+ 
+ class FirstReadyFCFSEntry(key: DRAMBaseConfig)(implicit p: Parameters) extends MASEntry(key)(p) {
+@@ -337,7 +335,6 @@ class FirstReadyFCFSEntry(key: DRAMBaseConfig)(implicit p: Parameters) extends M
+   // and the entry isn't personally ready
+   def wantPRE(): Bool = !isReady && mayPRE // Don't need the dummy args
+   def wantACT(): Bool = !isReady
+-  override def cloneType = new FirstReadyFCFSEntry(key)(p).asInstanceOf[this.type]
+ }
+ 
+ // Tracks the state of a bank, including:
+diff --git a/sim/midas/src/main/scala/midas/models/dram/EgressUnit.scala b/sim/midas/src/main/scala/midas/models/dram/EgressUnit.scala
+index 43447aaa9..25827f778 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/EgressUnit.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/EgressUnit.scala
+@@ -72,7 +72,6 @@ class RATEntry(vIdWidth: Int, pIdWidth: Int) extends Bundle {
+     next.valid := false.B
+     head := false.B
+   }
+-  override def cloneType() = new RATEntry(vIdWidth, pIdWidth).asInstanceOf[this.type]
+ }
+ 
+ object RATEntry {
+diff --git a/sim/midas/src/main/scala/midas/models/dram/LastLevelCache.scala b/sim/midas/src/main/scala/midas/models/dram/LastLevelCache.scala
+index 27ef3f05a..95db24be6 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/LastLevelCache.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/LastLevelCache.scala
+@@ -43,7 +43,6 @@ class MSHR(llcKey: LLCParams)(implicit p: Parameters) extends NastiBundle()(p) {
+     xaction := new_xaction
+   }
+ 
+-  override def cloneType = new MSHR(llcKey)(p).asInstanceOf[this.type]
+ }
+ 
+ object MSHR {
+@@ -63,7 +62,6 @@ class BlockMetadata(tagBits: Int) extends Bundle {
+   val tag = UInt(tagBits.W)
+   val valid = Bool()
+   val dirty = Bool()
+-  override def cloneType = new BlockMetadata(tagBits).asInstanceOf[this.type]
+ }
+ 
+ class LLCProgrammableSettings(llcKey: LLCParams) extends Bundle
+diff --git a/sim/midas/src/main/scala/midas/models/dram/Util.scala b/sim/midas/src/main/scala/midas/models/dram/Util.scala
+index db5f2fee6..7115b0b3d 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/Util.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/Util.scala
+@@ -109,7 +109,6 @@ class DynamicLatencyPipeIO[T <: Data](gen: T, entries: Int, countBits: Int)
+   val latency = Input(UInt(countBits.W))
+   val tCycle = Input(UInt(countBits.W))
+ 
+-  override def cloneType = new DynamicLatencyPipeIO(gen, entries, countBits).asInstanceOf[this.type]
+ }
+ 
+ // I had to copy this code because critical fields are now private
+diff --git a/sim/midas/src/main/scala/midas/widgets/Lib.scala b/sim/midas/src/main/scala/midas/widgets/Lib.scala
+index 7e547a03f..8be8a38a8 100644
+--- a/sim/midas/src/main/scala/midas/widgets/Lib.scala
++++ b/sim/midas/src/main/scala/midas/widgets/Lib.scala
+@@ -386,7 +386,6 @@ object CRIO {
+ }
+ 
+ class DecoupledCRIO[+T <: Data](gen: T) extends DecoupledIO[T](gen) {
+-  override def cloneType: this.type = new DecoupledIO(gen).asInstanceOf[this.type]
+ }
+ object DecoupledCRIO {
+   def apply[T <: Data](gen: T): DecoupledCRIO[T] = new DecoupledCRIO(gen)

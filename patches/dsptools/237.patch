@@ -1,0 +1,87 @@
+From 4153c7b0bedc3562021dc1065ec7a7dd140b11d6 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:46:27 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ .../scala/dsptools/numbers/algebra_types/helpers/Sign.scala    | 1 -
+ .../scala/dsptools/numbers/chisel_concrete/DspComplex.scala    | 3 ---
+ .../dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala | 2 --
+ src/test/scala/examples/CaseClassBundleSpec.scala              | 2 --
+ src/test/scala/examples/SimpleDspModuleSpec.scala              | 1 -
+ 5 files changed, 9 deletions(-)
+
+diff --git a/src/main/scala/dsptools/numbers/algebra_types/helpers/Sign.scala b/src/main/scala/dsptools/numbers/algebra_types/helpers/Sign.scala
+index 049f196b..d372c507 100644
+--- a/src/main/scala/dsptools/numbers/algebra_types/helpers/Sign.scala
++++ b/src/main/scala/dsptools/numbers/algebra_types/helpers/Sign.scala
+@@ -39,7 +39,6 @@ sealed class Sign(zeroInit: Option[Boolean] = None, negInit: Option[Boolean] = N
+   // it's raised by an odd power
+   def **(that: UInt): Sign = Sign(this.zero, this.neg && that(0))
+ 
+-  override def cloneType = new Sign(zeroInit, negInit).asInstanceOf[this.type]
+ }
+ 
+ object Sign {
+diff --git a/src/main/scala/dsptools/numbers/chisel_concrete/DspComplex.scala b/src/main/scala/dsptools/numbers/chisel_concrete/DspComplex.scala
+index 9187a6c2..6c317150 100644
+--- a/src/main/scala/dsptools/numbers/chisel_concrete/DspComplex.scala
++++ b/src/main/scala/dsptools/numbers/chisel_concrete/DspComplex.scala
+@@ -70,9 +70,6 @@ class DspComplex[T <: Data:Ring](val real: T, val imag: T) extends Bundle {
+   // Uses implicits
+   def abssq(dummy: Int = 0): T = (real * real) + (imag * imag)
+ 
+-  override def cloneType: this.type = {
+-    new DspComplex(real.cloneType, imag.cloneType).asInstanceOf[this.type]
+-  }
+ 
+   def underlyingType(dummy: Int = 0): String = {
+     real match {
+diff --git a/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala b/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala
+index ebe9efe6..7e3cd74f 100644
+--- a/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala
++++ b/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala
+@@ -84,7 +84,6 @@ class DataTypeBundle[R <: Data:Real](genType: R, dataWidth: Width, binaryPoint:
+   val s = SInt(dataWidth)
+   val f = FixedPoint(dataWidth, binaryPoint)
+   val u = UInt(dataWidth)
+-  override def cloneType: this.type = new DataTypeBundle(genType, dataWidth, binaryPoint).asInstanceOf[this.type]
+ }
+ 
+ class Interface[R <: Data:Real](genShort: R, genLong: R, includeR: Boolean, p: TestParams) extends Bundle {
+@@ -110,7 +109,6 @@ class Interface[R <: Data:Real](genShort: R, genLong: R, includeR: Boolean, p: T
+   val vS = Vec(vecLen, SInt(smallW))
+   val vF = Vec(vecLen, FixedPoint(smallW, smallBP))
+ 
+-  override def cloneType: this.type = new Interface(genShort, genLong, includeR, p).asInstanceOf[this.type]
+ }
+ 
+ class SimpleIOModule[R <: Data:Real](genShort: R, genLong: R, val includeR: Boolean, val p: TestParams)
+diff --git a/src/test/scala/examples/CaseClassBundleSpec.scala b/src/test/scala/examples/CaseClassBundleSpec.scala
+index 2393eb4b..4cee6ba5 100644
+--- a/src/test/scala/examples/CaseClassBundleSpec.scala
++++ b/src/test/scala/examples/CaseClassBundleSpec.scala
+@@ -12,11 +12,9 @@ import org.scalatest.matchers.should.Matchers
+ //case class CaseClassBundle(a: SInt) extends Bundle
+ //case class CaseClassBundle(underlying: SInt) extends Bundle {
+   //  val underlying = gen.cloneType
+-  //  override def cloneType: this.type = new CaseClassBundle(underlying.cloneType).asInstanceOf[this.type]
+ //}
+ class CaseClassBundle(gen: SInt) extends Bundle {
+     val underlying = gen
+-    override def cloneType: this.type = new CaseClassBundle(underlying.cloneType).asInstanceOf[this.type]
+ }
+ 
+ class SimpleCaseClassModule(gen: SInt) extends Module {
+diff --git a/src/test/scala/examples/SimpleDspModuleSpec.scala b/src/test/scala/examples/SimpleDspModuleSpec.scala
+index 222d0cbd..91b07e55 100644
+--- a/src/test/scala/examples/SimpleDspModuleSpec.scala
++++ b/src/test/scala/examples/SimpleDspModuleSpec.scala
+@@ -25,7 +25,6 @@ class SimpleDspIo[T <: Data:RealBits](gen: T) extends Bundle {
+   val x = Input(gen.cloneType)
+   val y = Input(gen.cloneType)
+   val z = Output(gen.cloneType)
+-  override def cloneType: this.type = new SimpleDspIo(gen).asInstanceOf[this.type]
+ }
+ 
+ // Parameterized Chisel Module; takes in type parameters as explained above

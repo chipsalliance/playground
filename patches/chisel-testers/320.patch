@@ -1,0 +1,42 @@
+From e3b74b47a0132e48ff53e3fb1fb0e7c69a78bfec Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:43:16 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ src/test/scala/examples/PeekPokeBundleSpec.scala | 2 --
+ src/test/scala/examples/Router.scala             | 1 -
+ 2 files changed, 3 deletions(-)
+
+diff --git a/src/test/scala/examples/PeekPokeBundleSpec.scala b/src/test/scala/examples/PeekPokeBundleSpec.scala
+index e302c85..7f329bc 100644
+--- a/src/test/scala/examples/PeekPokeBundleSpec.scala
++++ b/src/test/scala/examples/PeekPokeBundleSpec.scala
+@@ -16,7 +16,6 @@ class PeekPokeBundleSpec extends AnyFlatSpec with Matchers {
+     val aBool = Bool()
+ 
+     // Since this bundle is defined within a class, we need an explicit cloneType method.
+-    override def cloneType: ABundle.this.type = new ABundle().asInstanceOf[ABundle.this.type]
+   }
+ 
+   object MyEnum extends ChiselEnum {
+@@ -31,7 +30,6 @@ class PeekPokeBundleSpec extends AnyFlatSpec with Matchers {
+    val anEnum = MyEnum()
+ 
+    // Since this bundle is defined within a class, we need an explicit cloneType method.
+-   override def cloneType: MyBundle.this.type = new MyBundle().asInstanceOf[MyBundle.this.type]
+  }
+ 
+   // A trivial circuit that copies its input to its output.
+diff --git a/src/test/scala/examples/Router.scala b/src/test/scala/examples/Router.scala
+index 5a32c95..182f582 100644
+--- a/src/test/scala/examples/Router.scala
++++ b/src/test/scala/examples/Router.scala
+@@ -35,7 +35,6 @@ class Packet extends Bundle {
+   * @param n is number of fanned outputs for the routed packet
+   */
+ class RouterIO(n: Int) extends Bundle {
+-//  override def cloneType           = new RouterIO(n).asInstanceOf[this.type]
+   val read_routing_table_request   = DeqIO(new ReadCmd())
+   val read_routing_table_response  = EnqIO(UInt(Router.addressWidth.W))
+   val load_routing_table_request   = DeqIO(new WriteCmd())

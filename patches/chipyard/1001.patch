@@ -1,0 +1,42 @@
+From c1af2937783fc3e7ecb15abb343445afd95512ca Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:12:54 +0800
+Subject: [PATCH] remove cloneType
+
+---
+ .../chipyard/src/main/scala/example/dsptools/GenericFIR.scala   | 2 --
+ .../src/main/scala/example/dsptools/StreamingPassthrough.scala  | 1 -
+ 2 files changed, 3 deletions(-)
+
+diff --git a/generators/chipyard/src/main/scala/example/dsptools/GenericFIR.scala b/generators/chipyard/src/main/scala/example/dsptools/GenericFIR.scala
+index ed16b25d1..0e94dae0f 100644
+--- a/generators/chipyard/src/main/scala/example/dsptools/GenericFIR.scala
++++ b/generators/chipyard/src/main/scala/example/dsptools/GenericFIR.scala
+@@ -26,7 +26,6 @@ class GenericFIRCellBundle[T<:Data:Ring](genIn:T, genOut:T) extends Bundle {
+   val data: T = genIn.cloneType
+   val carry: T = genOut.cloneType
+ 
+-  override def cloneType: this.type = GenericFIRCellBundle(genIn, genOut).asInstanceOf[this.type]
+ }
+ object GenericFIRCellBundle {
+   def apply[T<:Data:Ring](genIn:T, genOut:T): GenericFIRCellBundle[T] = new GenericFIRCellBundle(genIn, genOut)
+@@ -44,7 +43,6 @@ object GenericFIRCellIO {
+ class GenericFIRBundle[T<:Data:Ring](proto: T) extends Bundle {
+   val data: T = proto.cloneType
+ 
+-  override def cloneType: this.type = GenericFIRBundle(proto).asInstanceOf[this.type]
+ }
+ object GenericFIRBundle {
+   def apply[T<:Data:Ring](proto: T): GenericFIRBundle[T] = new GenericFIRBundle(proto)
+diff --git a/generators/chipyard/src/main/scala/example/dsptools/StreamingPassthrough.scala b/generators/chipyard/src/main/scala/example/dsptools/StreamingPassthrough.scala
+index 923f12e2d..99cf492a1 100644
+--- a/generators/chipyard/src/main/scala/example/dsptools/StreamingPassthrough.scala
++++ b/generators/chipyard/src/main/scala/example/dsptools/StreamingPassthrough.scala
+@@ -27,7 +27,6 @@ case object StreamingPassthroughKey extends Field[Option[StreamingPassthroughPar
+ class StreamingPassthroughBundle[T<:Data:Ring](proto: T) extends Bundle {
+     val data: T = proto.cloneType
+ 
+-    override def cloneType: this.type = StreamingPassthroughBundle(proto).asInstanceOf[this.type]
+ }
+ object StreamingPassthroughBundle {
+     def apply[T<:Data:Ring](proto: T): StreamingPassthroughBundle[T] = new StreamingPassthroughBundle(proto)
