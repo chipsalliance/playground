@@ -35,8 +35,7 @@ hwacha https://github.com/ucb-bar/hwacha/pull/33
 chipyard https://github.com/ucb-bar/chipyard/pull/1001  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/67  
 gemmini https://github.com/ucb-bar/gemmini/pull/150   
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2890  
-firesim https://github.com/firesim/firesim/pull/845  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2890    
 <!-- END-PATCH -->
 
 ## Why not Chipyard
