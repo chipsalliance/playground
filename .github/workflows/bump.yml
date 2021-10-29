@@ -3,10 +3,80 @@ on:
     - cron: '10 * * * *'
   push:
 jobs:
-  bump:
+  archlinux:
     if: github.repository == 'sequencer/playground'
     runs-on: ubuntu-latest
     container: archlinux/archlinux:latest
+    steps:
+      - name: Install dependencies
+        run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: '0'
+      - name: Coursier Cache
+        uses: coursier/cache-action@v5
+      - name: Init
+        run: |
+          make init
+      - name: Bump
+        id: bump
+        run: make bump
+      - name: Patch
+        run: |
+          make update-patches
+          make patch
+      - name: Check Mill Compile
+        run: make compile
+      - name: Check Sanity
+        run: make test
+  nix:
+    if: github.repository == 'sequencer/playground'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: '0'
+      - uses: cachix/install-nix-action@v14.1
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Coursier Cache
+        uses: coursier/cache-action@v5
+      - name: Init
+        uses: ZenithalHourlyRate/nix-shell-action@v3
+        with:
+          script: |
+            make init
+      - name: Bump
+        id: bump
+        uses: ZenithalHourlyRate/nix-shell-action@v3
+        with:
+          script: |
+            make bump
+      - name: Patch
+        uses: ZenithalHourlyRate/nix-shell-action@v3
+        with:
+          script: |
+            make update-patches
+            make patch
+      - name: Check Mill Compile
+        uses: ZenithalHourlyRate/nix-shell-action@v3
+        with:
+          script: |
+            make compile
+      - name: Check Sanity
+        uses: ZenithalHourlyRate/nix-shell-action@v3
+        with:
+          script: |
+            make test
+  bump:
+    if: github.repository == 'sequencer/playground' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    container: archlinux/archlinux:latest
+    needs:
+      - archlinux
+      - nix
     steps:
       - name: Install dependencies
         run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4
@@ -28,10 +98,6 @@ jobs:
         run: |
           make update-patches
           make patch
-      - name: Check Mill Compile
-        run: make compile
-      - name: Check Sanity
-        run: make test
       - name: Commit
         run: |
           make depatch
