@@ -54,7 +54,10 @@ So generally, this repo is the fast and cleanest way to start your Chisel projec
 You can use this template and start your own job by appending commits on it. GitHub Action will automatically bump all dependencies, you can merge or rebase `sequencer/master` to your branch.
 
 ## System Dependencies
-Currently, only support **Arch Linux, macOS and Debian sid**, you can PR your own distributions, like Fedora.  
+Currently, only support **Arch Linux, macOS, Debian sid and Nix**, you can PR your own distributions, like Fedora.
+
+Nix users may use `shell.nix` as provided.
+
 **Notice Ubuntu and CentOS is unacceptable, since they have a stale package repository, not possible use official package manager to install these requirements, if you insist using them, please install requirements below by your self.**
 * GNU Make
   - Arch Linux: make
@@ -90,6 +93,8 @@ Currently, only support **Arch Linux, macOS and Debian sid**, you can PR your ow
 
 ## SanityTests
 This package is the standalone tests to check is bumping correct or not, served as the unittest, this also can be a great example to illustrate usages.
+
+Nix users may use `shell.nix` as provided.
 
 **NOTICE: SanityTests also contains additional system dependencies:**
 **SanityTests do not support Mac, since LLVM package doesn't contain lld. **
