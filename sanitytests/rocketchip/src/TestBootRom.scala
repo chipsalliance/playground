@@ -12,9 +12,17 @@ class TestBootRom
           val elf = tmp / "bootrom.elf"
           val bin = tmp / "bootrom.bin"
           val img = tmp / "bootrom.img"
+          /*
+           * Infer clang executable name
+           * This is a hack for Nix
+           * In Nix, clang --target=riscv64 wont work
+           * only riscv64-unknown-linux-gnu-clang would work
+           */
+          val is_nix = os.proc("riscv64-unknown-linux-gnu-clang", "-v").call(check = false)
+          val clang = if (is_nix.exitCode != 0)  "clang" else "riscv64-unknown-linux-gnu-clang"
           // format: off
           proc(
-            "clang",
+            s"$clang",
             "--target=riscv64", "-march=rv64gc",
             "-mno-relax",
             "-static",
