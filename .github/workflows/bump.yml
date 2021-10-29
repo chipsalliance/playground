@@ -3,13 +3,76 @@ on:
     - cron: '10 * * * *'
   push:
 jobs:
-  bump:
+  archlinux:
     if: github.repository == 'sequencer/playground'
     runs-on: ubuntu-latest
     container: archlinux/archlinux:latest
     steps:
       - name: Install dependencies
         run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: '0'
+      - name: Coursier Cache
+        uses: coursier/cache-action@v5
+      - name: Init
+        run: |
+          make init
+      - name: Bump
+        id: bump
+        run: make bump
+      - name: Patch
+        run: |
+          make update-patches
+          make patch
+      - name: Check Mill Compile
+        run: make compile
+      - name: Check Sanity
+        run: make test
+  nixos:
+    if: github.repository == 'sequencer/playground'
+    runs-on: ubuntu-latest
+    container: nixos/nix:latest
+    steps:
+      - name: Use unstable channel
+        run: |
+          nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs
+          nix-channel --update
+          nix-shell
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: '0'
+      - name: Coursier Cache
+        uses: coursier/cache-action@v5
+      - name: Init
+        run: |
+          make init
+      - name: Bump
+        id: bump
+        run: make bump
+      - name: Patch
+        run: |
+          make update-patches
+          make patch
+      - name: Check Mill Compile
+        run: make compile
+      - name: Check Sanity
+        run: make test
+  bump:
+    if: github.repository == 'sequencer/playground'
+    runs-on: ubuntu-latest
+    container: nixos/nix:latest
+    needs:
+      - archlinux
+      - nixos
+    steps:
+      - name: Use unstable channel
+        run: |
+          nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs
+          nix-channel --update
+          nix-shell
       - uses: actions/checkout@v2
         with:
           submodules: 'true'
@@ -28,10 +91,6 @@ jobs:
         run: |
           make update-patches
           make patch
-      - name: Check Mill Compile
-        run: make compile
-      - name: Check Sanity
-        run: make test
       - name: Commit
         run: |
           make depatch
