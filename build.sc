@@ -294,7 +294,7 @@ object gemmini extends CommonModule with SbtModule {
   override def ivyDeps = Agg(
     ivys.breeze
   )
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, testchipip)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, testchipip, firesim.lib)
 }
 
 object nvdla extends CommonModule with SbtModule {
