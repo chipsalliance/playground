@@ -326,7 +326,16 @@ object sha3 extends CommonModule with SbtModule {
 
   override def millSourcePath = os.pwd / "dependencies" / "sha3"
 
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, iotesters, firesim.midas)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, mychiseltest, firesim.midas)
+}
+
+object ibex extends CommonModule with SbtModule {
+  // TODO: FIX
+  override def scalacOptions = Seq("-Xsource:2.11")
+
+  override def millSourcePath = os.pwd / "dependencies" / "ibex-wrapper"
+
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
 
 // I know it's quite strange, however UCB messly managed their dependency...
@@ -335,7 +344,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
   override def scalacOptions = Seq("-Xsource:2.11")
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex)
 
   object tracegen extends CommonModule with SbtModule {
     // TODO: FIX

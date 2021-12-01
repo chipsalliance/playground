@@ -104,3 +104,6 @@
 [submodule "dependencies/rocket-dsp-utils"]
 	path = dependencies/rocket-dsp-utils
 	url = git@github.com:ucb-bar/rocket-dsp-utils.git
+[submodule "dependencies/ibex-wrapper"]
+	path = dependencies/ibex-wrapper
+	url = git@github.com:ucb-bar/ibex-wrapper.git
