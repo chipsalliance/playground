@@ -10,7 +10,6 @@ import $file.dependencies.chisel3.build
 import $file.dependencies.firrtl.build
 import $file.dependencies.treadle.build
 import $file.dependencies.`chisel-testers2`.build
-import $file.dependencies.`maltese-smt`.build
 import $file.dependencies.`api-config-chipsalliance`.build
 import $file.dependencies.`berkeley-hardfloat`.build
 import $file.dependencies.`rocket-chip`.common
@@ -142,23 +141,6 @@ object mychiseltest extends dependencies.`chisel-testers2`.build.chiseltestCross
   def chisel3Module: Option[PublishModule] = Some(mychisel3)
 
   def treadleModule: Option[PublishModule] = Some(mytreadle)
-
-  def malteseModule: Option[PublishModule] = Some(mymaltese)
-}
-
-object mymaltese extends dependencies.`maltese-smt`.build.malteseCrossModule(ivys.sv) {
-  override def millSourcePath = os.pwd / "dependencies" / "maltese-smt"
-
-  def firrtlModule: Option[PublishModule] = Some(myfirrtl)
-
-  def treadleModule: Option[PublishModule] = Some(mytreadle)
-}
-
-object `firrtl-interpreter` extends CommonModule with SbtModule {
-  override def millSourcePath = os.pwd /  "dependencies" / "firrtl-interpreter"
-  override def ivyDeps = Agg(
-    ivys.jline
-  )
 }
 
 object iotesters extends CommonModule with SbtModule {
@@ -171,7 +153,12 @@ object iotesters extends CommonModule with SbtModule {
     ivys.scopt
  )
 
-  override def moduleDeps = super.moduleDeps ++ Seq(mytreadle, `firrtl-interpreter`)
+  override def moduleDeps = super.moduleDeps ++ Seq(mytreadle)
+
+  object test extends Tests {
+    def testFramework = "org.scalatest.tools.Framework"
+  }
+
 }
 
 object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
