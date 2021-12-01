@@ -1,0 +1,993 @@
+From 898004620b0497dfa9e866cc7c048219ce06cf25 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Wed, 1 Dec 2021 22:46:06 +0800
+Subject: [PATCH] refactor up iotester dependency.
+
+---
+ src/main/scala/dspblocks/TestIP.scala         | 138 +--------
+ .../rocketchip/amba/apb/APBMasterModel.scala  |  60 ----
+ .../amba/axi4/AXI4MasterModel.scala           | 268 ------------------
+ .../amba/axi4stream/AXI4StreamModel.scala     | 248 ----------------
+ .../rocketchip/tilelink/TestIP.scala          | 214 --------------
+ 5 files changed, 1 insertion(+), 927 deletions(-)
+ delete mode 100644 src/main/scala/freechips/rocketchip/amba/apb/APBMasterModel.scala
+ delete mode 100644 src/main/scala/freechips/rocketchip/amba/axi4/AXI4MasterModel.scala
+ delete mode 100644 src/main/scala/freechips/rocketchip/tilelink/TestIP.scala
+
+diff --git a/src/main/scala/dspblocks/TestIP.scala b/src/main/scala/dspblocks/TestIP.scala
+index e248ae2..4e31a14 100644
+--- a/src/main/scala/dspblocks/TestIP.scala
++++ b/src/main/scala/dspblocks/TestIP.scala
+@@ -6,11 +6,6 @@ import chisel3.experimental.FixedPoint
+ import chisel3.internal.firrtl.KnownBinaryPoint
+ import dsptools._
+ import dsptools.numbers._
+-import freechips.rocketchip.amba.apb.APBMasterModel
+-import freechips.rocketchip.amba.axi4.AXI4MasterModel
+-import freechips.rocketchip.tilelink.TLMasterModel
+-import spire.math.ConvertableFrom
+-import spire.implicits._
+ 
+ 
+ trait MemTester {
+@@ -18,135 +13,4 @@ trait MemTester {
+   def readAddr(addr: BigInt): BigInt
+   def writeAddr(addr: BigInt, value: BigInt): Unit
+   def writeAddr(addr: Int, value: Int): Unit = writeAddr(BigInt(addr), BigInt(value))
+-}
+-
+-trait TLMemTester extends TLMasterModel {
+-  def resetMem(): Unit = {
+-    tlReset()
+-  }
+-
+-  def readAddr(addr: BigInt): BigInt = {
+-    tlReadWord(addr)
+-  }
+-
+-  def writeAddr(addr: BigInt, value: BigInt): Unit = {
+-    tlWriteWord(addr, value)
+-  }
+-}
+-
+-trait APBMemTester extends APBMasterModel {
+-  def resetMem(): Unit = {
+-    apbReset()
+-  }
+-
+-  def readAddr(addr: BigInt): BigInt = {
+-    apbRead(addr)
+-  }
+-
+-  def writeAddr(addr: BigInt, value: BigInt): Unit = {
+-    apbWrite(addr, value)
+-  }
+-}
+-
+-trait AXI4MemTester extends AXI4MasterModel {
+-  def resetMem(): Unit = {
+-    axiReset()
+-  }
+-
+-  def readAddr(addr: BigInt): BigInt = {
+-    axiReadWord(addr)
+-  }
+-
+-  def writeAddr(addr: BigInt, value: BigInt): Unit = {
+-    axiWriteWord(addr, value)
+-  }
+-}
+-
+-/*
+-trait AHBMemTester[T <: MultiIOModule] extends AHBMasterModel[T] {
+-  def resetMem(): Unit = {
+-    ahbReset()
+-  }
+-
+-  def readAddr(addr: BigInt): BigInt = {
+-    ahbReadWord(addr)
+-  }
+-
+-  def writeAddr(addr: BigInt, value: BigInt): Unit = {
+-    ahbWriteWord(addr, value)
+-  }
+-}
+-*/
+-
+-
+-object PeekPokePackers {
+-  def signedToUnsigned(in: BigInt, width: Int): BigInt = {
+-    require(width >= 0)
+-    if (width == 0) return BigInt(0)
+-    if (in >= BigInt(0)) {
+-      in
+-    } else {
+-      (BigInt(1) << width) + in
+-    }
+-  }
+-  def unsignedToSigned(in: BigInt, width: Int): BigInt = {
+-    require(width >= 0)
+-    if (width == 0) return 0
+-    val msb = BigInt(1) << (width - 1)
+-    if (in < msb) {
+-      in
+-    } else {
+-      in - (msb << 1)
+-    }
+-  }
+-
+-  def pack[T <: Data, V : ConvertableFrom](value: V, gen: T): BigInt = gen match {
+-    case _:DspReal => DspTesterUtilities.doubleToBigIntBits(value.toDouble())
+-    case f:FixedPoint => f.binaryPoint match {
+-      case KnownBinaryPoint(bp) =>
+-        val bigIntValue = FixedPoint.toBigInt(value.toDouble(), bp)
+-        signedToUnsigned(bigIntValue, gen.getWidth)
+-      case _ => throw DspException("Must poke FixedPoint with known binary point")
+-    }
+-    case _: UInt => value.toBigInt
+-    case _: SInt => signedToUnsigned(value.toBigInt, gen.getWidth)
+-  }
+-
+-  def packDouble[T <: Data](value: Double, gen: T): BigInt = pack(value, gen)
+-  def packInt[T <: Data](value: Int, gen: T): BigInt = pack(value, gen)
+-  def packBigInt[T <: Data](value: BigInt, gen: T): BigInt = pack(value, gen)
+-
+-  def pack[T <: Data](value: Complex, gen: DspComplex[T]): BigInt = {
+-    val real = packDouble(value.real, gen.real)
+-    val imag = packDouble(value.imag, gen.imag)
+-    (real << gen.imag.getWidth) | imag
+-  }
+-
+-  def pack[T <: Data](value: Seq[Complex], gen: Seq[DspComplex[T]]): BigInt = {
+-    value.zip(gen).foldLeft(BigInt(0)) { case (bi, (elem, genElem)) =>
+-      (bi << genElem.getWidth) | pack(elem, genElem)
+-    }
+-  }
+-
+-  def unpackDouble[T <: Data](value: BigInt, gen: T): Double = gen match {
+-    case _:DspReal => DspTesterUtilities.bigIntBitsToDouble(value)
+-    case f:FixedPoint => f.binaryPoint match {
+-      case KnownBinaryPoint(b) => FixedPoint.toDouble(unsignedToSigned(value, f.getWidth), b)
+-      case _ => throw DspException("Must poke FixedPoint with known binary point")
+-    }
+-    case _:UInt => value.toDouble
+-    case _:SInt => unsignedToSigned(value, gen.getWidth).toDouble
+-  }
+-
+-  def unpack[T <: Data](value: BigInt, gen: DspComplex[T]): Complex = {
+-    val real = unpackDouble(value >> gen.imag.getWidth, gen.real)
+-    val imag = unpackDouble(value &  ((BigInt(1) << gen.imag.getWidth) - 1), gen.imag)
+-    Complex(real, imag)
+-  }
+-
+-  def unpack[T <: Data](values: Seq[BigInt], gen: Seq[DspComplex[T]]): Seq[Complex] = {
+-    values.zip(gen).map { case (v, g) => unpack(v, g) }
+-  }
+-
+-
+-}
++}
+\ No newline at end of file
+diff --git a/src/main/scala/freechips/rocketchip/amba/apb/APBMasterModel.scala b/src/main/scala/freechips/rocketchip/amba/apb/APBMasterModel.scala
+deleted file mode 100644
+index f48ad72..0000000
+--- a/src/main/scala/freechips/rocketchip/amba/apb/APBMasterModel.scala
++++ /dev/null
+@@ -1,60 +0,0 @@
+-// SPDX-License-Identifier: Apache-2.0
+-
+-package freechips.rocketchip.amba.apb
+-
+-import chisel3.MultiIOModule
+-import dsptools.tester.MemMasterModel
+-import freechips.rocketchip.amba.apb._
+-
+-trait APBMasterModel extends chisel3.iotesters.PeekPokeTester[MultiIOModule] with MemMasterModel {
+-  def memAPB: APBBundle
+-
+-  def apbReset(): Unit = {
+-    poke(memAPB.psel, 0)
+-    poke(memAPB.penable, 0)
+-  }
+-
+-  def apbWrite(addr: Int, data: Int): Unit =
+-    apbWrite(BigInt(addr), BigInt(data))
+-
+-  def memWriteWord(addr: BigInt, data: BigInt): Unit = apbWrite(addr, data)
+-  def apbWrite(addr: BigInt, data: BigInt): Unit = {
+-    var count = 0
+-    poke(memAPB.psel, 1)
+-    poke(memAPB.penable, 0)
+-    poke(memAPB.pwrite, 1)
+-    poke(memAPB.pwdata, data)
+-    poke(memAPB.paddr, addr)
+-    poke(memAPB.pstrb, 0xff)
+-    step(1)
+-    poke(memAPB.psel, 1)
+-    poke(memAPB.penable, 1)
+-    step(1)
+-    while (peek(memAPB.pready) == 0 && count < 1000) {
+-      step(1)
+-      count += 1
+-    }
+-    poke(memAPB.psel, 0)
+-    poke(memAPB.penable, 0)
+-  }
+-
+-  def memReadWord(addr: BigInt): BigInt = apbRead(addr)
+-  def apbRead(addr: Int): BigInt =
+-    apbRead(BigInt(addr))
+-
+-  def apbRead(addr: BigInt): BigInt = {
+-    poke(memAPB.psel, 1)
+-    poke(memAPB.penable, 0)
+-    poke(memAPB.pwrite, 0)
+-    poke(memAPB.paddr, addr)
+-    step(1)
+-    poke(memAPB.penable, 1)
+-    while (peek(memAPB.pready) == 0) {
+-      step(1)
+-    }
+-    poke(memAPB.psel, 0)
+-    poke(memAPB.penable, 0)
+-    peek(memAPB.prdata)
+-  }
+-}
+-
+diff --git a/src/main/scala/freechips/rocketchip/amba/axi4/AXI4MasterModel.scala b/src/main/scala/freechips/rocketchip/amba/axi4/AXI4MasterModel.scala
+deleted file mode 100644
+index a8e2300..0000000
+--- a/src/main/scala/freechips/rocketchip/amba/axi4/AXI4MasterModel.scala
++++ /dev/null
+@@ -1,268 +0,0 @@
+-package freechips.rocketchip.amba.axi4
+-
+-import chisel3._
+-import chisel3.iotesters.{PeekPokeTester, Pokeable}
+-import chisel3.util.IrrevocableIO
+-import dsptools.tester.MemMasterModel
+-import freechips.rocketchip.amba.axi4._
+-import freechips.rocketchip.util.BundleMap
+-
+-object AXI4MasterModel {
+-  case class AWChannel(
+-                        id: BigInt                = 0,
+-                        addr: BigInt              = 0,
+-                        len: BigInt               = 0,
+-                        size: BigInt              = 0,
+-                        burst: BigInt             = 0,
+-                        lock: BigInt              = 0,
+-                        cache: BigInt             = 0,
+-                        prot: BigInt              = 0,
+-                        qos: BigInt               = 0,
+-                        region: BigInt            = 0,
+-                        user: Map[String, BigInt] = Map()
+-                      )
+-  case class ARChannel(
+-                        id: BigInt                = 0,
+-                        addr: BigInt              = 0,
+-                        len: BigInt               = 0,
+-                        size: BigInt              = 0,
+-                        burst: BigInt             = 0,
+-                        lock: BigInt              = 0,
+-                        cache: BigInt             = 0,
+-                        prot: BigInt              = 0,
+-                        qos: BigInt               = 0,
+-                        region: BigInt            = 0,
+-                        user: Map[String, BigInt] = Map()
+-                      )
+-  case class WChannel(
+-                       data: BigInt = 0,
+-                       strb: BigInt = 0,
+-                       last: BigInt = 0
+-                     )
+-  case class RChannel(
+-                       id: BigInt                = 0,
+-                       data: BigInt              = 0,
+-                       resp: BigInt              = 0,
+-                       last: BigInt              = 0,
+-                       user: Map[String, BigInt] = Map()
+-                     )
+-  case class BChannel(
+-                       id: BigInt                = 0,
+-                       resp: BigInt              = 0,
+-                       user: Map[String, BigInt] = Map()
+-                     )
+-
+-  val BRESP_OKAY   = BigInt(0)
+-  val BRESP_EXOKAY = BigInt(1)
+-  val BRESP_SLVERR = BigInt(2)
+-  val BRESP_DECERR = BigInt(3)
+-
+-  val RRESP_OKAY   = BigInt(0)
+-  val RRESP_EXOKAY = BigInt(1)
+-  val RRESP_SLVERR = BigInt(2)
+-  val RRESP_DECERR = BigInt(3)
+-}
+-
+-trait AXI4MasterModel extends PeekPokeTester[MultiIOModule] with MemMasterModel {
+-  import AXI4MasterModel._
+-
+-  def memAXI: AXI4Bundle
+-
+-  def maxWait = 500
+-
+-  def fire(io: IrrevocableIO[_]): Boolean = {
+-    (peek(io.valid) != BigInt(0)) && (peek(io.ready) != BigInt(0))
+-  }
+-
+-  def pokeUser(user: BundleMap, values: Map[String, BigInt]): Unit = {
+-    for ( (k, v) <- values ) {
+-      user.elements.get(k) match {
+-        case Some(Pokeable(e)) =>
+-          poke(e, v)
+-        case Some(b: Bundle) =>
+-          poke(b, values)
+-        case Some(d) =>
+-          println(s"Don't know how to poke element $d")
+-        case None =>
+-          println(s"user field $k not found")
+-      }
+-    }
+-  }
+-
+-  def pokeAW(aw: AXI4BundleAW, value: AWChannel): Unit = {
+-    poke(aw.id,     value.id)
+-    poke(aw.addr,   value.addr)
+-    poke(aw.len,    value.len)
+-    poke(aw.size,   value.size)
+-    poke(aw.burst,  value.burst)
+-    poke(aw.lock,   value.lock)
+-    poke(aw.cache,  value.cache)
+-    poke(aw.prot,   value.prot)
+-    poke(aw.qos,    value.qos)
+-    // poke(aw., value.region)
+-    require(value.region == BigInt(0), s"region is optional and rocket-chip left it out. overriding the default value here with ${value.region} won't do anything")
+-    pokeUser(aw.user, value.user)
+-  }
+-
+-
+-  def pokeAR(ar: AXI4BundleAR, value: ARChannel): Unit = {
+-    poke(ar.id, value.id)
+-    poke(ar.addr, value.addr)
+-    poke(ar.len, value.len)
+-    poke(ar.size, value.size)
+-    poke(ar.burst, value.burst)
+-    poke(ar.lock, value.lock)
+-    poke(ar.cache, value.cache)
+-    poke(ar.prot, value.prot)
+-    poke(ar.qos,  value.qos)
+-    pokeUser(ar.user, value.user)
+-  }
+-
+-  def pokeW(w: AXI4BundleW, value: WChannel): Unit = {
+-    poke(w.data, value.data)
+-    poke(w.strb, value.strb)
+-    poke(w.last, value.last)
+-  }
+-
+-  def peekR(r: AXI4BundleR): RChannel = {
+-    RChannel(
+-      id   = peek(r.id),
+-      data = peek(r.data),
+-      resp = peek(r.resp),
+-      last = peek(r.last),
+-      user = r.user.elements.map { case (n: String, Pokeable(d)) => n -> peek(d) }
+-    )
+-  }
+-
+-  def peekB(b: AXI4BundleB): BChannel = {
+-    BChannel(
+-      id = peek(b.id),
+-      resp = peek(b.resp),
+-      user = b.user.elements.map { case (n: String, Pokeable(d)) => n -> peek(d) }
+-    )
+-  }
+-
+-  def memWriteWord(addr: BigInt, data: BigInt): Unit = axiWriteWord(addr, data)
+-  def axiWriteWord(addr: BigInt, data: BigInt): Unit = {
+-    val awChannel = AWChannel(
+-      addr = addr,
+-      size = 3        // 8 bytes
+-    )
+-    val wChannel  = WChannel(
+-      data = data,
+-      strb = 0xFF,    // 8 bytes
+-      last = true    // one word only
+-    )
+-
+-    // poke AW and W channels
+-    pokeAW(memAXI.aw.bits, awChannel)
+-    pokeW(memAXI.w.bits, wChannel)
+-
+-    var awFinished = false
+-    var wFinished = false
+-    var cyclesWaited = 0
+-
+-    poke(memAXI.aw.valid, 1)
+-    poke(memAXI.w.valid,  1)
+-
+-    while (!awFinished || !wFinished) {
+-      if (!awFinished) { awFinished = fire(memAXI.aw) }
+-      if (! wFinished) {  wFinished = fire(memAXI.w)  }
+-      require(cyclesWaited < maxWait || awFinished, s"Timeout waiting for AW to be ready ($maxWait cycles)")
+-      require(cyclesWaited < maxWait || wFinished,  s"Timeout waiting for W to be ready ($maxWait cycles)")
+-      // if (cyclesWaited >= maxWait) {
+-      //   return
+-      // }
+-      cyclesWaited += 1
+-      step(1)
+-      if (awFinished) { poke(memAXI.aw.valid, 0) }
+-      if ( wFinished) { poke(memAXI.w.valid,  0) }
+-    }
+-
+-    // wait for resp
+-    cyclesWaited = 0
+-    poke(memAXI.b.ready, 1)
+-    var bFinished = false
+-    var b = peekB(memAXI.b.bits)
+-
+-    while (!bFinished) {
+-      bFinished = peek(memAXI.b.valid) != BigInt(0)
+-      b = peekB(memAXI.b.bits)
+-      require(cyclesWaited < maxWait, s"Timeout waiting for B to be valid ($maxWait cycles)")
+-      step(1)
+-      cyclesWaited += 1
+-    }
+-
+-    poke(memAXI.b.ready, 0)
+-
+-    require(b.id == awChannel.id, s"Got bad id (${b.id} != ${awChannel.id})")
+-    require(b.resp == BRESP_OKAY, s"BRESP not OKAY (got ${b.resp}")
+-
+-  }
+-  def memReadWord(addr: BigInt) = axiReadWord(addr)
+-  def axiReadWord(addr: BigInt): BigInt = {
+-    val arChannel = ARChannel(
+-      addr = addr,
+-      size = 3        // 8 bytes
+-    )
+-
+-    pokeAR(memAXI.ar.bits, arChannel)
+-    poke(memAXI.ar.valid, 1)
+-    
+-    var cyclesWaited = 0
+-    var arFinished = false
+-
+-    while (!arFinished) {
+-      arFinished = peek(memAXI.ar.ready) != BigInt(0)
+-      require(cyclesWaited < maxWait, s"Timeout waiting for AR to be ready ($maxWait cycles)")
+-      /* if (cyclesWaited >= maxWait) {
+-        println(s"Timeout waiting for AR to be ready ($maxWait cycles)")
+-        arFinished = true
+-      } */
+-      step(1)
+-      cyclesWaited += 1
+-    }
+-
+-    poke(memAXI.ar.valid, 0)
+-    poke(memAXI.r.ready, 1)
+-    //step(1)
+-
+-    var rFinished = false
+-    cyclesWaited = 0
+-    var rChannel = peekR(memAXI.r.bits)
+-
+-    while (!rFinished) {
+-      poke(memAXI.ar.valid, 0)
+-      rFinished = peek(memAXI.r.valid) != BigInt(0)
+-      if (rFinished) {
+-        rChannel = peekR(memAXI.r.bits)
+-      }
+-      step(1)
+-      require(cyclesWaited < maxWait, s"Timeout waiting for R to be valid ($maxWait cycles)")
+-      /* if (cyclesWaited >= maxWait) {
+-        println(s"Timeout waiting for R to be ready ($maxWait cycles)")
+-        rFinished = true // hack hack hack
+-      } */
+-
+-      cyclesWaited += 1
+-    }
+-
+-    poke(memAXI.r.ready, 0)
+-
+-    require(rChannel.last != BigInt(0))
+-    require(rChannel.id == arChannel.id, s"Got id ${rChannel.id} instead of ${arChannel.id}")
+-    require(rChannel.resp == RRESP_OKAY, s"RRESP not OKAY (got ${rChannel.resp}")
+-    rChannel.data
+-  }
+-
+-  def axiReset(): Unit = {
+-    pokeAR(memAXI.ar.bits, ARChannel())
+-    pokeAW(memAXI.aw.bits, AWChannel())
+-    pokeW(memAXI.w.bits, WChannel())
+-    poke(memAXI.ar.valid, 0)
+-    poke(memAXI.aw.valid, 0)
+-    poke(memAXI.w.valid, 0)
+-    poke(memAXI.r.ready, 0)
+-    poke(memAXI.b.ready, 0)
+-  }
+-}
+diff --git a/src/main/scala/freechips/rocketchip/amba/axi4stream/AXI4StreamModel.scala b/src/main/scala/freechips/rocketchip/amba/axi4stream/AXI4StreamModel.scala
+index 7f681e3..3292391 100644
+--- a/src/main/scala/freechips/rocketchip/amba/axi4stream/AXI4StreamModel.scala
++++ b/src/main/scala/freechips/rocketchip/amba/axi4stream/AXI4StreamModel.scala
+@@ -2,7 +2,6 @@ package freechips.rocketchip.amba.axi4stream
+ 
+ import breeze.stats.distributions._
+ import chisel3.MultiIOModule
+-import chisel3.iotesters.PeekPokeTester
+ 
+ import scala.language.implicitConversions
+ 
+@@ -101,250 +100,3 @@ case class AXI4StreamTransactionExpect
+   id:   Option[BigInt]  = None,
+   dest: Option[BigInt]  = None
+ )
+-
+-
+-class AXI4StreamPeekPokeMaster(port: AXI4StreamBundle, tester: PeekPokeTester[_]) {
+-  protected var input: Seq[AXI4StreamTransaction] = Seq()
+-
+-  def addTransactions(in: Seq[AXI4StreamTransaction]): Unit = {
+-    input ++= in
+-  }
+-
+-  def step(): Unit = {
+-    import tester.{peek, poke}
+-    if (input.isEmpty) {
+-      poke(port.valid, 0)
+-    } else {
+-      val t = input.head
+-      poke(port.valid, 1)
+-      poke(port.bits.data, t.data)
+-      poke(port.bits.last, if (t.last) 1 else 0)
+-      if (port.bits.strb.getWidth > 0) {
+-        if (t.strb == -1) {
+-          val allOnes = (BigInt(1) << port.bits.strb.getWidth) - 1
+-          poke(port.bits.strb, allOnes)
+-        } else {
+-          poke(port.bits.strb, t.strb)
+-        }
+-      }
+-      if (port.bits.keep.getWidth > 0) {
+-        if (t.keep == -1) {
+-          val allOnes = (BigInt(1) << port.bits.keep.getWidth) - 1
+-          poke(port.bits.keep, allOnes)
+-        } else {
+-          poke(port.bits.keep, t.keep)
+-        }
+-      }
+-      if (port.bits.user.getWidth > 0) {
+-        poke(port.bits.user, t.user)
+-      }
+-      if (port.bits.id.getWidth > 0) {
+-        poke(port.bits.id,   t.id)
+-      }
+-      if (port.bits.dest.getWidth > 0) {
+-        poke(port.bits.dest, t.dest)
+-      }
+-      if (peek(port.ready) != BigInt(0)) {
+-        input = input.tail
+-      }
+-    }
+-  }
+-
+-  def complete(): Boolean = {
+-    input.isEmpty
+-  }
+-}
+-
+-
+-class AXI4StreamPeekPokeSlave(port: AXI4StreamBundle, tester: PeekPokeTester[_]) {
+-
+-  protected var output: Seq[AXI4StreamTransaction] = Seq()
+-  protected var expects: Seq[AXI4StreamTransactionExpect] = Seq()
+-
+-  def addExpects(expect: Seq[AXI4StreamTransactionExpect]): Unit = {
+-    expects ++= expect
+-  }
+-
+-  def getTransactions(): Seq[AXI4StreamTransaction] = {
+-    val toret = output
+-    output = Seq()
+-    toret
+-  }
+-
+-  def expect(port: AXI4StreamBundle, value: AXI4StreamTransactionExpect): Boolean = {
+-    import tester.{expect => texpect}
+-    value.data.forall(texpect(port.bits.data, _)) &&
+-      value.last.forall { x => texpect(port.bits.last, if (x) 1 else 0) } &&
+-      value.strb.forall(texpect(port.bits.strb, _)) &&
+-      value.keep.forall(texpect(port.bits.keep, _)) &&
+-      value.user.forall(texpect(port.bits.user, _)) &&
+-      value.id.forall(texpect(port.bits.id, _)) &&
+-      value.dest.forall(texpect(port.bits.dest, _))
+-  }
+-
+-  def step(): Unit = {
+-    import tester.{peek, poke}
+-    if (expects.isEmpty) {
+-      poke(port.ready, 0)
+-    } else {
+-      poke(port.ready, 1)
+-      if (peek(port.valid) != BigInt(0)) {
+-        expect(port, expects.head)
+-        expects = expects.tail
+-
+-        val data = if (port.params.hasData && port.params.n > 0) {
+-          peek(port.bits.data)
+-        } else {
+-          BigInt(0)
+-        }
+-        val last = peek(port.bits.last) != BigInt(0)
+-        val strb = if (port.params.hasStrb && port.params.n > 0) {
+-          peek(port.bits.strb)
+-        } else {
+-          BigInt(-1)
+-        }
+-        val keep = if (port.params.hasKeep && port.params.n > 0) {
+-          peek(port.bits.keep)
+-        } else {
+-          BigInt(-1)
+-        }
+-        val user = if (port.params.u > 0) {
+-          peek(port.bits.user)
+-        } else {
+-          BigInt(0)
+-        }
+-        val id = if (port.params.i > 0) {
+-          peek(port.bits.id)
+-        } else {
+-          BigInt(0)
+-        }
+-        val dest = if (port.params.d > 0) {
+-          peek(port.bits.dest)
+-        } else {
+-          BigInt(0)
+-        }
+-
+-        output +:= AXI4StreamTransaction(
+-          data = data,
+-          last = last,
+-          strb = strb,
+-          keep = keep,
+-          user = user,
+-          id   = id,
+-          dest = dest
+-        )
+-      }
+-    }
+-  }
+-
+-  def complete(): Boolean = {
+-    expects.isEmpty
+-  }
+-}
+-
+-trait AXI4StreamMasterModel extends PeekPokeTester[MultiIOModule] {
+-  protected var masters: Seq[AXI4StreamPeekPokeMaster] = Seq()
+-
+-  def resetMaster(port: AXI4StreamBundle): Unit = {
+-    poke(port.valid, 0)
+-  }
+-
+-  def bindMaster(port: AXI4StreamBundle): AXI4StreamPeekPokeMaster = {
+-    resetMaster(port)
+-    val master = new AXI4StreamPeekPokeMaster(port, this)
+-    masters +:= master
+-    master
+-  }
+-
+-  protected def stepMasters(): Unit = {
+-    masters.foreach(_.step())
+-  }
+-
+-  override def step(n: Int): Unit = {
+-    for (_ <- 0 until n) {
+-      stepMasters()
+-      super.step(1)
+-    }
+-  }
+-
+-  def mastersComplete(): Boolean = {
+-    masters.map(_.complete()).forall(x => x)
+-  }
+-
+-  def stepToCompletion(maxCycles: Int = 1000, silentFail: Boolean = false): Unit = {
+-    for (_ <- 0 until maxCycles) {
+-      if (mastersComplete()) {
+-        step(1)
+-        return
+-      } else {
+-        step(1)
+-      }
+-    }
+-    require(silentFail, s"slavesComplete: ${mastersComplete()}")
+-  }
+-}
+-
+-trait AXI4StreamSlaveModel extends PeekPokeTester[MultiIOModule] {
+-  protected var slaves: Seq[AXI4StreamPeekPokeSlave] = Seq()
+-
+-  def resetSlave(port: AXI4StreamBundle): Unit = {
+-    poke(port.ready, 0)
+-  }
+-
+-  def bindSlave(port: AXI4StreamBundle): AXI4StreamPeekPokeSlave = {
+-    resetSlave(port)
+-    val slave = new AXI4StreamPeekPokeSlave(port, this)
+-    slaves +:= slave
+-    slave
+-  }
+-
+-  protected def stepSlaves(): Unit = {
+-    slaves.foreach(_.step())
+-  }
+-
+-  override def step(n: Int): Unit = {
+-    for (_ <- 0 until n) {
+-      stepSlaves()
+-      super.step(1)
+-    }
+-  }
+-
+-  def stepToCompletion(maxCycles: Int = 1000, silentFail: Boolean = false): Unit = {
+-    for (_ <- 0 until maxCycles) {
+-      if (slavesComplete()) {
+-        step(1)
+-        return
+-      } else {
+-        step(1)
+-      }
+-    }
+-    require(silentFail, s"slavesComplete: ${slavesComplete()}")
+-  }
+-
+-  def slavesComplete(): Boolean = {
+-    slaves.map(_.complete()).forall(x => x)
+-  }
+-}
+-
+-trait AXI4StreamModel extends
+-  AXI4StreamSlaveModel with AXI4StreamMasterModel {
+-
+-  override def step(n: Int): Unit = {
+-    for (_ <- 0 until n) {
+-      stepMasters()
+-      super[AXI4StreamSlaveModel].step(1)
+-    }
+-  }
+-
+-  override def stepToCompletion(maxCycles: Int = 1000, silentFail: Boolean = false): Unit = {
+-    for (_ <- 0 until maxCycles) {
+-      if (slavesComplete() && mastersComplete()) {
+-        step(1)
+-        return
+-      } else {
+-        step(1)
+-      }
+-    }
+-    require(silentFail, s"stepToCompletion failed at $maxCycles cycles")
+-  }
+-}
+diff --git a/src/main/scala/freechips/rocketchip/tilelink/TestIP.scala b/src/main/scala/freechips/rocketchip/tilelink/TestIP.scala
+deleted file mode 100644
+index 5de2efe..0000000
+--- a/src/main/scala/freechips/rocketchip/tilelink/TestIP.scala
++++ /dev/null
+@@ -1,214 +0,0 @@
+-// SPDX-License-Identifier: Apache-2.0
+-
+-package freechips.rocketchip.tilelink
+-
+-import chisel3.MultiIOModule
+-import dsptools.tester.MemMasterModel
+-
+-object TLMasterModel {
+-  case class AChannel(
+-    opcode:  BigInt = 0, // PutFullData
+-    param:   BigInt = 0, // toT
+-    size:    BigInt = 2,
+-    source:  BigInt = 1,
+-    address: BigInt = 0,
+-    mask:    BigInt = 0xff,
+-    data:    BigInt = 0)
+-
+-  case class BChannel(
+-    opcode:  BigInt = 0,
+-    param:   BigInt = 0,
+-    size:    BigInt = 0,
+-    source:  BigInt = 0,
+-    address: BigInt = 0,
+-    mask:    BigInt = 0,
+-    data:    BigInt = 0)
+-
+-  case class CChannel(
+-    opcode:  BigInt = 0,
+-    param:   BigInt = 0,
+-    size:    BigInt = 0,
+-    source:  BigInt = 0,
+-    address: BigInt = 0,
+-    data:    BigInt = 0,
+-    corrupt:   Boolean = false)
+-
+-  case class DChannel(
+-    opcode:  BigInt = 0,
+-    param:   BigInt = 0,
+-    size:    BigInt = 0,
+-    source:  BigInt = 0,
+-    sink:    BigInt = 0,
+-    data:    BigInt = 0,
+-    corrupt:   Boolean = false)
+-
+-  case class EChannel(
+-    sink: BigInt = 0)
+-}
+-
+-//noinspection RedundantDefaultArgument
+-trait TLMasterModel extends chisel3.iotesters.PeekPokeTester[MultiIOModule] with MemMasterModel {
+-  import TLMasterModel._
+-
+-  def memTL: TLBundle
+-
+-  def tlReset(): Unit = {
+-    pokeA(AChannel())
+-    pokeC(CChannel())
+-    pokeE(EChannel())
+-    poke(memTL.a.valid, 0)
+-    poke(memTL.b.ready, 0)
+-    poke(memTL.c.valid, 0)
+-    poke(memTL.d.ready, 0)
+-    poke(memTL.e.valid, 0)
+-  }
+-
+-  def pokeA(a: AChannel): Unit = {
+-    poke(memTL.a.bits.opcode,  a.opcode)
+-    poke(memTL.a.bits.param,   a.param)
+-    poke(memTL.a.bits.size,    a.size)
+-    poke(memTL.a.bits.source,  a.source)
+-    poke(memTL.a.bits.address, a.address)
+-    poke(memTL.a.bits.mask,    a.mask)
+-    poke(memTL.a.bits.data,    a.data)
+-  }
+-
+-  def tlWriteA(a: AChannel): Unit = {
+-    poke(memTL.a.valid, 1)
+-    pokeA(a)
+-
+-    while(peek(memTL.a.ready) != BigInt(0)) {
+-      step(1)
+-    }
+-    step(1)
+-    poke(memTL.a.valid, 0)
+-  }
+-
+-  def peekB(): BChannel = {
+-
+-    val opcode  = peek(memTL.b.bits.opcode)
+-    val param   = peek(memTL.b.bits.param)
+-    val size    = peek(memTL.b.bits.size)
+-    val source  = peek(memTL.b.bits.source)
+-    val address = peek(memTL.b.bits.address)
+-    val mask    = peek(memTL.b.bits.mask)
+-    val data    = peek(memTL.b.bits.data)
+-
+-    BChannel(
+-      opcode=opcode,
+-      param=param,
+-      size=size,
+-      source=source,
+-      address=address,
+-      mask=mask,
+-      data=data)
+-  }
+-
+-  def tlReadB(): BChannel = {
+-    poke(memTL.b.ready, 1)
+-
+-    while (peek(memTL.b.valid) != BigInt(0)) {
+-      step(1)
+-    }
+-
+-    step(1)
+-
+-    poke(memTL.b.ready, 0)
+-
+-    peekB()
+-  }
+-
+-  def pokeC(c: CChannel): Unit = {
+-    poke(memTL.c.bits.opcode,  c.opcode)
+-    poke(memTL.c.bits.param,   c.param)
+-    poke(memTL.c.bits.size,    c.size)
+-    poke(memTL.c.bits.source,  c.source)
+-    poke(memTL.c.bits.address, c.address)
+-    poke(memTL.c.bits.data,    c.data)
+-    poke(memTL.c.bits.corrupt, c.corrupt)
+-
+-  }
+-
+-  def tlWriteC(c: CChannel): Unit = {
+-    poke(memTL.c.valid, 1)
+-    pokeC(c)
+-
+-    while(peek(memTL.c.ready) != BigInt(0)) {
+-      step(1)
+-    }
+-    step(1)
+-    poke(memTL.c.valid, 0)
+-  }
+-
+-  def peekD(): DChannel = {
+-    val opcode  = peek(memTL.d.bits.opcode)
+-    val param   = peek(memTL.d.bits.param)
+-    val size    = peek(memTL.d.bits.size)
+-    val source  = peek(memTL.d.bits.source)
+-    val sink    = peek(memTL.d.bits.sink)
+-    val data    = peek(memTL.d.bits.data)
+-    val corrupt = peek(memTL.d.bits.corrupt)
+-
+-    DChannel(
+-      opcode=opcode,
+-      param=param,
+-      size=size,
+-      source=source,
+-      sink=sink,
+-      data=data,
+-      corrupt = corrupt != BigInt(0))
+-  }
+-
+-  def tlReadD(): DChannel = {
+-    poke(memTL.d.ready, 1)
+-
+-    while (peek(memTL.d.valid) != BigInt(0)) {
+-      step(1)
+-    }
+-    val d = peekD()
+-    step(1)
+-
+-    poke(memTL.d.ready, 0)
+-    d
+-  }
+-
+-  def pokeE(e: EChannel): Unit = {
+-    poke(memTL.e.bits.sink,   e.sink)
+-  }
+-
+-  def tlWriteE(e: EChannel): Unit = {
+-    poke(memTL.e.valid, 1)
+-    pokeE(e)
+-
+-    while(peek(memTL.e.ready) != BigInt(0)) {
+-      step(1)
+-    }
+-    step(1)
+-    poke(memTL.e.valid, 0)
+-  }
+-
+-  def memWriteWord(addr: BigInt, data: BigInt): Unit = tlWriteWord(addr, data)
+-  def tlWriteWord(addr: BigInt, data: BigInt): Unit = {
+-    tlWriteA(AChannel(opcode = 0 /* PUT */, address=addr, data=data, mask = BigInt("1"*8, 2)))
+-    tlReadD()
+-  }
+-
+-  def tlWriteByte(addr: BigInt, data: Int): Unit = {
+-    tlWriteA(AChannel(opcode = 0 /* PUT */, address = addr, data=data, mask = BigInt("1"*8, 2)))
+-    tlReadD()
+-  }
+-
+-  def tlWriteBytes(addr: BigInt, data: Seq[Int]): Unit = {
+-    data.zipWithIndex.foreach { case (d, i) =>
+-      tlWriteByte(addr + i, d)
+-    }
+-  }
+-
+-  def memReadWord(addr: BigInt): BigInt = tlReadWord(addr)
+-  def tlReadWord(addr: BigInt): BigInt = {
+-    tlWriteA(AChannel(opcode = 4 /* GET */, address=addr))
+-    val d = tlReadD()
+-    d.data
+-  }
+-
+-}

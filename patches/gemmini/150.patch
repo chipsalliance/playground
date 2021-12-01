@@ -1,4 +1,4 @@
-From d7fc0c0bdaa6db06e9490a99fdd9fe5a6fabfa65 Mon Sep 17 00:00:00 2001
+From c98e70b5d13df63058a84a6a13a523ad0f23d884 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 20 Nov 2021 18:59:29 +0800
 Subject: [PATCH] remove cloneType
@@ -16,16 +16,17 @@ Subject: [PATCH] remove cloneType
  src/main/scala/gemmini/PE.scala               |  1 -
  .../scala/gemmini/ReservationStation.scala    |  1 -
  src/main/scala/gemmini/Scratchpad.scala       |  4 ----
+ src/main/scala/gemmini/SharedExtMem.scala     |  1 -
  src/main/scala/gemmini/SyncMem.scala          |  1 -
  src/main/scala/gemmini/TilerController.scala  |  2 --
  src/main/scala/gemmini/Util.scala             |  1 -
  .../gemmini/VectorScalarMultiplier.scala      |  3 ---
  src/main/scala/gemmini/XactTracker.scala      |  2 --
  src/main/scala/gemmini/ZeroWriter.scala       |  2 --
- 18 files changed, 63 deletions(-)
+ 19 files changed, 64 deletions(-)
 
 diff --git a/src/main/scala/gemmini/AccumulatorMem.scala b/src/main/scala/gemmini/AccumulatorMem.scala
-index 89a39182..557f5d01 100644
+index 8f3fbaf5..5b8425a7 100644
 --- a/src/main/scala/gemmini/AccumulatorMem.scala
 +++ b/src/main/scala/gemmini/AccumulatorMem.scala
 @@ -14,7 +14,6 @@ class AccumulatorReadReq[T <: Data](n: Int, shift_width: Int, scale_t: T) extend
@@ -58,23 +59,23 @@ index 89a39182..557f5d01 100644
 -  override def cloneType: this.type = new AccumulatorWriteReq(n, t).asInstanceOf[this.type]
  }
  
- class AccumulatorMemIO [T <: Data: Arithmetic, U <: Data](n: Int, t: Vec[Vec[T]], scale_t: U) extends Bundle {
-@@ -49,7 +45,6 @@ class AccumulatorMemIO [T <: Data: Arithmetic, U <: Data](n: Int, t: Vec[Vec[T]]
-   // val write = Flipped(new AccumulatorWriteIO(n, t))
-   val write = Flipped(Decoupled(new AccumulatorWriteReq(n, t)))
  
--  override def cloneType: this.type = new AccumulatorMemIO(n, t, scale_t).asInstanceOf[this.type]
+@@ -60,7 +56,6 @@ class AccumulatorMemIO [T <: Data: Arithmetic, U <: Data](n: Int, t: Vec[Vec[T]]
+     val sum = Input(t.cloneType)
+   }
+ 
+-  override def cloneType: this.type = new AccumulatorMemIO(n, t, scale_t, acc_sub_banks, use_shared_ext_mem).asInstanceOf[this.type]
  }
  
- class AccumulatorMem[T <: Data, U <: Data](
-@@ -124,7 +119,6 @@ class AccumulatorMem[T <: Data, U <: Data](
+ class AccPipe[T <: Data : Arithmetic](latency: Int, t: T)(implicit ev: Arithmetic[T]) extends Module {
+@@ -203,7 +198,6 @@ class AccumulatorMem[T <: Data, U <: Data](
          val data = Vec(mask_len, mask_elem)
          val mask = Vec(mask_len, Bool())
          val addr = UInt(log2Ceil(n/acc_sub_banks).W)
 -        override def cloneType: this.type = new W_Q_Entry(mask_len, mask_elem).asInstanceOf[this.type]
        }
+ 
        val w_q = Reg(Vec(nEntries, new W_Q_Entry(mask_len, mask_elem)))
-       for (e <- w_q) {
 diff --git a/src/main/scala/gemmini/AccumulatorScale.scala b/src/main/scala/gemmini/AccumulatorScale.scala
 index 5e4997f8..cc6865c6 100644
 --- a/src/main/scala/gemmini/AccumulatorScale.scala
@@ -113,10 +114,10 @@ index 5e4997f8..cc6865c6 100644
  
  class AccScalePipe[T <: Data : Arithmetic, U <: Data](t: T, rDataType: Vec[Vec[T]], scale_func: (T, U) => T, scale_t: U, latency: Int, has_nonlinear_activations: Boolean)(implicit ev: Arithmetic[T]) extends Module {
 diff --git a/src/main/scala/gemmini/Controller.scala b/src/main/scala/gemmini/Controller.scala
-index f1de9486..3b05af5d 100644
+index 3e74af93..f5a0bdd2 100644
 --- a/src/main/scala/gemmini/Controller.scala
 +++ b/src/main/scala/gemmini/Controller.scala
-@@ -17,7 +17,6 @@ class GemminiCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
+@@ -18,7 +18,6 @@ class GemminiCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
    val cmd = new RoCCCommand
    val rob_id = UDValid(UInt(log2Up(rob_entries).W))
  
@@ -173,10 +174,10 @@ index a687e918..84c7d56f 100644
  
      val cmd_completed = Decoupled(new CmdCompletedT(cmd_id_t.cloneType, tag_t.cloneType))
 diff --git a/src/main/scala/gemmini/GemminiISA.scala b/src/main/scala/gemmini/GemminiISA.scala
-index 554bcdeb..24aef01f 100644
+index c85b6816..ebafbced 100644
 --- a/src/main/scala/gemmini/GemminiISA.scala
 +++ b/src/main/scala/gemmini/GemminiISA.scala
-@@ -69,9 +69,6 @@ object GemminiISA {
+@@ -71,9 +71,6 @@ object GemminiISA {
      val num_cols = UInt(mvin_cols_bits.W)
      val _spacer0 = UInt((MVIN_RS2_ADDR_WIDTH - local_addr_t.getWidth).W)
      val local_addr = local_addr_t.cloneType
@@ -186,7 +187,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val MVOUT_RS2_ADDR_WIDTH = 32
-@@ -85,9 +82,6 @@ object GemminiISA {
+@@ -87,9 +84,6 @@ object GemminiISA {
      val num_cols = UInt(mvout_cols_bits.W)
      val _spacer0 = UInt((MVOUT_RS2_ADDR_WIDTH - local_addr_t.getWidth).W)
      val local_addr = local_addr_t.cloneType
@@ -196,7 +197,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val CONFIG_MVIN_RS1_UNUSED_WIDTH = 2
-@@ -106,9 +100,6 @@ object GemminiISA {
+@@ -108,9 +102,6 @@ object GemminiISA {
      val state_id = UInt(CONFIG_MVIN_RS1_STATE_ID_WIDTH.W)
      val shrink = UInt(CONFIG_MVIN_RS1_SHRINK_WIDTH.W)
      val _unused = UInt(CONFIG_MVIN_RS1_UNUSED_WIDTH.W)
@@ -206,7 +207,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val CONFIG_MVOUT_RS1_UNUSED_WIDTH = 2
-@@ -138,7 +129,6 @@ object GemminiISA {
+@@ -140,7 +131,6 @@ object GemminiISA {
      val activation = UInt(CONFIG_MVOUT_RS1_ACTIVATION_WIDTH.W)
      val _unused = UInt(CONFIG_MVOUT_RS1_UNUSED_WIDTH.W)
  
@@ -214,7 +215,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val CONFIG_MVOUT_RS2_ACC_SCALE_WIDTH = 32
-@@ -149,9 +139,6 @@ object GemminiISA {
+@@ -151,9 +141,6 @@ object GemminiISA {
      val acc_scale = UInt(acc_scale_bits.W)
      val _spacer0 = UInt((CONFIG_MVOUT_RS2_STRIDE_WIDTH - stride_bits).W)
      val stride = UInt(stride_bits.W)
@@ -224,7 +225,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val CONFIG_EX_RS1_CMD_TYPE_WIDTH = 2
-@@ -177,9 +164,6 @@ object GemminiISA {
+@@ -179,9 +166,6 @@ object GemminiISA {
      val activation = UInt(CONFIG_EX_RS1_ACTIVATION_WIDTH.W)
      val dataflow = UInt(CONFIG_EX_RS1_DATAFLOW_WIDTH.W)
      val cmd_type = UInt(CONFIG_EX_RS1_CMD_TYPE_WIDTH.W)
@@ -234,7 +235,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val CONFIG_EX_RS2_IN_SHIFT_WIDTH = 32
-@@ -191,7 +175,6 @@ object GemminiISA {
+@@ -193,7 +177,6 @@ object GemminiISA {
      val relu6_shift = UInt(CONFIG_EX_RS2_RELU6_SHIFT_WIDTH.W)
      val in_shift = UInt(CONFIG_EX_RS2_IN_SHIFT_WIDTH.W)
  
@@ -242,7 +243,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val PRELOAD_RS_ADDR_WIDTH = 32
-@@ -205,9 +188,6 @@ object GemminiISA {
+@@ -207,9 +190,6 @@ object GemminiISA {
      val num_cols = UInt(preload_cols_bits.W)
      val _spacer0 = UInt((PRELOAD_RS_ADDR_WIDTH - local_addr_t.getWidth).W)
      val local_addr = local_addr_t.cloneType
@@ -252,7 +253,7 @@ index 554bcdeb..24aef01f 100644
    }
  
    val COMPUTED_RS_ADDR_WIDTH = 32
-@@ -221,9 +201,6 @@ object GemminiISA {
+@@ -223,9 +203,6 @@ object GemminiISA {
      val num_cols = UInt(compute_cols_bits.W)
      val _spacer0 = UInt((COMPUTED_RS_ADDR_WIDTH - local_addr_t.getWidth).W)
      val local_addr = local_addr_t.cloneType
@@ -283,15 +284,17 @@ index 2c7f8cbf..a317902b 100644
  }
  
 diff --git a/src/main/scala/gemmini/LocalAddr.scala b/src/main/scala/gemmini/LocalAddr.scala
-index b003fd7b..851adf46 100644
+index cce6bcae..864d60f2 100644
 --- a/src/main/scala/gemmini/LocalAddr.scala
 +++ b/src/main/scala/gemmini/LocalAddr.scala
-@@ -79,5 +79,4 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
+@@ -79,7 +79,6 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
      data := ~(0.U(maxAddrBits.W))
    }
  
 -  override def cloneType: LocalAddr.this.type = new LocalAddr(sp_banks, sp_bank_entries, acc_banks, acc_bank_entries).asInstanceOf[this.type]
  }
+ 
+ object LocalAddr {
 diff --git a/src/main/scala/gemmini/MeshWithDelays.scala b/src/main/scala/gemmini/MeshWithDelays.scala
 index acab135d..60fa5b1c 100644
 --- a/src/main/scala/gemmini/MeshWithDelays.scala
@@ -345,10 +348,10 @@ index 929685f6..f61e654f 100644
  
  // TODO we don't need to store the full command in here. We should be able to release the command directly into the relevant controller and only store the associated metadata in the ROB. This would reduce the size considerably
 diff --git a/src/main/scala/gemmini/Scratchpad.scala b/src/main/scala/gemmini/Scratchpad.scala
-index e3289b7f..f64e2cce 100644
+index 0d76758d..d45bd37f 100644
 --- a/src/main/scala/gemmini/Scratchpad.scala
 +++ b/src/main/scala/gemmini/Scratchpad.scala
-@@ -24,7 +24,6 @@ class ScratchpadMemReadRequest[U <: Data](local_addr_t: LocalAddr, scale_t_bits:
+@@ -23,7 +23,6 @@ class ScratchpadMemReadRequest[U <: Data](local_addr_t: LocalAddr, scale_t_bits:
    val cmd_id = UInt(8.W) // TODO don't use a magic number here
    val status = new MStatus
  
@@ -356,7 +359,7 @@ index e3289b7f..f64e2cce 100644
  }
  
  class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
-@@ -45,7 +44,6 @@ class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
+@@ -44,7 +43,6 @@ class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
    val pool_en = Bool()
    val store_en = Bool()
  
@@ -364,15 +367,15 @@ index e3289b7f..f64e2cce 100644
  }
  
  class ScratchpadMemWriteResponse extends Bundle {
-@@ -62,7 +60,6 @@ class ScratchpadReadMemIO[U <: Data](local_addr_t: LocalAddr, scale_t_bits: Int)
+@@ -60,7 +58,6 @@ class ScratchpadReadMemIO[U <: Data](local_addr_t: LocalAddr, scale_t_bits: Int)
    val req = Decoupled(new ScratchpadMemReadRequest(local_addr_t, scale_t_bits))
    val resp = Flipped(Valid(new ScratchpadMemReadResponse))
  
 -  override def cloneType: this.type = new ScratchpadReadMemIO(local_addr_t, scale_t_bits).asInstanceOf[this.type]
  }
  
- // class ScratchpadWriteMemIO(val nBanks: Int, val nRows: Int, val acc_rows: Int)
-@@ -71,7 +68,6 @@ class ScratchpadWriteMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)
+ class ScratchpadWriteMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)
+@@ -68,7 +65,6 @@ class ScratchpadWriteMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)
    val req = Decoupled(new ScratchpadMemWriteRequest(local_addr_t, scale_t_bits))
    val resp = Flipped(Valid(new ScratchpadMemWriteResponse))
  
@@ -380,6 +383,18 @@ index e3289b7f..f64e2cce 100644
  }
  
  class ScratchpadReadReq(val n: Int) extends Bundle {
+diff --git a/src/main/scala/gemmini/SharedExtMem.scala b/src/main/scala/gemmini/SharedExtMem.scala
+index 9d0e1802..f3acdd2e 100644
+--- a/src/main/scala/gemmini/SharedExtMem.scala
++++ b/src/main/scala/gemmini/SharedExtMem.scala
+@@ -20,7 +20,6 @@ class ExtMemIO extends Bundle {
+ class ExtSpadMemIO(sp_banks: Int, acc_banks: Int, acc_sub_banks: Int) extends Bundle {
+   val spad = Vec(sp_banks, new ExtMemIO)
+   val acc = Vec(acc_banks, Vec(acc_sub_banks, new ExtMemIO))
+-  override def cloneType: this.type = new ExtSpadMemIO(sp_banks, acc_banks, acc_sub_banks).asInstanceOf[this.type]
+ }
+ 
+ 
 diff --git a/src/main/scala/gemmini/SyncMem.scala b/src/main/scala/gemmini/SyncMem.scala
 index 799e45c5..43200015 100644
 --- a/src/main/scala/gemmini/SyncMem.scala
@@ -418,7 +433,7 @@ index 511cfee2..6c2fc238 100644
  
    object UDValid {
 diff --git a/src/main/scala/gemmini/VectorScalarMultiplier.scala b/src/main/scala/gemmini/VectorScalarMultiplier.scala
-index d1cefcb3..554c80f9 100644
+index 05480e09..4d853216 100644
 --- a/src/main/scala/gemmini/VectorScalarMultiplier.scala
 +++ b/src/main/scala/gemmini/VectorScalarMultiplier.scala
 @@ -12,7 +12,6 @@ class VectorScalarMultiplierReq[T <: Data, U <: Data, Tag <: Data](block_cols: I
