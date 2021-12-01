@@ -6,7 +6,67 @@ You can add your own submodule in `build.sc`.
 For more information please visit [mill documentation](https://com-lihaoyi.github.io/mill/page/configuring-mill.html)
 after adding your own code, you can add your library to playground dependency, and re-index Intellij to add your own library.
 
+## Quick Start
+
+To use this repo as your Chisel development environment, simply follow the steps.
+
+1. Clone this repo;
+
+```bash
+git clone git@github.com:sequencer/playground.git
+```
+
+
+2. [Optional] Remove unused dependences to accelerate bsp compile in `build.sc` `playground.moduleDeps`;
+
+```bash
+cd playground # entry your project directory
+vim build.sc
+```
+```scala
+// build.sc
+
+// Original
+object playground extends CommonModule {
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, rocketdsputils, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities, mychiseltest)
+  ...
+}
+
+// Remove unused dependences, e.g.,
+object playground extends CommonModule {
+  override def moduleDeps = super.moduleDeps ++ Seq(mychiseltest)
+  ...
+}
+```
+
+
+3. Init and update dependences;
+
+```bash
+cd playground # entry your project directory
+make init     # init the submodules
+make patch    # using the correct patches for some repos
+```
+
+
+4. Generate IDE bsp;
+
+```bash
+make bsp
+```
+
+
+5. Open your IDE and wait bsp compile;
+
+```bash
+idea . # open IDEA at current directory
+```
+
+
+6. Enjory your development with playground :)
+
 ## IDE support
+
 For mill use
 ```bash
 mill mill.bsp.BSP/install
@@ -14,6 +74,7 @@ mill mill.bsp.BSP/install
 then open by your favorite IDE, which supports [BSP](https://build-server-protocol.github.io/) 
 
 ## Pending PRs
+
 Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
@@ -48,6 +109,11 @@ So generally, this repo is the fast and cleanest way to start your Chisel projec
 
 ## Always keep update-to-date
 You can use this template and start your own job by appending commits on it. GitHub Action will automatically bump all dependencies, you can merge or rebase `sequencer/master` to your branch.
+
+```bash
+cd playground # entry your project directory
+git rebase origin/master
+```
 
 ## System Dependencies
 Currently, only support **Arch Linux, macOS and Debian sid**, you can PR your own distributions, like Fedora.  
