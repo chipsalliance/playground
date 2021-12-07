@@ -1,7 +1,30 @@
-From c98e70b5d13df63058a84a6a13a523ad0f23d884 Mon Sep 17 00:00:00 2001
+From 4fff2cdd8ad2020ee9e009baabfc501367c9a0ad Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Tue, 7 Dec 2021 15:37:35 +0800
+Subject: [PATCH 1/2] fix toBool
+
+---
+ src/main/scala/gemmini/PixelRepeater.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/main/scala/gemmini/PixelRepeater.scala b/src/main/scala/gemmini/PixelRepeater.scala
+index 0413304e..9acc21cb 100644
+--- a/src/main/scala/gemmini/PixelRepeater.scala
++++ b/src/main/scala/gemmini/PixelRepeater.scala
+@@ -88,7 +88,7 @@ class PixelRepeater[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_cols
+       req.bits.pixel_repeats := io.req.bits.pixel_repeats - 1.U
+     }
+ 
+-    when(reset.toBool()) {
++    when(reset.asBool()) {
+       req.pop()
+     }
+   }
+
+From ddc54d9432d3675f804da78981f311fdd814ecd4 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 20 Nov 2021 18:59:29 +0800
-Subject: [PATCH] remove cloneType
+Subject: [PATCH 2/2] remove cloneType
 
 ---
  src/main/scala/gemmini/AccumulatorMem.scala   |  6 -----
@@ -9,13 +32,14 @@ Subject: [PATCH] remove cloneType
  src/main/scala/gemmini/Controller.scala       |  1 -
  src/main/scala/gemmini/DMA.scala              |  2 --
  .../scala/gemmini/DMACommandTracker.scala     |  3 ---
- src/main/scala/gemmini/GemminiISA.scala       | 23 -------------------
+ src/main/scala/gemmini/GemminiISA.scala       | 25 -------------------
  src/main/scala/gemmini/Im2Col.scala           |  2 --
  src/main/scala/gemmini/LocalAddr.scala        |  1 -
  src/main/scala/gemmini/MeshWithDelays.scala   |  3 ---
  src/main/scala/gemmini/PE.scala               |  1 -
+ src/main/scala/gemmini/PixelRepeater.scala    |  4 ---
  .../scala/gemmini/ReservationStation.scala    |  1 -
- src/main/scala/gemmini/Scratchpad.scala       |  4 ----
+ src/main/scala/gemmini/Scratchpad.scala       |  4 ---
  src/main/scala/gemmini/SharedExtMem.scala     |  1 -
  src/main/scala/gemmini/SyncMem.scala          |  1 -
  src/main/scala/gemmini/TilerController.scala  |  2 --
@@ -23,7 +47,7 @@ Subject: [PATCH] remove cloneType
  .../gemmini/VectorScalarMultiplier.scala      |  3 ---
  src/main/scala/gemmini/XactTracker.scala      |  2 --
  src/main/scala/gemmini/ZeroWriter.scala       |  2 --
- 19 files changed, 64 deletions(-)
+ 20 files changed, 70 deletions(-)
 
 diff --git a/src/main/scala/gemmini/AccumulatorMem.scala b/src/main/scala/gemmini/AccumulatorMem.scala
 index 8f3fbaf5..5b8425a7 100644
@@ -114,7 +138,7 @@ index 5e4997f8..cc6865c6 100644
  
  class AccScalePipe[T <: Data : Arithmetic, U <: Data](t: T, rDataType: Vec[Vec[T]], scale_func: (T, U) => T, scale_t: U, latency: Int, has_nonlinear_activations: Boolean)(implicit ev: Arithmetic[T]) extends Module {
 diff --git a/src/main/scala/gemmini/Controller.scala b/src/main/scala/gemmini/Controller.scala
-index 3e74af93..f5a0bdd2 100644
+index 74f23b4c..b5ea9461 100644
 --- a/src/main/scala/gemmini/Controller.scala
 +++ b/src/main/scala/gemmini/Controller.scala
 @@ -18,7 +18,6 @@ class GemminiCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
@@ -126,10 +150,10 @@ index 3e74af93..f5a0bdd2 100644
  
  class Gemmini[T <: Data : Arithmetic, U <: Data, V <: Data](val config: GemminiArrayConfig[T, U, V])
 diff --git a/src/main/scala/gemmini/DMA.scala b/src/main/scala/gemmini/DMA.scala
-index c1cb51ef..0e0466fa 100644
+index 5952be5b..f1a9a1a2 100644
 --- a/src/main/scala/gemmini/DMA.scala
 +++ b/src/main/scala/gemmini/DMA.scala
-@@ -30,7 +30,6 @@ class StreamReadRequest[U <: Data](spad_rows: Int, acc_rows: Int, mvin_scale_t_b
+@@ -31,7 +31,6 @@ class StreamReadRequest[U <: Data](spad_rows: Int, acc_rows: Int, mvin_scale_t_b
    val block_stride = UInt(16.W) // TODO magic number
    val cmd_id = UInt(8.W) // TODO magic number
  
@@ -137,7 +161,7 @@ index c1cb51ef..0e0466fa 100644
  }
  
  class StreamReadResponse[U <: Data](spadWidth: Int, accWidth: Int, spad_rows: Int, acc_rows: Int, aligned_to: Int, mvin_scale_t_bits: Int)
-@@ -47,7 +46,6 @@ class StreamReadResponse[U <: Data](spadWidth: Int, accWidth: Int, spad_rows: In
+@@ -50,7 +49,6 @@ class StreamReadResponse[U <: Data](spadWidth: Int, accWidth: Int, spad_rows: In
    val bytes_read = UInt(8.W) // TODO magic number
    val cmd_id = UInt(8.W) // TODO magic number
  
@@ -174,7 +198,7 @@ index a687e918..84c7d56f 100644
  
      val cmd_completed = Decoupled(new CmdCompletedT(cmd_id_t.cloneType, tag_t.cloneType))
 diff --git a/src/main/scala/gemmini/GemminiISA.scala b/src/main/scala/gemmini/GemminiISA.scala
-index c85b6816..ebafbced 100644
+index 0b28316d..9cb15ac9 100644
 --- a/src/main/scala/gemmini/GemminiISA.scala
 +++ b/src/main/scala/gemmini/GemminiISA.scala
 @@ -71,9 +71,6 @@ object GemminiISA {
@@ -197,25 +221,26 @@ index c85b6816..ebafbced 100644
    }
  
    val CONFIG_MVIN_RS1_UNUSED_WIDTH = 2
-@@ -108,9 +102,6 @@ object GemminiISA {
+@@ -111,9 +105,6 @@ object GemminiISA {
      val state_id = UInt(CONFIG_MVIN_RS1_STATE_ID_WIDTH.W)
      val shrink = UInt(CONFIG_MVIN_RS1_SHRINK_WIDTH.W)
      val _unused = UInt(CONFIG_MVIN_RS1_UNUSED_WIDTH.W)
 -
 -    override def cloneType: ConfigMvinRs1.this.type =
--      (new ConfigMvinRs1(scale_bits, stride_bits)).asInstanceOf[this.type]
+-      (new ConfigMvinRs1(scale_bits, stride_bits, pixel_repeat_bits)).asInstanceOf[this.type]
    }
  
    val CONFIG_MVOUT_RS1_UNUSED_WIDTH = 2
-@@ -140,7 +131,6 @@ object GemminiISA {
+@@ -142,8 +133,6 @@ object GemminiISA {
+     val pool_stride = UInt(CONFIG_MVOUT_RS1_MAX_POOLING_STRIDE_WIDTH.W)
      val activation = UInt(CONFIG_MVOUT_RS1_ACTIVATION_WIDTH.W)
      val _unused = UInt(CONFIG_MVOUT_RS1_UNUSED_WIDTH.W)
- 
+-
 -    override def cloneType: ConfigMvoutRs1.this.type = (new ConfigMvoutRs1).asInstanceOf[this.type]
    }
  
    val CONFIG_MVOUT_RS2_ACC_SCALE_WIDTH = 32
-@@ -151,9 +141,6 @@ object GemminiISA {
+@@ -154,9 +143,6 @@ object GemminiISA {
      val acc_scale = UInt(acc_scale_bits.W)
      val _spacer0 = UInt((CONFIG_MVOUT_RS2_STRIDE_WIDTH - stride_bits).W)
      val stride = UInt(stride_bits.W)
@@ -225,7 +250,7 @@ index c85b6816..ebafbced 100644
    }
  
    val CONFIG_EX_RS1_CMD_TYPE_WIDTH = 2
-@@ -179,9 +166,6 @@ object GemminiISA {
+@@ -182,9 +168,6 @@ object GemminiISA {
      val activation = UInt(CONFIG_EX_RS1_ACTIVATION_WIDTH.W)
      val dataflow = UInt(CONFIG_EX_RS1_DATAFLOW_WIDTH.W)
      val cmd_type = UInt(CONFIG_EX_RS1_CMD_TYPE_WIDTH.W)
@@ -235,15 +260,16 @@ index c85b6816..ebafbced 100644
    }
  
    val CONFIG_EX_RS2_IN_SHIFT_WIDTH = 32
-@@ -193,7 +177,6 @@ object GemminiISA {
+@@ -195,8 +178,6 @@ object GemminiISA {
+     val c_stride = UInt(CONFIG_EX_RS2_C_STRIDE_WIDTH.W)
      val relu6_shift = UInt(CONFIG_EX_RS2_RELU6_SHIFT_WIDTH.W)
      val in_shift = UInt(CONFIG_EX_RS2_IN_SHIFT_WIDTH.W)
- 
+-
 -    override def cloneType: ConfigExRs2.this.type = (new ConfigExRs2).asInstanceOf[this.type]
    }
  
    val PRELOAD_RS_ADDR_WIDTH = 32
-@@ -207,9 +190,6 @@ object GemminiISA {
+@@ -210,9 +191,6 @@ object GemminiISA {
      val num_cols = UInt(preload_cols_bits.W)
      val _spacer0 = UInt((PRELOAD_RS_ADDR_WIDTH - local_addr_t.getWidth).W)
      val local_addr = local_addr_t.cloneType
@@ -253,7 +279,7 @@ index c85b6816..ebafbced 100644
    }
  
    val COMPUTED_RS_ADDR_WIDTH = 32
-@@ -223,9 +203,6 @@ object GemminiISA {
+@@ -226,9 +204,6 @@ object GemminiISA {
      val num_cols = UInt(compute_cols_bits.W)
      val _spacer0 = UInt((COMPUTED_RS_ADDR_WIDTH - local_addr_t.getWidth).W)
      val local_addr = local_addr_t.cloneType
@@ -284,10 +310,10 @@ index 2c7f8cbf..a317902b 100644
  }
  
 diff --git a/src/main/scala/gemmini/LocalAddr.scala b/src/main/scala/gemmini/LocalAddr.scala
-index cce6bcae..864d60f2 100644
+index ac5a1f4a..1fc6bf00 100644
 --- a/src/main/scala/gemmini/LocalAddr.scala
 +++ b/src/main/scala/gemmini/LocalAddr.scala
-@@ -79,7 +79,6 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
+@@ -94,7 +94,6 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
      data := ~(0.U(maxAddrBits.W))
    }
  
@@ -296,7 +322,7 @@ index cce6bcae..864d60f2 100644
  
  object LocalAddr {
 diff --git a/src/main/scala/gemmini/MeshWithDelays.scala b/src/main/scala/gemmini/MeshWithDelays.scala
-index acab135d..60fa5b1c 100644
+index db40debf..f8fce367 100644
 --- a/src/main/scala/gemmini/MeshWithDelays.scala
 +++ b/src/main/scala/gemmini/MeshWithDelays.scala
 @@ -14,7 +14,6 @@ class MeshWithDelaysReq[T <: Data: Arithmetic, TagT <: TagQueueTag with Data](ac
@@ -315,7 +341,7 @@ index acab135d..60fa5b1c 100644
  }
  
  // TODO Add io.out.ready back in. Before it was removed, it didn't work when banking, and it seemed to assume that SRAM outputs stay steady when ren is low
-@@ -217,7 +215,6 @@ class MeshWithDelays[T <: Data: Arithmetic, U <: TagQueueTag with Data]
+@@ -216,7 +214,6 @@ class MeshWithDelays[T <: Data: Arithmetic, U <: TagQueueTag with Data]
        tag.make_this_garbage()
      }
  
@@ -324,7 +350,7 @@ index acab135d..60fa5b1c 100644
  
    val matmul_id_of_output = wrappingAdd(matmul_id, Mux(io.req.bits.pe_control.dataflow === Dataflow.OS.id.U, 3.U, 2.U), max_simultaneous_matmuls)
 diff --git a/src/main/scala/gemmini/PE.scala b/src/main/scala/gemmini/PE.scala
-index 79944b72..94ce77bd 100644
+index e10318a3..5f7205bd 100644
 --- a/src/main/scala/gemmini/PE.scala
 +++ b/src/main/scala/gemmini/PE.scala
 @@ -9,7 +9,6 @@ class PEControl[T <: Data : Arithmetic](accType: T) extends Bundle {
@@ -335,8 +361,30 @@ index 79944b72..94ce77bd 100644
  }
  
  // TODO update documentation
+diff --git a/src/main/scala/gemmini/PixelRepeater.scala b/src/main/scala/gemmini/PixelRepeater.scala
+index 9acc21cb..c37a6b28 100644
+--- a/src/main/scala/gemmini/PixelRepeater.scala
++++ b/src/main/scala/gemmini/PixelRepeater.scala
+@@ -15,8 +15,6 @@ class PixelRepeaterReq[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_c
+   val tag: Tag = tag_t.cloneType
+ 
+   assert(block_cols <= 255, "len must be longer")
+-
+-  override def cloneType: PixelRepeaterReq.this.type = new PixelRepeaterReq(t, laddr_t, block_cols, tag_t).asInstanceOf[this.type]
+ }
+ 
+ class PixelRepeaterResp[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_cols: Int, tag_t: Tag) extends Bundle {
+@@ -25,8 +23,6 @@ class PixelRepeaterResp[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_
+   val laddr: LocalAddr = laddr_t.cloneType
+   val last: Bool = Bool()
+   val tag: Tag = tag_t.cloneType
+-
+-  override def cloneType: PixelRepeaterResp.this.type = new PixelRepeaterResp(t, laddr_t, block_cols, tag_t).asInstanceOf[this.type]
+ }
+ 
+ class PixelRepeater[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_cols: Int, aligned_to: Int, tag_t: Tag, passthrough: Boolean) extends Module {
 diff --git a/src/main/scala/gemmini/ReservationStation.scala b/src/main/scala/gemmini/ReservationStation.scala
-index 929685f6..f61e654f 100644
+index 7135969f..df023c9c 100644
 --- a/src/main/scala/gemmini/ReservationStation.scala
 +++ b/src/main/scala/gemmini/ReservationStation.scala
 @@ -21,7 +21,6 @@ class ReservationStationIssue[T <: Data](cmd_t: T, rob_entries: Int) extends Bun
@@ -348,10 +396,10 @@ index 929685f6..f61e654f 100644
  
  // TODO we don't need to store the full command in here. We should be able to release the command directly into the relevant controller and only store the associated metadata in the ROB. This would reduce the size considerably
 diff --git a/src/main/scala/gemmini/Scratchpad.scala b/src/main/scala/gemmini/Scratchpad.scala
-index 0d76758d..d45bd37f 100644
+index 764b5d5a..ba0a9dd0 100644
 --- a/src/main/scala/gemmini/Scratchpad.scala
 +++ b/src/main/scala/gemmini/Scratchpad.scala
-@@ -23,7 +23,6 @@ class ScratchpadMemReadRequest[U <: Data](local_addr_t: LocalAddr, scale_t_bits:
+@@ -24,7 +24,6 @@ class ScratchpadMemReadRequest[U <: Data](local_addr_t: LocalAddr, scale_t_bits:
    val cmd_id = UInt(8.W) // TODO don't use a magic number here
    val status = new MStatus
  
@@ -359,7 +407,7 @@ index 0d76758d..d45bd37f 100644
  }
  
  class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
-@@ -44,7 +43,6 @@ class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
+@@ -45,7 +44,6 @@ class ScratchpadMemWriteRequest(local_addr_t: LocalAddr, scale_t_bits: Int)
    val pool_en = Bool()
    val store_en = Bool()
  
@@ -367,7 +415,7 @@ index 0d76758d..d45bd37f 100644
  }
  
  class ScratchpadMemWriteResponse extends Bundle {
-@@ -60,7 +58,6 @@ class ScratchpadReadMemIO[U <: Data](local_addr_t: LocalAddr, scale_t_bits: Int)
+@@ -61,7 +59,6 @@ class ScratchpadReadMemIO[U <: Data](local_addr_t: LocalAddr, scale_t_bits: Int)
    val req = Decoupled(new ScratchpadMemReadRequest(local_addr_t, scale_t_bits))
    val resp = Flipped(Valid(new ScratchpadMemReadResponse))
  
@@ -375,7 +423,7 @@ index 0d76758d..d45bd37f 100644
  }
  
  class ScratchpadWriteMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)
-@@ -68,7 +65,6 @@ class ScratchpadWriteMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)
+@@ -69,7 +66,6 @@ class ScratchpadWriteMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)
    val req = Decoupled(new ScratchpadMemWriteRequest(local_addr_t, scale_t_bits))
    val resp = Flipped(Valid(new ScratchpadMemWriteResponse))
  
@@ -421,10 +469,10 @@ index 87ebff98..f3275790 100644
  
  
 diff --git a/src/main/scala/gemmini/Util.scala b/src/main/scala/gemmini/Util.scala
-index 511cfee2..6c2fc238 100644
+index 907c4ad2..51dc1377 100644
 --- a/src/main/scala/gemmini/Util.scala
 +++ b/src/main/scala/gemmini/Util.scala
-@@ -124,7 +124,6 @@ object Util {
+@@ -140,7 +140,6 @@ object Util {
        bits
      }
  
@@ -433,10 +481,10 @@ index 511cfee2..6c2fc238 100644
  
    object UDValid {
 diff --git a/src/main/scala/gemmini/VectorScalarMultiplier.scala b/src/main/scala/gemmini/VectorScalarMultiplier.scala
-index 05480e09..4d853216 100644
+index 7cb8c14f..e6700d66 100644
 --- a/src/main/scala/gemmini/VectorScalarMultiplier.scala
 +++ b/src/main/scala/gemmini/VectorScalarMultiplier.scala
-@@ -12,7 +12,6 @@ class VectorScalarMultiplierReq[T <: Data, U <: Data, Tag <: Data](block_cols: I
+@@ -13,7 +13,6 @@ class VectorScalarMultiplierReq[T <: Data, U <: Data, Tag <: Data](block_cols: I
    val last: Bool = Bool()
    val tag: Tag = tag_t.cloneType
  
@@ -444,7 +492,7 @@ index 05480e09..4d853216 100644
  }
  
  class VectorScalarMultiplierResp[T <: Data, Tag <: Data](block_cols: Int, t: T, tag_t: Tag) extends Bundle {
-@@ -21,7 +20,6 @@ class VectorScalarMultiplierResp[T <: Data, Tag <: Data](block_cols: Int, t: T,
+@@ -22,7 +21,6 @@ class VectorScalarMultiplierResp[T <: Data, Tag <: Data](block_cols: Int, t: T,
    val last: Bool = Bool()
    val tag: Tag = tag_t.cloneType
  
@@ -452,7 +500,7 @@ index 05480e09..4d853216 100644
  }
  
  class DataWithIndex[T <: Data, U <: Data](t: T, u: U) extends Bundle {
-@@ -29,7 +27,6 @@ class DataWithIndex[T <: Data, U <: Data](t: T, u: U) extends Bundle {
+@@ -30,7 +28,6 @@ class DataWithIndex[T <: Data, U <: Data](t: T, u: U) extends Bundle {
    val scale = u.cloneType
    val id = UInt(2.W) // TODO hardcoded
    val index = UInt()
@@ -461,10 +509,10 @@ index 05480e09..4d853216 100644
  
  class ScalePipe[T <: Data, U <: Data](t: T, mvin_scale_args: ScaleArguments[T, U]) extends Module {
 diff --git a/src/main/scala/gemmini/XactTracker.scala b/src/main/scala/gemmini/XactTracker.scala
-index e8581a26..b55fe5c9 100644
+index 84821d4e..277626a1 100644
 --- a/src/main/scala/gemmini/XactTracker.scala
 +++ b/src/main/scala/gemmini/XactTracker.scala
-@@ -21,7 +21,6 @@ class XactTrackerEntry[U <: Data](maxShift: Int, spadWidth: Int, accWidth: Int,
+@@ -23,7 +23,6 @@ class XactTrackerEntry[U <: Data](maxShift: Int, spadWidth: Int, accWidth: Int,
    val bytes_to_read = UInt(log2Up(maxReqBytes+1).W)
    val cmd_id = UInt(log2Up(nCmds).W)
  
@@ -472,7 +520,7 @@ index e8581a26..b55fe5c9 100644
  }
  
  class XactTrackerAllocIO[U <: Data](nXacts: Int, maxShift: Int, spadWidth: Int, accWidth :Int,
-@@ -34,7 +33,6 @@ class XactTrackerAllocIO[U <: Data](nXacts: Int, maxShift: Int, spadWidth: Int,
+@@ -36,7 +35,6 @@ class XactTrackerAllocIO[U <: Data](nXacts: Int, maxShift: Int, spadWidth: Int,
  
    def fire(dummy: Int = 0) = valid && ready
  
