@@ -86,7 +86,6 @@ rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/4
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2889  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/565  
 dsptools https://github.com/ucb-bar/dsptools/pull/237  
-chisel-testers https://github.com/freechipsproject/chisel-testers/pull/320  
 berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/60  
 icenet https://github.com/firesim/icenet/pull/32  
 firesim https://github.com/firesim/firesim/pull/843  
@@ -95,7 +94,6 @@ chipyard https://github.com/ucb-bar/chipyard/pull/1001
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/67  
 gemmini https://github.com/ucb-bar/gemmini/pull/150  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2890  
-chisel-testers https://github.com/freechipsproject/chisel-testers/pull/323  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 sha3 https://github.com/ucb-bar/sha3/pull/33  
