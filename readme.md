@@ -93,13 +93,12 @@ firesim https://github.com/firesim/firesim/pull/843
 hwacha https://github.com/ucb-bar/hwacha/pull/33  
 chipyard https://github.com/ucb-bar/chipyard/pull/1001  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/67  
-gemmini https://github.com/ucb-bar/gemmini/pull/150   
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2890    
-chisel-testers https://github.com/freechipsproject/chisel-testers/pull/323
-dsptools https://github.com/ucb-bar/dsptools/pull/240
-rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6
-firesim https://github.com/firesim/firesim/pull/890
-sha3 https://github.com/ucb-bar/sha3/pull/33
+gemmini https://github.com/ucb-bar/gemmini/pull/150  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2890  
+chisel-testers https://github.com/freechipsproject/chisel-testers/pull/323  
+dsptools https://github.com/ucb-bar/dsptools/pull/240  
+rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
+sha3 https://github.com/ucb-bar/sha3/pull/33  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
