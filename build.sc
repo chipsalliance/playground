@@ -64,6 +64,7 @@ object myfirrtl extends dependencies.firrtl.build.firrtlCrossModule(ivys.sv) {
   )
   override val checkSystemAntlr4Version = false
   override val checkSystemProtocVersion = false
+  override val protocVersion = "3.19.2"
 }
 
 object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) {
@@ -141,24 +142,6 @@ object mychiseltest extends dependencies.`chisel-testers2`.build.chiseltestCross
   def chisel3Module: Option[PublishModule] = Some(mychisel3)
 
   def treadleModule: Option[PublishModule] = Some(mytreadle)
-}
-
-object iotesters extends CommonModule with SbtModule {
-  override def millSourcePath = os.pwd /  "dependencies" / "chisel-testers"
-
-  override def ivyDeps = Agg(
-    ivys.scalatest,
-    ivys.scalatestplus,
-    ivys.scalacheck,
-    ivys.scopt
- )
-
-  override def moduleDeps = super.moduleDeps ++ Seq(mytreadle)
-
-  object test extends Tests {
-    def testFramework = "org.scalatest.tools.Framework"
-  }
-
 }
 
 object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
@@ -256,8 +239,6 @@ object barstools extends CommonModule with SbtModule { bt =>
 
 object dsptools extends CommonModule with SbtModule { dt =>
   override def millSourcePath = os.pwd / "dependencies" / "dsptools"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(iotesters)
 
   override def ivyDeps = Agg(
     ivys.spire,
@@ -399,7 +380,7 @@ object spike extends Module {
   // ask make to cache file.
   def compile = T.persistent {
     os.proc(millSourcePath / "configure", "--prefix", "/usr").call(
-      T.ctx.dest, Map("CC" -> "clang", "CXX" -> "clang++")
+      T.ctx.dest, Map("CC" -> "clang", "CXX" -> "clang++", "LD" -> "ldd")
     )
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
     T.ctx.dest
