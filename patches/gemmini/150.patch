@@ -1,4 +1,4 @@
-From 4fff2cdd8ad2020ee9e009baabfc501367c9a0ad Mon Sep 17 00:00:00 2001
+From e63410586647eeee7ae9b221fc6990018a12372f Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Tue, 7 Dec 2021 15:37:35 +0800
 Subject: [PATCH 1/2] fix toBool
@@ -8,7 +8,7 @@ Subject: [PATCH 1/2] fix toBool
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/main/scala/gemmini/PixelRepeater.scala b/src/main/scala/gemmini/PixelRepeater.scala
-index 0413304e..9acc21cb 100644
+index e0eb4fd7..fd256edd 100644
 --- a/src/main/scala/gemmini/PixelRepeater.scala
 +++ b/src/main/scala/gemmini/PixelRepeater.scala
 @@ -88,7 +88,7 @@ class PixelRepeater[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_cols
@@ -21,7 +21,7 @@ index 0413304e..9acc21cb 100644
      }
    }
 
-From ddc54d9432d3675f804da78981f311fdd814ecd4 Mon Sep 17 00:00:00 2001
+From 6eed1e1c5ce6ccbfebf18fc9b4cedfd82daa2696 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 20 Nov 2021 18:59:29 +0800
 Subject: [PATCH 2/2] remove cloneType
@@ -310,7 +310,7 @@ index 2c7f8cbf..a317902b 100644
  }
  
 diff --git a/src/main/scala/gemmini/LocalAddr.scala b/src/main/scala/gemmini/LocalAddr.scala
-index ac5a1f4a..1fc6bf00 100644
+index d6e4f309..92e46ffc 100644
 --- a/src/main/scala/gemmini/LocalAddr.scala
 +++ b/src/main/scala/gemmini/LocalAddr.scala
 @@ -94,7 +94,6 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
@@ -362,7 +362,7 @@ index e10318a3..5f7205bd 100644
  
  // TODO update documentation
 diff --git a/src/main/scala/gemmini/PixelRepeater.scala b/src/main/scala/gemmini/PixelRepeater.scala
-index 9acc21cb..c37a6b28 100644
+index fd256edd..be88c75c 100644
 --- a/src/main/scala/gemmini/PixelRepeater.scala
 +++ b/src/main/scala/gemmini/PixelRepeater.scala
 @@ -15,8 +15,6 @@ class PixelRepeaterReq[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_c
@@ -370,16 +370,16 @@ index 9acc21cb..c37a6b28 100644
  
    assert(block_cols <= 255, "len must be longer")
 -
--  override def cloneType: PixelRepeaterReq.this.type = new PixelRepeaterReq(t, laddr_t, block_cols, tag_t).asInstanceOf[this.type]
+-  override def cloneType: PixelRepeaterReq.this.type = new PixelRepeaterReq(t, laddr_t, block_cols, aligned_to, tag_t).asInstanceOf[this.type]
  }
  
- class PixelRepeaterResp[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_cols: Int, tag_t: Tag) extends Bundle {
+ class PixelRepeaterResp[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_cols: Int, aligned_to: Int, tag_t: Tag) extends Bundle {
 @@ -25,8 +23,6 @@ class PixelRepeaterResp[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_
    val laddr: LocalAddr = laddr_t.cloneType
    val last: Bool = Bool()
    val tag: Tag = tag_t.cloneType
 -
--  override def cloneType: PixelRepeaterResp.this.type = new PixelRepeaterResp(t, laddr_t, block_cols, tag_t).asInstanceOf[this.type]
+-  override def cloneType: PixelRepeaterResp.this.type = new PixelRepeaterResp(t, laddr_t, block_cols, aligned_to, tag_t).asInstanceOf[this.type]
  }
  
  class PixelRepeater[T <: Data, Tag <: Data](t: T, laddr_t: LocalAddr, block_cols: Int, aligned_to: Int, tag_t: Tag, passthrough: Boolean) extends Module {
@@ -396,7 +396,7 @@ index 7135969f..df023c9c 100644
  
  // TODO we don't need to store the full command in here. We should be able to release the command directly into the relevant controller and only store the associated metadata in the ROB. This would reduce the size considerably
 diff --git a/src/main/scala/gemmini/Scratchpad.scala b/src/main/scala/gemmini/Scratchpad.scala
-index 764b5d5a..ba0a9dd0 100644
+index 2b97d5a9..f6bf62d6 100644
 --- a/src/main/scala/gemmini/Scratchpad.scala
 +++ b/src/main/scala/gemmini/Scratchpad.scala
 @@ -24,7 +24,6 @@ class ScratchpadMemReadRequest[U <: Data](local_addr_t: LocalAddr, scale_t_bits:
@@ -481,7 +481,7 @@ index 907c4ad2..51dc1377 100644
  
    object UDValid {
 diff --git a/src/main/scala/gemmini/VectorScalarMultiplier.scala b/src/main/scala/gemmini/VectorScalarMultiplier.scala
-index 7cb8c14f..e6700d66 100644
+index 271bf290..a334e6d6 100644
 --- a/src/main/scala/gemmini/VectorScalarMultiplier.scala
 +++ b/src/main/scala/gemmini/VectorScalarMultiplier.scala
 @@ -13,7 +13,6 @@ class VectorScalarMultiplierReq[T <: Data, U <: Data, Tag <: Data](block_cols: I

@@ -1,4 +1,4 @@
-From 63c40fe756c8b79ed03878d9eea7606ea5bce404 Mon Sep 17 00:00:00 2001
+From 48a448c56b0786804984ebc135c9e3d9f69e7609 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Kevin=20L=C3=A4ufer?= <laeufer@cs.berkeley.edu>
 Date: Mon, 27 Sep 2021 15:05:43 -0700
 Subject: [PATCH 1/2] cover: prefix with `property.` to avoid clashes with
@@ -242,7 +242,7 @@ index 5ccf1bc5818..61229b897ff 100644
      // Does the D stage want to perform a write?
      // It's important this reduce to false.B when eccBytes=1 && atomics=false && canCorrect=false
 
-From 9fc9b740fe9f5ec45fe7f287d96bc60960c8e6d7 Mon Sep 17 00:00:00 2001
+From 03513d0b3542a06ae7390602633dc769f456bb66 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Thu, 7 Oct 2021 20:00:52 +0800
 Subject: [PATCH 2/2] remove property
@@ -335,7 +335,7 @@ index 23520e7957e..ac3019696c2 100644
  
        def litOR(x: Bool, y: Bool) = if (x.isLit && x.litValue == 1) Bool(true) else x || y
 diff --git a/src/main/scala/rocket/CSR.scala b/src/main/scala/rocket/CSR.scala
-index 609e828f106..00438aa2b21 100644
+index 4e8dad31437..871daf8dab6 100644
 --- a/src/main/scala/rocket/CSR.scala
 +++ b/src/main/scala/rocket/CSR.scala
 @@ -10,7 +10,7 @@ import freechips.rocketchip.config.Parameters
@@ -347,7 +347,7 @@ index 609e828f106..00438aa2b21 100644
  import scala.collection.mutable.LinkedHashMap
  import Instructions._
  
-@@ -793,8 +793,8 @@ class CSRFile(
+@@ -1025,8 +1025,8 @@ class CSRFile(
    for (i <- 0 until supported_interrupts.getWidth) {
      val en = exception && (supported_interrupts & (BigInt(1) << i).U) =/= 0 && cause === (BigInt(1) << (xLen - 1)).U + i
      val delegable = (delegable_interrupts & (BigInt(1) << i).U) =/= 0
@@ -358,7 +358,7 @@ index 609e828f106..00438aa2b21 100644
    }
    for (i <- 0 until xLen) {
      val supported_exceptions: BigInt = 0x8fe |
-@@ -805,8 +805,8 @@ class CSRFile(
+@@ -1037,8 +1037,8 @@ class CSRFile(
      if (((supported_exceptions >> i) & 1) != 0) {
        val en = exception && cause === i
        val delegable = (delegable_exceptions & (BigInt(1) << i).U) =/= 0
@@ -369,7 +369,7 @@ index 609e828f106..00438aa2b21 100644
      }
    }
  
-@@ -860,9 +860,9 @@ class CSRFile(
+@@ -1106,9 +1106,9 @@ class CSRFile(
    }
    coverable_counters.foreach( {case (k, v) => {
      when (!k(11,10).andR) {  // Cover points for RW CSR registers
@@ -382,7 +382,7 @@ index 609e828f106..00438aa2b21 100644
    }})
  
 diff --git a/src/main/scala/rocket/DCache.scala b/src/main/scala/rocket/DCache.scala
-index a70b7aab5dc..52b0b91527d 100644
+index 18d0ed5bcec..951803adc36 100644
 --- a/src/main/scala/rocket/DCache.scala
 +++ b/src/main/scala/rocket/DCache.scala
 @@ -11,7 +11,7 @@ import freechips.rocketchip.diplomaticobjectmodel.model.OMSRAM
@@ -394,7 +394,7 @@ index a70b7aab5dc..52b0b91527d 100644
  import chisel3.{DontCare, WireInit, dontTouch, withClock}
  import chisel3.experimental.{chiselName, NoChiselNamePrefix}
  import chisel3.internal.sourceinfo.SourceInfo
-@@ -1103,38 +1103,38 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+@@ -1109,38 +1109,38 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
  
    if (usingDataScratchpad) {
      val data_error_cover = Seq(
@@ -451,7 +451,7 @@ index a70b7aab5dc..52b0b91527d 100644
        Seq(data_error_type, data_error_dirty, request_source, tag_error_cover),
        Seq(),
        "MemorySystem;;Cache Memory Bit Flip Cross Covers"))
-@@ -1159,7 +1159,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+@@ -1165,7 +1165,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
      (isWrite(req.cmd) && (req.cmd === M_PWR || req.size < log2Ceil(eccBytes)))
  
    def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
@@ -483,7 +483,7 @@ index 5d04aeda627..94914d0d54b 100644
    }
  }
 diff --git a/src/main/scala/rocket/Frontend.scala b/src/main/scala/rocket/Frontend.scala
-index 26822ad6ba9..07f87e8414e 100644
+index c175955185c..dc675898233 100644
 --- a/src/main/scala/rocket/Frontend.scala
 +++ b/src/main/scala/rocket/Frontend.scala
 @@ -12,7 +12,7 @@ import freechips.rocketchip.config._
@@ -495,7 +495,7 @@ index 26822ad6ba9..07f87e8414e 100644
  import freechips.rocketchip.diplomaticobjectmodel.logicaltree.ICacheLogicalTreeNode
  
  class FrontendReq(implicit p: Parameters) extends CoreBundle()(p) {
-@@ -341,7 +341,7 @@ class FrontendModule(outer: Frontend) extends LazyModuleImp(outer)
+@@ -362,7 +362,7 @@ class FrontendModule(outer: Frontend) extends LazyModuleImp(outer)
    def alignPC(pc: UInt) = ~(~pc | (coreInstBytes - 1))
  
    def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
@@ -565,7 +565,7 @@ index ce30bc3c145..0f02ee875a6 100644
 +  property.cover(error_cross_covers)
  }
 diff --git a/src/main/scala/rocket/PTW.scala b/src/main/scala/rocket/PTW.scala
-index a5e9b047c1f..3e91e60f547 100644
+index a97f1b102f2..a94115ad0b7 100644
 --- a/src/main/scala/rocket/PTW.scala
 +++ b/src/main/scala/rocket/PTW.scala
 @@ -13,7 +13,7 @@ import freechips.rocketchip.subsystem.CacheBlockBytes
@@ -577,17 +577,17 @@ index a5e9b047c1f..3e91e60f547 100644
  import freechips.rocketchip.diplomaticobjectmodel.model.OMSRAM
  import scala.collection.mutable.ListBuffer
  
-@@ -422,7 +422,7 @@ class PTW(n: Int)(implicit edge: TLEdgeOut, p: Parameters) extends CoreModule()(
+@@ -573,7 +573,7 @@ class PTW(n: Int)(implicit edge: TLEdgeOut, p: Parameters) extends CoreModule()(
    } // leaving gated-clock domain
  
    private def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =
 -    if (usingVM) cover(cond, s"PTW_$label", "MemorySystem;;" + desc)
 +    if (usingVM) property.cover(cond, s"PTW_$label", "MemorySystem;;" + desc)
- }
  
- /** Mix-ins for constructing tiles that might have a PTW */
+   private def makePTE(ppn: UInt, default: PTE) = {
+     val pte = Wire(init = default)
 diff --git a/src/main/scala/rocket/RocketCore.scala b/src/main/scala/rocket/RocketCore.scala
-index 4806e0a81c4..2b74604e815 100644
+index b5a551db1bd..d42a0713eca 100644
 --- a/src/main/scala/rocket/RocketCore.scala
 +++ b/src/main/scala/rocket/RocketCore.scala
 @@ -10,7 +10,7 @@ import chisel3.experimental.{chiselName, NoChiselNamePrefix}
@@ -599,7 +599,7 @@ index 4806e0a81c4..2b74604e815 100644
  import freechips.rocketchip.scie._
  import scala.collection.mutable.ArrayBuffer
  
-@@ -976,7 +976,7 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
+@@ -1019,7 +1019,7 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
  
    def coverExceptions(exceptionValid: Bool, cause: UInt, labelPrefix: String, coverCausesLabels: Seq[(Int, String)]): Unit = {
      for ((coverCause, label) <- coverCausesLabels) {
@@ -609,7 +609,7 @@ index 4806e0a81c4..2b74604e815 100644
    }
  
 diff --git a/src/main/scala/rocket/TLB.scala b/src/main/scala/rocket/TLB.scala
-index abb3aaaf738..53fec83e62a 100644
+index f7d51023628..9e75bd0d7a5 100644
 --- a/src/main/scala/rocket/TLB.scala
 +++ b/src/main/scala/rocket/TLB.scala
 @@ -12,7 +12,7 @@ import freechips.rocketchip.diplomacy.RegionType
@@ -621,7 +621,7 @@ index abb3aaaf738..53fec83e62a 100644
  import freechips.rocketchip.devices.debug.DebugModuleKey
  import chisel3.internal.sourceinfo.SourceInfo
  
-@@ -404,7 +404,7 @@ class TLB(instruction: Boolean, lgMaxSize: Int, cfg: TLBConfig)(implicit edge: T
+@@ -511,7 +511,7 @@ class TLB(instruction: Boolean, lgMaxSize: Int, cfg: TLBConfig)(implicit edge: T
    }
  
    def ccover(cond: Bool, label: String, desc: String)(implicit sourceInfo: SourceInfo) =

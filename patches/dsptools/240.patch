@@ -1,8 +1,8 @@
-From 934aa2dfbb19c5344e9258dd95bcc9920cea8c2f Mon Sep 17 00:00:00 2001
+From 01dfff675070ea2cd2bc8d207743f7dba530ded7 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Wed, 1 Dec 2021 21:56:22 +0800
-Subject: [PATCH] remove legacy tests which has been broken by Chisel/FIRRTL
- x.5.
+Subject: [PATCH 1/3] remove legacy tests which has been broken by
+ Chisel/FIRRTL x.5.
 
 ---
  src/main/scala/dsptools/Driver.scala          |  93 -----
@@ -26,7 +26,7 @@ Subject: [PATCH] remove legacy tests which has been broken by Chisel/FIRRTL
 
 diff --git a/src/main/scala/dsptools/Driver.scala b/src/main/scala/dsptools/Driver.scala
 deleted file mode 100644
-index e776362e..00000000
+index cee6cd55..00000000
 --- a/src/main/scala/dsptools/Driver.scala
 +++ /dev/null
 @@ -1,93 +0,0 @@
@@ -100,7 +100,7 @@ index e776362e..00000000
 -      blackBoxFactories = optionsManager.treadleOptions.blackBoxFactories :+ new TreadleDspRealFactory
 -    )
 -
--    logger.Logger.makeScope(optionsManager) {
+-    logger.LoggerCompatibility.makeScope(optionsManager) {
 -      val chiselResult: ChiselExecutionResult = iotesters.DriverCompatibility.execute(optionsManager, dutGenerator)
 -      chiselResult match {
 -        case iotesters.DriverCompatibility.ChiselExecutionSuccess(_, emitted, _) =>
@@ -504,10 +504,10 @@ index 3a0fcee0..00000000
 -  }
 -}
 diff --git a/src/main/scala/dsptools/numbers/chisel_concrete/DspReal.scala b/src/main/scala/dsptools/numbers/chisel_concrete/DspReal.scala
-index e6ea13b4..5c8f042b 100644
+index e9ebf902..1de76f22 100644
 --- a/src/main/scala/dsptools/numbers/chisel_concrete/DspReal.scala
 +++ b/src/main/scala/dsptools/numbers/chisel_concrete/DspReal.scala
-@@ -116,9 +116,10 @@ class DspReal(val lit: Option[BigInt] = None) extends Bundle {
+@@ -114,9 +114,10 @@ class DspReal() extends Bundle {
    def abs(): DspReal = Mux(this < DspReal(0.0), DspReal(0.0) - this, this)
  
    // Assumes you're using chisel testers
@@ -1398,3 +1398,509 @@ index 8f901c86..00000000
 -  }
 -
 -}
+
+From 8dabea209d34bed4d35b85912aa4aa9ddfb4a0ee Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Fri, 7 Jan 2022 18:02:43 +0800
+Subject: [PATCH 2/3] remove tests
+
+---
+ .../dsptools/dspmath/Factorization.scala      | 48 -------------------
+ 1 file changed, 48 deletions(-)
+
+diff --git a/src/main/scala/dsptools/dspmath/Factorization.scala b/src/main/scala/dsptools/dspmath/Factorization.scala
+index eb578ad5..bda9b5bf 100644
+--- a/src/main/scala/dsptools/dspmath/Factorization.scala
++++ b/src/main/scala/dsptools/dspmath/Factorization.scala
+@@ -86,51 +86,3 @@ case class Factorization(supportedRadsUnsorted: Seq[Seq[Int]]) {
+ 
+ }
+ 
+-class FactorizationSpec extends AnyFlatSpec with Matchers {
+-
+-  val testSupportedRads = Seq(Seq(4, 2), Seq(3), Seq(5), Seq(7))
+-
+-  behavior of "Factorization"
+-  it should "properly factorize" in {
+-    case class FactorizationTest(n: Int, pows: Seq[Int], coprimes: Seq[Int])
+-    val tests = Seq(
+-      FactorizationTest(
+-        n = (math.pow(4, 5) * math.pow(2, 1) * math.pow(3, 7)).toInt,
+-        pows = Seq(5, 1, 7),
+-        coprimes = Seq((math.pow(4, 5) * math.pow(2, 1)).toInt, math.pow(3, 7).toInt)
+-      ),
+-      FactorizationTest(n = 15, pows = Seq(0, 0, 1, 1), coprimes = Seq(1, 3, 5))
+-    )
+-
+-    tests foreach { case FactorizationTest(n, pows, coprimes) =>
+-      val powsFill = Seq.fill(testSupportedRads.flatten.length - pows.length)(0)
+-      val coprimesFill = Seq.fill(testSupportedRads.length - coprimes.length)(1)
+-      require(
+-        Factorization(testSupportedRads).getPowsFlat(n) == pows ++ powsFill,
+-        "Should factorize to get the right powers -- includes padding."
+-      )
+-      require(
+-        Factorization(testSupportedRads).getCoprimes(n) == coprimes ++ coprimesFill,
+-        "Should factorize into the right coprimes -- includes padding."
+-      )
+-    }
+-  }
+-
+-  it should "properly factorize coprime" in {
+-    case class CoprimeFactorizationTest(n: Int, factorization: Seq[Int], basePrime: Int)
+-    val tests = Seq(
+-      CoprimeFactorizationTest(n = 8, factorization = Seq(4, 2), basePrime = 2),
+-      CoprimeFactorizationTest(n = 16, factorization = Seq(4, 4), basePrime = 2)
+-    )
+-    tests foreach { case CoprimeFactorizationTest(n, factorization, basePrime) =>
+-      require(
+-        Factorization(testSupportedRads).factorizeCoprime(n) == factorization,
+-        "Should factorize coprime properly."
+-      )
+-      require(
+-        Factorization(testSupportedRads).getBasePrime(n) == basePrime,
+-        "Should get the correct base prime."
+-      )
+-    }
+-  }
+-}
+
+From 005d688f5c83413f8006936ff47d909b3209b8f1 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Fri, 7 Jan 2022 18:09:27 +0800
+Subject: [PATCH 3/3] remove scalatest
+
+---
+ src/main/scala/dsptools/dspmath/Factorization.scala           | 3 ---
+ src/test/scala/dsptools/BaseNSpec.scala                       | 4 ++--
+ src/test/scala/dsptools/DspContextSpec.scala                  | 4 ++--
+ src/test/scala/dsptools/DspTesterSpec.scala                   | 4 ++--
+ src/test/scala/dsptools/LoggingSpec.scala                     | 4 ++--
+ src/test/scala/dsptools/ShiftRegisterDelaySpec.scala          | 4 ++--
+ .../VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala         | 4 ++--
+ src/test/scala/dsptools/numbers/AbsSpec.scala                 | 4 ++--
+ src/test/scala/dsptools/numbers/BaseNSpec.scala               | 4 ++--
+ src/test/scala/dsptools/numbers/FixedPointSpec.scala          | 4 ++--
+ .../scala/dsptools/numbers/FixedPrecisionChangerSpec.scala    | 4 ++--
+ src/test/scala/dsptools/numbers/IntervalSpec.scala            | 4 ++--
+ src/test/scala/dsptools/numbers/LnSpec.scala                  | 4 ++--
+ src/test/scala/dsptools/numbers/NumbersSpec.scala             | 4 ++--
+ src/test/scala/dsptools/numbers/OverflowSpec.scala            | 4 ++--
+ src/test/scala/dsptools/numbers/ParameterizedOpSpec.scala     | 4 ++--
+ src/test/scala/dsptools/numbers/SaturateSpec.scala            | 4 ++--
+ src/test/scala/dsptools/numbers/TypeclassSpec.scala           | 4 ++--
+ src/test/scala/examples/CaseClassBundleSpec.scala             | 4 ++--
+ src/test/scala/examples/ComplexMultiplierSpec.scala           | 4 ++--
+ src/test/scala/examples/ParameterizedAdderSpec.scala          | 4 ++--
+ src/test/scala/examples/ParameterizedSaturatingAdder.scala    | 4 ++--
+ src/test/scala/examples/RealAdderSpec.scala                   | 4 ++--
+ src/test/scala/examples/SimpleAdderSpec.scala                 | 4 ++--
+ src/test/scala/examples/SimpleDspModuleSpec.scala             | 4 ++--
+ src/test/scala/examples/StreamingAutocorrelatorSpec.scala     | 4 ++--
+ src/test/scala/examples/TransposedStreamFIRSpec.scala         | 4 ++--
+ 27 files changed, 52 insertions(+), 55 deletions(-)
+
+diff --git a/src/main/scala/dsptools/dspmath/Factorization.scala b/src/main/scala/dsptools/dspmath/Factorization.scala
+index bda9b5bf..af6f4a2d 100644
+--- a/src/main/scala/dsptools/dspmath/Factorization.scala
++++ b/src/main/scala/dsptools/dspmath/Factorization.scala
+@@ -2,9 +2,6 @@
+ 
+ package dsptools.dspmath
+ 
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
+-
+ case class RadPow(rad: Int, pow: Int) {
+   /** `r ^ p` */
+   def get: Int = BigInt(rad).pow(pow).toInt
+diff --git a/src/test/scala/dsptools/BaseNSpec.scala b/src/test/scala/dsptools/BaseNSpec.scala
+index 7aa314dc..516f7aaf 100644
+--- a/src/test/scala/dsptools/BaseNSpec.scala
++++ b/src/test/scala/dsptools/BaseNSpec.scala
+@@ -3,8 +3,8 @@
+ package dsptools
+ 
+ import chisel3._
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ //scalastyle:off magic.number
+ 
+diff --git a/src/test/scala/dsptools/DspContextSpec.scala b/src/test/scala/dsptools/DspContextSpec.scala
+index 05ea1bc7..e15b2df0 100644
+--- a/src/test/scala/dsptools/DspContextSpec.scala
++++ b/src/test/scala/dsptools/DspContextSpec.scala
+@@ -4,8 +4,8 @@ package dsptools
+ 
+ import chisel3._
+ import dsptools.numbers._
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ import scala.collection.parallel.CollectionConverters.RangeIsParallelizable
+ 
+diff --git a/src/test/scala/dsptools/DspTesterSpec.scala b/src/test/scala/dsptools/DspTesterSpec.scala
+index 9ee12af3..7793977d 100644
+--- a/src/test/scala/dsptools/DspTesterSpec.scala
++++ b/src/test/scala/dsptools/DspTesterSpec.scala
+@@ -3,8 +3,8 @@
+ package dsptools
+ 
+ import DspTesterUtilities._
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ import scala.math.{pow, abs}
+ 
+ class DspTesterSpec {
+diff --git a/src/test/scala/dsptools/LoggingSpec.scala b/src/test/scala/dsptools/LoggingSpec.scala
+index 95f72ff0..414a586b 100644
+--- a/src/test/scala/dsptools/LoggingSpec.scala
++++ b/src/test/scala/dsptools/LoggingSpec.scala
+@@ -4,8 +4,8 @@ package dsptools
+ 
+ import chisel3._
+ import logger.{LazyLogging, LogLevel, Logger}
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class DutWithLogging extends Module with LazyLogging {
+   val io = IO(new Bundle {})
+diff --git a/src/test/scala/dsptools/ShiftRegisterDelaySpec.scala b/src/test/scala/dsptools/ShiftRegisterDelaySpec.scala
+index d26e5ff0..d70afeda 100644
+--- a/src/test/scala/dsptools/ShiftRegisterDelaySpec.scala
++++ b/src/test/scala/dsptools/ShiftRegisterDelaySpec.scala
+@@ -5,8 +5,8 @@ package dsptools
+ import chisel3._
+ import chisel3.experimental.FixedPoint
+ import dsptools.numbers._
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ import scala.collection.mutable
+ 
+diff --git a/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala b/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala
+index 345f8de4..8e69a3ca 100644
+--- a/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala
++++ b/src/test/scala/dsptools/VerboseDspTesterSpec/SimpleTBwGenTypeOption.scala
+@@ -9,8 +9,8 @@ import chisel3.experimental.FixedPoint
+ import breeze.math.Complex
+ import dsptools.{DspTester, DspTesterOptionsManager, DspTesterOptions}
+ import dsptools.numbers._
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ import chisel3.iotesters.TesterOptions
+ 
+ trait EasyPeekPoke {
+diff --git a/src/test/scala/dsptools/numbers/AbsSpec.scala b/src/test/scala/dsptools/numbers/AbsSpec.scala
+index e7f3030c..acfa8ec4 100644
+--- a/src/test/scala/dsptools/numbers/AbsSpec.scala
++++ b/src/test/scala/dsptools/numbers/AbsSpec.scala
+@@ -5,8 +5,8 @@ package dsptools.numbers
+ import chisel3._
+ import chisel3.experimental._
+ import dsptools.{DspContext, DspTester, Grow, Wrap}
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class AbsSpec extends AnyFreeSpec with Matchers {
+   "absolute value should work for all types" - {
+diff --git a/src/test/scala/dsptools/numbers/BaseNSpec.scala b/src/test/scala/dsptools/numbers/BaseNSpec.scala
+index 068360ff..5ba232f5 100644
+--- a/src/test/scala/dsptools/numbers/BaseNSpec.scala
++++ b/src/test/scala/dsptools/numbers/BaseNSpec.scala
+@@ -3,8 +3,8 @@
+ package dsptools.numbers
+ 
+ import dsptools.numbers.representations.BaseN
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class BaseNSpec extends AnyFlatSpec with Matchers {
+   behavior of "BaseN"
+diff --git a/src/test/scala/dsptools/numbers/FixedPointSpec.scala b/src/test/scala/dsptools/numbers/FixedPointSpec.scala
+index 12abd4a0..d65e2eb9 100644
+--- a/src/test/scala/dsptools/numbers/FixedPointSpec.scala
++++ b/src/test/scala/dsptools/numbers/FixedPointSpec.scala
+@@ -10,8 +10,8 @@ import chisel3.iotesters.ChiselPropSpec
+ import chisel3.testers.BasicTester
+ import dsptools.DspTester
+ import dsptools.numbers.implicits._
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class FixedRing1(val width: Int, val binaryPoint: Int) extends Module {
+   val io = IO(new Bundle {
+diff --git a/src/test/scala/dsptools/numbers/FixedPrecisionChangerSpec.scala b/src/test/scala/dsptools/numbers/FixedPrecisionChangerSpec.scala
+index 7f8ca233..7e226799 100644
+--- a/src/test/scala/dsptools/numbers/FixedPrecisionChangerSpec.scala
++++ b/src/test/scala/dsptools/numbers/FixedPrecisionChangerSpec.scala
+@@ -5,8 +5,8 @@ package dsptools.numbers
+ import chisel3._
+ import chisel3.experimental.FixedPoint
+ import dsptools.DspTester
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ //scalastyle:off magic.number
+ 
+diff --git a/src/test/scala/dsptools/numbers/IntervalSpec.scala b/src/test/scala/dsptools/numbers/IntervalSpec.scala
+index 977a32be..72c22f9b 100644
+--- a/src/test/scala/dsptools/numbers/IntervalSpec.scala
++++ b/src/test/scala/dsptools/numbers/IntervalSpec.scala
+@@ -9,8 +9,8 @@ import chisel3.experimental._
+ import chisel3.internal.firrtl.IntervalRange
+ import dsptools.DspTester
+ import dsptools.numbers.implicits._
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class IntervalRing1(val width: Int, val binaryPoint: Int) extends Module {
+   val range = IntervalRange(width.W, binaryPoint.BP)
+diff --git a/src/test/scala/dsptools/numbers/LnSpec.scala b/src/test/scala/dsptools/numbers/LnSpec.scala
+index cfcc18e7..8e1cb0ad 100644
+--- a/src/test/scala/dsptools/numbers/LnSpec.scala
++++ b/src/test/scala/dsptools/numbers/LnSpec.scala
+@@ -7,8 +7,8 @@ import chisel3.util._
+ import chisel3.testers.BasicTester
+ import chisel3.iotesters.{ChiselFlatSpec, PeekPokeTester, TesterOptionsManager}
+ import dsptools.{DspTester, ReplOptionsManager}
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class LnModule extends Module {
+   val io = IO(new Bundle {
+diff --git a/src/test/scala/dsptools/numbers/NumbersSpec.scala b/src/test/scala/dsptools/numbers/NumbersSpec.scala
+index e9097e75..82c6ac64 100644
+--- a/src/test/scala/dsptools/numbers/NumbersSpec.scala
++++ b/src/test/scala/dsptools/numbers/NumbersSpec.scala
+@@ -6,8 +6,8 @@ import chisel3._
+ import dsptools._
+ import chisel3.experimental.FixedPoint
+ import dsptools.numbers.implicits._
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ /**
+   * This will attempt to follow the dsptools.numbers.README.md file as close as possible.
+diff --git a/src/test/scala/dsptools/numbers/OverflowSpec.scala b/src/test/scala/dsptools/numbers/OverflowSpec.scala
+index c43ff4b6..1cc6f296 100644
+--- a/src/test/scala/dsptools/numbers/OverflowSpec.scala
++++ b/src/test/scala/dsptools/numbers/OverflowSpec.scala
+@@ -2,8 +2,8 @@
+ 
+ package dsptools.numbers
+ 
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class OverflowSpec extends AnyFreeSpec with Matchers {
+ 
+diff --git a/src/test/scala/dsptools/numbers/ParameterizedOpSpec.scala b/src/test/scala/dsptools/numbers/ParameterizedOpSpec.scala
+index 326f235e..953e40b6 100644
+--- a/src/test/scala/dsptools/numbers/ParameterizedOpSpec.scala
++++ b/src/test/scala/dsptools/numbers/ParameterizedOpSpec.scala
+@@ -7,8 +7,8 @@ import chisel3._
+ import chisel3.experimental.FixedPoint
+ import chisel3.iotesters.TesterOptionsManager
+ import dsptools.DspTester
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ import dsptools.numbers._
+ import dsptools._
+ 
+diff --git a/src/test/scala/dsptools/numbers/SaturateSpec.scala b/src/test/scala/dsptools/numbers/SaturateSpec.scala
+index 5462762b..fecf2f03 100644
+--- a/src/test/scala/dsptools/numbers/SaturateSpec.scala
++++ b/src/test/scala/dsptools/numbers/SaturateSpec.scala
+@@ -6,8 +6,8 @@ import chisel3._
+ import chisel3.experimental.FixedPoint
+ import chisel3.iotesters._
+ import dsptools.numbers.rounding.Saturate
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class SaturateUIntMod(val add: Boolean) extends MultiIOModule {
+   val a = IO(Input(UInt(8.W)))
+diff --git a/src/test/scala/dsptools/numbers/TypeclassSpec.scala b/src/test/scala/dsptools/numbers/TypeclassSpec.scala
+index f7d60f4e..dc3ab0f0 100644
+--- a/src/test/scala/dsptools/numbers/TypeclassSpec.scala
++++ b/src/test/scala/dsptools/numbers/TypeclassSpec.scala
+@@ -7,8 +7,8 @@ import chisel3.experimental.FixedPoint
+ import chisel3.iotesters._
+ import dsptools._
+ import dsptools.numbers._
+-import org.scalatest.freespec.AnyFreeSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ /*
+  * These tests mostly exist to ensure that expressions of the form
+diff --git a/src/test/scala/examples/CaseClassBundleSpec.scala b/src/test/scala/examples/CaseClassBundleSpec.scala
+index 90397304..9bfb47ba 100644
+--- a/src/test/scala/examples/CaseClassBundleSpec.scala
++++ b/src/test/scala/examples/CaseClassBundleSpec.scala
+@@ -4,8 +4,8 @@ package examples
+ 
+ import chisel3._
+ import chisel3.iotesters.PeekPokeTester
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ //scalastyle:off magic.number
+ 
+diff --git a/src/test/scala/examples/ComplexMultiplierSpec.scala b/src/test/scala/examples/ComplexMultiplierSpec.scala
+index fcaf2933..fcab1230 100644
+--- a/src/test/scala/examples/ComplexMultiplierSpec.scala
++++ b/src/test/scala/examples/ComplexMultiplierSpec.scala
+@@ -8,8 +8,8 @@ import chisel3.iotesters.Backend
+ import chisel3.{Bundle, Module}
+ import dsptools.{DspContext, DspTester}
+ import dsptools.numbers._
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ import spire.algebra.Ring
+ 
+ //scalastyle:off magic.number
+diff --git a/src/test/scala/examples/ParameterizedAdderSpec.scala b/src/test/scala/examples/ParameterizedAdderSpec.scala
+index 454100a0..bb2e6cdf 100644
+--- a/src/test/scala/examples/ParameterizedAdderSpec.scala
++++ b/src/test/scala/examples/ParameterizedAdderSpec.scala
+@@ -6,8 +6,8 @@ import chisel3._
+ import chisel3.experimental.FixedPoint
+ import dsptools.DspTester
+ import dsptools.numbers._
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ //scalastyle:off magic.number
+ 
+diff --git a/src/test/scala/examples/ParameterizedSaturatingAdder.scala b/src/test/scala/examples/ParameterizedSaturatingAdder.scala
+index ee249ff0..052a6a7f 100644
+--- a/src/test/scala/examples/ParameterizedSaturatingAdder.scala
++++ b/src/test/scala/examples/ParameterizedSaturatingAdder.scala
+@@ -5,8 +5,8 @@ package examples
+ import chisel3._
+ import dsptools.{DspContext, DspTester, Saturate}
+ import dsptools.numbers._
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class ParameterizedSaturatingAdder[T <: Data:Integer](gen:() => T) extends Module {
+   val io = IO(new Bundle {
+diff --git a/src/test/scala/examples/RealAdderSpec.scala b/src/test/scala/examples/RealAdderSpec.scala
+index 558e9e37..c6083067 100644
+--- a/src/test/scala/examples/RealAdderSpec.scala
++++ b/src/test/scala/examples/RealAdderSpec.scala
+@@ -5,8 +5,8 @@ package examples
+ import chisel3._
+ import dsptools.{DspTester, ReplOptionsManager}
+ import dsptools.numbers.DspReal
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ import scala.math.BigDecimal
+ 
+diff --git a/src/test/scala/examples/SimpleAdderSpec.scala b/src/test/scala/examples/SimpleAdderSpec.scala
+index f3e962e2..b48b148c 100644
+--- a/src/test/scala/examples/SimpleAdderSpec.scala
++++ b/src/test/scala/examples/SimpleAdderSpec.scala
+@@ -5,8 +5,8 @@ package examples
+ import chisel3._
+ import chisel3.experimental.FixedPoint
+ import dsptools.DspTester
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ class SimpleAdder extends Module {
+   val io = IO(new Bundle {
+diff --git a/src/test/scala/examples/SimpleDspModuleSpec.scala b/src/test/scala/examples/SimpleDspModuleSpec.scala
+index 91b07e55..25fa16ed 100644
+--- a/src/test/scala/examples/SimpleDspModuleSpec.scala
++++ b/src/test/scala/examples/SimpleDspModuleSpec.scala
+@@ -15,8 +15,8 @@ import dsptools.{DspTester, DspTesterOptionsManager, DspTesterOptions}
+ // Allows you to modify default Chisel tester behavior (note that DspTester is a special version of Chisel tester)
+ import iotesters.TesterOptions
+ // Scala unit testing style
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ // IO Bundle. Note that when you parameterize the bundle, you MUST override cloneType.
+ // This also creates x, y, z inputs/outputs (direction must be specified at some IO hierarchy level)
+diff --git a/src/test/scala/examples/StreamingAutocorrelatorSpec.scala b/src/test/scala/examples/StreamingAutocorrelatorSpec.scala
+index aa34c8fc..df0001f3 100644
+--- a/src/test/scala/examples/StreamingAutocorrelatorSpec.scala
++++ b/src/test/scala/examples/StreamingAutocorrelatorSpec.scala
+@@ -7,8 +7,8 @@ package examples
+ import chisel3._
+ import chisel3.iotesters.PeekPokeTester
+ import dsptools.numbers.implicits._
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ 
+ import spire.algebra.{Ring, Field}
+ 
+diff --git a/src/test/scala/examples/TransposedStreamFIRSpec.scala b/src/test/scala/examples/TransposedStreamFIRSpec.scala
+index 97c756f6..290f3b53 100644
+--- a/src/test/scala/examples/TransposedStreamFIRSpec.scala
++++ b/src/test/scala/examples/TransposedStreamFIRSpec.scala
+@@ -8,8 +8,8 @@ import chisel3._
+ import chisel3.iotesters.{PeekPokeTester, TesterOptions}
+ import dsptools.numbers.implicits._
+ import dsptools.{DspContext, Grow}
+-import org.scalatest.flatspec.AnyFlatSpec
+-import org.scalatest.matchers.should.Matchers
++
++
+ import dsptools.examples.{ConstantTapTransposedStreamingFIR, TransposedStreamingFIR}
+ import spire.algebra.{Field, Ring}
+ 

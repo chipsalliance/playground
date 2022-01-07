@@ -1,7 +1,7 @@
 From 990a3c7829e4c9ae155100427aa091af65007076 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Thu, 7 Oct 2021 15:22:16 +0800
-Subject: [PATCH] remove cloneType
+Subject: [PATCH 1/3] remove cloneType
 
 ---
  src/main/scala/common/debug.scala         | 2 --
@@ -210,3 +210,112 @@ index 74aebbe..265cf5f 100644
  }
  
  
+
+From 59466542e6243088681778efd111492bad669a5c Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Fri, 7 Jan 2022 17:19:00 +0800
+Subject: [PATCH 2/3] bump for chipsalliance/rocket-chip#2841
+
+---
+ src/main/scala/rv32_1stage/dpath.scala | 2 +-
+ src/main/scala/rv32_2stage/dpath.scala | 2 +-
+ src/main/scala/rv32_3stage/dpath.scala | 2 +-
+ src/main/scala/rv32_5stage/dpath.scala | 2 +-
+ src/main/scala/rv32_ucode/dpath.scala  | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/main/scala/rv32_1stage/dpath.scala b/src/main/scala/rv32_1stage/dpath.scala
+index 39f9a53..273a76f 100644
+--- a/src/main/scala/rv32_1stage/dpath.scala
++++ b/src/main/scala/rv32_1stage/dpath.scala
+@@ -194,7 +194,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr := inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
++   csr.io.decode(0).csr_addr := inst
+    csr.io.rw.addr   := inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.cmd    := io.ctl.csr_cmd
+    csr.io.rw.wdata  := alu_out
+diff --git a/src/main/scala/rv32_2stage/dpath.scala b/src/main/scala/rv32_2stage/dpath.scala
+index 0774199..a743e01 100644
+--- a/src/main/scala/rv32_2stage/dpath.scala
++++ b/src/main/scala/rv32_2stage/dpath.scala
+@@ -228,7 +228,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr  := exe_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
++   csr.io.decode(0).csr_addr  := exe_reg_inst
+    csr.io.rw.addr  := exe_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.cmd   := io.ctl.csr_cmd
+    csr.io.rw.wdata := exe_alu_out
+diff --git a/src/main/scala/rv32_3stage/dpath.scala b/src/main/scala/rv32_3stage/dpath.scala
+index 941c779..04a38ea 100644
+--- a/src/main/scala/rv32_3stage/dpath.scala
++++ b/src/main/scala/rv32_3stage/dpath.scala
+@@ -259,7 +259,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr   := wb_reg_csr_addr
++   csr.io.decode(0).csr_addr   := wb_reg_csr_addr << 20
+    csr.io.rw.addr   := wb_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.wdata  := wb_reg_alu
+    csr.io.rw.cmd    := Mux(wb_dmiss_stall, CSR.N, wb_reg_ctrl.csr_cmd)
+diff --git a/src/main/scala/rv32_5stage/dpath.scala b/src/main/scala/rv32_5stage/dpath.scala
+index 2f7dbb9..db75ef1 100644
+--- a/src/main/scala/rv32_5stage/dpath.scala
++++ b/src/main/scala/rv32_5stage/dpath.scala
+@@ -427,7 +427,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // The CSRFile can redirect the PC so it's easiest to put this in Execute for now.
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr  := mem_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
++   csr.io.decode(0).csr_addr := mem_reg_inst
+    csr.io.rw.addr   := mem_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.wdata  := mem_reg_alu_out
+    csr.io.rw.cmd    := mem_reg_ctrl_csr_cmd
+diff --git a/src/main/scala/rv32_ucode/dpath.scala b/src/main/scala/rv32_ucode/dpath.scala
+index 74aebbe..2f11b29 100644
+--- a/src/main/scala/rv32_ucode/dpath.scala
++++ b/src/main/scala/rv32_ucode/dpath.scala
+@@ -169,7 +169,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr  := csr_addr
++   csr.io.decode(0).csr_addr  := csr_addr << 20
+    csr.io.rw.addr  := csr_addr
+    csr.io.rw.wdata := csr_wdata
+    csr.io.rw.cmd   := io.ctl.csr_cmd
+
+From e3a9ae3155cc0a6a61dcbe1353693e2adbdb52f6 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sat, 8 Jan 2022 03:15:38 +0800
+Subject: [PATCH 3/3] bump for chipsalliance/rocket-chip#2841
+
+---
+ src/main/scala/common/sodor_tile.scala | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/main/scala/common/sodor_tile.scala b/src/main/scala/common/sodor_tile.scala
+index b0e125c..feda4e5 100644
+--- a/src/main/scala/common/sodor_tile.scala
++++ b/src/main/scala/common/sodor_tile.scala
+@@ -27,6 +27,7 @@ case class SodorCoreParams(
+   internalTile: SodorInternalTileFactory = Stage5Factory
+ ) extends CoreParams {
+   val useVM: Boolean = false
++  val useHypervisor: Boolean = false
+   val useUser: Boolean = false
+   val useSupervisor: Boolean = false
+   val useDebug: Boolean = true
+@@ -60,6 +61,7 @@ case class SodorCoreParams(
+   val decodeWidth: Int = 1 // TODO: Check
+   val fetchWidth: Int = 1 // TODO: Check
+   val retireWidth: Int = 1
++  val nPTECacheEntries: Int = 0
+ }
+ 
+ // DOC include start: CanAttachTile
