@@ -4,7 +4,7 @@ with import <nixpkgs> {
       llvmPackages = pkgs.llvmPackages_13;
       clang = pkgs.clang_13;
       lld = pkgs.lld_13;
-      jdk = pkgs.graalvm11-ce; # choose your preferred jdk
+      jdk = pkgs.jdk11_headless; # choose your preferred jdk
       protobuf = pkgs.protobuf3_15; # required by firrtl
     };
   };
@@ -16,7 +16,7 @@ let
       #!${pkgs.bash}/bin/bash
       if [[ "$*" == *--target=riscv64* ]]; then
         # works partially, namely no ld
-        ${pkgs.pkgsCross.riscv64.buildPackages.clang}/bin/riscv64-unknown-linux-gnu-clang $@
+        ${pkgs.clang.cc}/bin/clang --target=riscv64 $@
       else
         # works fully
         ${pkgs.clang}/bin/clang $@
@@ -27,7 +27,7 @@ let
       #!${pkgs.bash}/bin/bash
       if [[ "$*" == *--target=riscv64* ]]; then
         # works partially, namely no ld
-        ${pkgs.pkgsCross.riscv64.buildPackages.clang}/bin/riscv64-unknown-linux-gnu-clang++ $@
+        ${pkgs.clang.cc}/bin/clang++ --target=riscv64 $@
       else
         # works fully
         ${pkgs.clang}/bin/clang++ $@
