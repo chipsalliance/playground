@@ -90,15 +90,15 @@ icenet https://github.com/firesim/icenet/pull/32
 firesim https://github.com/firesim/firesim/pull/843  
 hwacha https://github.com/ucb-bar/hwacha/pull/33  
 chipyard https://github.com/ucb-bar/chipyard/pull/1001  
-chipyard https://github.com/ucb-bar/chipyard/pull/1076
+chipyard https://github.com/ucb-bar/chipyard/pull/1076  
 gemmini https://github.com/ucb-bar/gemmini/pull/150  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2890  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 sha3 https://github.com/ucb-bar/sha3/pull/33  
-riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/69
-dsptools https://github.com/ucb-bar/dsptools/pull/240
-cva6-wrapper https://github.com/ucb-bar/cva6-wrapper/pull/13
-ibex-wrapper https://github.com/ucb-bar/ibex-wrapper/pull/1
+riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/69  
+dsptools https://github.com/ucb-bar/dsptools/pull/240  
+cva6-wrapper https://github.com/ucb-bar/cva6-wrapper/pull/13  
+ibex-wrapper https://github.com/ucb-bar/ibex-wrapper/pull/1  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
@@ -118,68 +118,41 @@ git rebase origin/master
 ```
 
 ## System Dependencies
-Currently, only support **Arch Linux, macOS, Debian sid and Nix**, you can PR your own distributions, like Fedora.
+Currently, only support **Arch Linux**, if you are using other distros please install nix.
 
-Nix users may use `shell.nix` as provided.
-
-**Notice Ubuntu and CentOS is unacceptable, since they have a stale package repository, not possible use official package manager to install these requirements, if you insist using them, please install requirements below by your self.**
 * GNU Make
   - Arch Linux: make
-  - Debian: make
-  - Homebrew: make
 * git
   - Arch Linux: git
-  - Debian: git
-  - Homebrew: git
 * mill
   - Arch Linux: mill
-  - Homebrew: mill
 * wget
   - Arch Linux: wget
-  - Debian: wget
-  - Homebrew: wget
 * GNU Parallel
   - Arch Linux: parallel
-  - Debian: parallel
-  - Homebrew: parallel
 * Device Tree Compiler
   - Arch Linux: dtc
-  - Debian: device-tree-compiler
-  - Homebrew: dtc
 * protobuf
   - Arch Linux: protobuf
-  - Debian: protobuf-compiler
-  - Homebrew: protobuf
 * antlr4
   - Arch Linux: antlr4
-  - Debian: antlr4
-  - Homebrew: antlr
 
 ## SanityTests
 This package is the standalone tests to check is bumping correct or not, served as the unittest, this also can be a great example to illustrate usages.
 
-Nix users may use `shell.nix` as provided.
-
 **NOTICE: SanityTests also contains additional system dependencies:**
-**SanityTests do not support Mac, since LLVM package doesn't contain lld. **
 * clang: bootrom cross compiling and veriltor C++ -> binary compiling
   - Arch Linux: clang
-  - Debian: clang
 * llvm: gnu toolchain replacement 
   - Arch Linux: llvm
-  - Debian: llvm
 * lld: LLVM based linker
   - Arch Linux: lld
-  - Debian: lld
 * verilator -> Verilog -> C++ generation
   - Arch Linux: verilator
-  - Debian: verilator
 * cmake -> verilator emulator build system
   - Arch Linux: cmake
-  - Debian: cmake
 * ninja -> verilator emulator build system
   - Arch Linux: ninja
-  - Debian: ninja-build
 
 ### rocketchip
 This package is a replacement to RocketChip Makefile based generator, it directly generate a simple RocketChip emulator with verilator and linked to spike. 
