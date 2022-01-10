@@ -1,4 +1,4 @@
-package sanitytests.vcu118
+package sanitytests.fpga
 
 import chipsalliance.rocketchip.config.Parameters
 import chisel3._
@@ -39,5 +39,8 @@ class DesignKeyWrapper()(implicit p: Parameters) extends LazyModule {
   val coreClock = ClockSinkNode(freqMHz = p(FPGAFrequencyKey))
   coreClock := resetWrangler := ClockGroup() := pll := fpgaClockSource
   val jtagOut = p(JTAGDebugOverlayKey).headOption.map(_.place(JTAGDebugDesignInput())).get.overlayOutput.jtag
+
+
+  /* User design */
   val subsystem = LazyModule(new RocketFPGASubsystem(resetWrangler, pll)(p))
 }

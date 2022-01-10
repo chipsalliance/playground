@@ -1,8 +1,9 @@
-package sanitytests.vcu118
+package sanitytests.fpga
 
 import chipsalliance.rocketchip.config.{Config, Parameters}
 import freechips.rocketchip.devices.debug.{DebugModuleKey, ExportDebug, JTAG}
 import freechips.rocketchip.devices.tilelink.BootROMLocated
+import freechips.rocketchip.subsystem.RocketTilesKey
 import os._
 import sifive.fpgashells.shell.DesignKey
 
@@ -46,3 +47,7 @@ class FPGATestConfig
       case ExportDebug => up(ExportDebug, site).copy(protocols = Set(JTAG))
       case DebugModuleKey => up(DebugModuleKey, site).map(_.copy(clockGate = false))
     })
+
+class WithNoScratchPad extends Config((site, here, up) => {
+  case RocketTilesKey => up(RocketTilesKey).map(p => p.copy(dcache = p.dcache.map(p => p.copy(scratch = None))))
+})

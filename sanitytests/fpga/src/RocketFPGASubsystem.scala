@@ -1,4 +1,4 @@
-package sanitytests.vcu118
+package sanitytests.fpga
 
 import chipsalliance.rocketchip.config.Parameters
 import freechips.rocketchip.devices.debug.{HasPeripheryDebug, HasPeripheryDebugModuleImp}
