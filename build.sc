@@ -64,7 +64,8 @@ object myfirrtl extends dependencies.firrtl.build.firrtlCrossModule(ivys.sv) {
   )
   override val checkSystemAntlr4Version = false
   override val checkSystemProtocVersion = false
-  override val protocVersion = "3.19.2"
+  override val protocVersion = os.proc("protoc", "--version").call().out.text.dropRight(1).split(' ').last
+  override val antlr4Version = os.proc("antlr4").call().out.text.split('\n').head.split(' ').last
 }
 
 object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) {
