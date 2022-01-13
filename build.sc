@@ -380,7 +380,7 @@ object spike extends Module {
   override def millSourcePath = os.pwd / "dependencies" / "riscv-isa-sim"
   // ask make to cache file.
   def compile = T.persistent {
-    os.proc(millSourcePath / "configure", "--prefix", "/usr").call(
+    os.proc(millSourcePath / "configure", "--prefix", "/usr", "--without-boost", "--without-boost-asio", "--without-boost-regex").call(
       T.ctx.dest, Map("CC" -> "clang", "CXX" -> "clang++", "LD" -> "ldd")
     )
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
