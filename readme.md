@@ -82,7 +82,6 @@ rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
 fpga-shells https://github.com/sifive/fpga-shells/pull/161  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
-testchipip https://github.com/ucb-bar/testchipip/pull/137  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/4  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2889  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/565  
@@ -98,8 +97,6 @@ rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6
 sha3 https://github.com/ucb-bar/sha3/pull/33  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/69  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
-cva6-wrapper https://github.com/ucb-bar/cva6-wrapper/pull/13  
-ibex-wrapper https://github.com/ucb-bar/ibex-wrapper/pull/1  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
