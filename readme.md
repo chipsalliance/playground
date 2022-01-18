@@ -82,7 +82,6 @@ rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810
 hwacha https://github.com/ucb-bar/hwacha/pull/30  
 fpga-shells https://github.com/sifive/fpga-shells/pull/161  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
-rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/4  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/565  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/587  
 icenet https://github.com/firesim/icenet/pull/32  
