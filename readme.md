@@ -83,7 +83,6 @@ hwacha https://github.com/ucb-bar/hwacha/pull/30
 fpga-shells https://github.com/sifive/fpga-shells/pull/161  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/4  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2889  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/565  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/587  
 icenet https://github.com/firesim/icenet/pull/32  
@@ -92,11 +91,11 @@ hwacha https://github.com/ucb-bar/hwacha/pull/33
 chipyard https://github.com/ucb-bar/chipyard/pull/1001  
 chipyard https://github.com/ucb-bar/chipyard/pull/1076  
 gemmini https://github.com/ucb-bar/gemmini/pull/150  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2890  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 sha3 https://github.com/ucb-bar/sha3/pull/33  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/69  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2931  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
