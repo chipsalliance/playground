@@ -94,7 +94,6 @@ rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6
 sha3 https://github.com/ucb-bar/sha3/pull/33  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/69  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2931  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
