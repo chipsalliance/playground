@@ -88,9 +88,9 @@ riscv-boom https://github.com/riscv-boom/riscv-boom/pull/589
 hwacha https://github.com/ucb-bar/hwacha/pull/35  
 icenet https://github.com/firesim/icenet/pull/33  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/71  
-firesim https://github.com/firesim/firesim/pull/843
-chipyard https://github.com/ucb-bar/chipyard/pull/1001
-chipyard https://github.com/ucb-bar/chipyard/pull/1076
+firesim https://github.com/firesim/firesim/pull/843  
+chipyard https://github.com/ucb-bar/chipyard/pull/1001  
+chipyard https://github.com/ucb-bar/chipyard/pull/1076  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
