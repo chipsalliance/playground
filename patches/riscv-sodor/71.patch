@@ -1,7 +1,7 @@
 From 990a3c7829e4c9ae155100427aa091af65007076 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Thu, 7 Oct 2021 15:22:16 +0800
-Subject: [PATCH 1/3] remove cloneType
+Subject: [PATCH 1/6] remove cloneType
 
 ---
  src/main/scala/common/debug.scala         | 2 --
@@ -214,7 +214,7 @@ index 74aebbe..265cf5f 100644
 From 59466542e6243088681778efd111492bad669a5c Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Fri, 7 Jan 2022 17:19:00 +0800
-Subject: [PATCH 2/3] bump for chipsalliance/rocket-chip#2841
+Subject: [PATCH 2/6] bump for chipsalliance/rocket-chip#2841
 
 ---
  src/main/scala/rv32_1stage/dpath.scala | 2 +-
@@ -293,7 +293,7 @@ index 74aebbe..2f11b29 100644
 From e3a9ae3155cc0a6a61dcbe1353693e2adbdb52f6 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 8 Jan 2022 03:15:38 +0800
-Subject: [PATCH 3/3] bump for chipsalliance/rocket-chip#2841
+Subject: [PATCH 3/6] bump for chipsalliance/rocket-chip#2841
 
 ---
  src/main/scala/common/sodor_tile.scala | 2 ++
@@ -319,3 +319,262 @@ index b0e125c..feda4e5 100644
  }
  
  // DOC include start: CanAttachTile
+
+From f8892559c6b499d2b80a3bc095fac99b15ea8a6a Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Mon, 17 Jan 2022 15:14:32 -0800
+Subject: [PATCH 4/6] Convert fire() to fire
+
+---
+ src/main/scala/common/master_adapter.scala      | 6 +++---
+ src/main/scala/common/sodor_internal_tile.scala | 4 ++--
+ src/main/scala/rv32_3stage/arbiter.scala        | 6 +++---
+ src/main/scala/rv32_5stage/dpath.scala          | 8 ++++----
+ 4 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/src/main/scala/common/master_adapter.scala b/src/main/scala/common/master_adapter.scala
+index cc4a893..5267817 100644
+--- a/src/main/scala/common/master_adapter.scala
++++ b/src/main/scala/common/master_adapter.scala
+@@ -66,10 +66,10 @@ class SodorMasterAdapterImp(outer: SodorMasterAdapter) extends LazyModuleImp(out
+     req_size_reg := a_size
+     req_data_reg := io.dport.req.bits.data
+   }
+-  when (state === s_active && tl_out.a.fire()) {
++  when (state === s_active && tl_out.a.fire) {
+     state := s_inflight
+   }
+-  when (state === s_inflight && tl_out.d.fire()) {
++  when (state === s_inflight && tl_out.d.fire) {
+     state := s_ready
+   }
+   tl_out.a.valid := state === s_active
+@@ -78,7 +78,7 @@ class SodorMasterAdapterImp(outer: SodorMasterAdapter) extends LazyModuleImp(out
+   io.dport.resp.valid := tl_out.d.valid
+ 
+   // Bookkeeping
+-  when (tl_out.a.fire()) {
++  when (tl_out.a.fire) {
+     a_address_reg := io.dport.req.bits.addr
+     a_signed_reg := a_size
+   }
+diff --git a/src/main/scala/common/sodor_internal_tile.scala b/src/main/scala/common/sodor_internal_tile.scala
+index c43b7b8..b7b582c 100644
+--- a/src/main/scala/common/sodor_internal_tile.scala
++++ b/src/main/scala/common/sodor_internal_tile.scala
+@@ -77,7 +77,7 @@ class SodorInternalTileStage3(range: AddressSet, ports: Int)(implicit p: Paramet
+     router.io.masterPort <> master_port
+     // For sync memory, use the request address from the previous cycle
+     val reg_resp_address = Reg(UInt(conf.xprlen.W))
+-    when (core_port.req.fire()) { reg_resp_address := core_port.req.bits.addr }
++    when (core_port.req.fire) { reg_resp_address := core_port.req.bits.addr }
+     router.io.respAddress := reg_resp_address
+   }})
+ 
+@@ -114,7 +114,7 @@ class SodorInternalTileStage3(range: AddressSet, ports: Int)(implicit p: Paramet
+ }
+ 
+ // The general Sodor tile for all cores other than 3-stage
+-class SodorInternalTile(range: AddressSet, coreCtor: SodorCoreFactory)(implicit p: Parameters, conf: SodorCoreParams) 
++class SodorInternalTile(range: AddressSet, coreCtor: SodorCoreFactory)(implicit p: Parameters, conf: SodorCoreParams)
+   extends AbstractInternalTile(coreCtor.nMemPorts)
+ {
+   val core   = Module(coreCtor.instantiate)
+diff --git a/src/main/scala/rv32_3stage/arbiter.scala b/src/main/scala/rv32_3stage/arbiter.scala
+index 6af5921..5c8c6b6 100644
+--- a/src/main/scala/rv32_3stage/arbiter.scala
++++ b/src/main/scala/rv32_3stage/arbiter.scala
+@@ -36,7 +36,7 @@ class SodorMemArbiter(implicit val conf: SodorCoreParams) extends Module
+     io.imem.req.ready := io.mem.req.ready
+ 
+     // We only clear the d_resp flag when the next request fired since it also indicates the allowed type of the next request
+-    when (io.mem.req.fire())
++    when (io.mem.req.fire)
+     {
+       d_resp := false.B
+     }
+@@ -47,13 +47,13 @@ class SodorMemArbiter(implicit val conf: SodorCoreParams) extends Module
+     io.dmem.req.ready := io.mem.req.ready
+     io.imem.req.ready := io.mem.req.ready && !io.dmem.req.valid
+ 
+-    when (io.dmem.req.fire())
++    when (io.dmem.req.fire)
+     {
+       d_resp := true.B
+     }
+   }
+   // SWITCH BET DATA AND INST REQ FOR SINGLE PORT
+-  when (io.dmem.req.fire())
++  when (io.dmem.req.fire)
+   {
+     io.mem.req.valid     := io.dmem.req.valid
+     io.mem.req.bits.addr := io.dmem.req.bits.addr
+diff --git a/src/main/scala/rv32_5stage/dpath.scala b/src/main/scala/rv32_5stage/dpath.scala
+index 72163fd..ee86ca1 100644
+--- a/src/main/scala/rv32_5stage/dpath.scala
++++ b/src/main/scala/rv32_5stage/dpath.scala
+@@ -19,7 +19,7 @@ import freechips.rocketchip.tile.CoreInterrupts
+ import Constants._
+ import sodor.common._
+ 
+-class DatToCtlIo(implicit val conf: SodorCoreParams) extends Bundle() 
++class DatToCtlIo(implicit val conf: SodorCoreParams) extends Bundle()
+ {
+    val dec_inst    = Output(UInt(conf.xprlen.W))
+    val dec_valid   = Output(Bool())
+@@ -143,17 +143,17 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+ 
+    // Instruction fetch kill flag buffer
+    val if_reg_killed = RegInit(false.B)
+-   when ((io.ctl.pipeline_kill || io.ctl.if_kill) && !if_buffer_out.fire())
++   when ((io.ctl.pipeline_kill || io.ctl.if_kill) && !if_buffer_out.fire)
+    {
+       if_reg_killed := true.B
+    }
+-   when (if_reg_killed && if_buffer_out.fire())
++   when (if_reg_killed && if_buffer_out.fire)
+    {
+       if_reg_killed := false.B
+    }
+ 
+    // Do not change the PC again if the instruction is killed in previous cycles (when the PC has changed)
+-   when ((if_buffer_in.fire() && !if_reg_killed) || io.ctl.if_kill || io.ctl.pipeline_kill)
++   when ((if_buffer_in.fire && !if_reg_killed) || io.ctl.if_kill || io.ctl.pipeline_kill)
+    {
+       if_reg_pc := if_pc_next
+    }
+
+From 0a0f04799fd8a5e955073dd3ad28521d825d5e16 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Wed, 19 Jan 2022 21:44:28 -0800
+Subject: [PATCH 5/6] Update CSRDecodeIO from csr_addr to inst
+
+---
+ src/main/scala/rv32_1stage/dpath.scala | 2 +-
+ src/main/scala/rv32_2stage/dpath.scala | 4 ++--
+ src/main/scala/rv32_3stage/dpath.scala | 2 +-
+ src/main/scala/rv32_5stage/dpath.scala | 2 +-
+ src/main/scala/rv32_ucode/dpath.scala  | 8 ++++----
+ 5 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/src/main/scala/rv32_1stage/dpath.scala b/src/main/scala/rv32_1stage/dpath.scala
+index 011ffc3..63b8e5d 100644
+--- a/src/main/scala/rv32_1stage/dpath.scala
++++ b/src/main/scala/rv32_1stage/dpath.scala
+@@ -193,7 +193,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr_addr := inst
++   csr.io.decode(0).inst := inst
+    csr.io.rw.addr   := inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.cmd    := io.ctl.csr_cmd
+    csr.io.rw.wdata  := alu_out
+diff --git a/src/main/scala/rv32_2stage/dpath.scala b/src/main/scala/rv32_2stage/dpath.scala
+index c14bee1..756ec22 100644
+--- a/src/main/scala/rv32_2stage/dpath.scala
++++ b/src/main/scala/rv32_2stage/dpath.scala
+@@ -84,7 +84,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+                   (io.ctl.pc_sel === PC_EXC)-> exception_target
+                   ))
+ 
+-   // Instruction memory buffer; if the core is stalled and a multi-cycle request arrives, save it in the buffer and supply it to the pipeline once 
++   // Instruction memory buffer; if the core is stalled and a multi-cycle request arrives, save it in the buffer and supply it to the pipeline once
+    // the execution is resumed
+    val if_inst_buffer = RegInit(0.U(32.W))
+    val if_inst_buffer_valid = RegInit(false.B)
+@@ -227,7 +227,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr_addr  := exe_reg_inst
++   csr.io.decode(0).inst  := exe_reg_inst
+    csr.io.rw.addr  := exe_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.cmd   := io.ctl.csr_cmd
+    csr.io.rw.wdata := exe_alu_out
+diff --git a/src/main/scala/rv32_3stage/dpath.scala b/src/main/scala/rv32_3stage/dpath.scala
+index 3fd652f..678ab42 100644
+--- a/src/main/scala/rv32_3stage/dpath.scala
++++ b/src/main/scala/rv32_3stage/dpath.scala
+@@ -258,7 +258,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr_addr   := wb_reg_csr_addr << 20
++   csr.io.decode(0).inst   := wb_reg_csr_addr << 20
+    csr.io.rw.addr   := wb_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.wdata  := wb_reg_alu
+    csr.io.rw.cmd    := Mux(wb_dmiss_stall, CSR.N, wb_reg_ctrl.csr_cmd)
+diff --git a/src/main/scala/rv32_5stage/dpath.scala b/src/main/scala/rv32_5stage/dpath.scala
+index ee86ca1..ace3cd8 100644
+--- a/src/main/scala/rv32_5stage/dpath.scala
++++ b/src/main/scala/rv32_5stage/dpath.scala
+@@ -426,7 +426,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // The CSRFile can redirect the PC so it's easiest to put this in Execute for now.
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr_addr := mem_reg_inst
++   csr.io.decode(0).inst := mem_reg_inst
+    csr.io.rw.addr   := mem_reg_inst(CSR_ADDR_MSB,CSR_ADDR_LSB)
+    csr.io.rw.wdata  := mem_reg_alu_out
+    csr.io.rw.cmd    := mem_reg_ctrl_csr_cmd
+diff --git a/src/main/scala/rv32_ucode/dpath.scala b/src/main/scala/rv32_ucode/dpath.scala
+index 19c7919..75e2f7f 100644
+--- a/src/main/scala/rv32_ucode/dpath.scala
++++ b/src/main/scala/rv32_ucode/dpath.scala
+@@ -101,7 +101,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+ 
+   // Exception
+   val tval_data_ma = Wire(UInt(conf.xprlen.W))
+-  val tval_inst_ma = Wire(UInt(conf.xprlen.W)) 
++  val tval_inst_ma = Wire(UInt(conf.xprlen.W))
+   val inst_misaligned = Wire(Bool())
+   val data_misaligned = Wire(Bool())
+   val mem_store = Wire(Bool())
+@@ -137,13 +137,13 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    when (io.ctl.reg_wr & reg_addr =/= 0.U)
+    {
+       when (reg_addr === PC_IDX)
+-      { 
++      {
+         // Check bit 1 of the address for misalignment
+         inst_misaligned := bus(1)
+         // Clear LSB of the write data if we are writing to PC (required by JALR, but doesn't hurt doing this for all req)
+         regfile(reg_addr) := bus & ~1.U(conf.xprlen.W)
+       }
+-      .elsewhen (!io.ctl.exception) 
++      .elsewhen (!io.ctl.exception)
+       {
+         regfile(reg_addr) := bus
+       }
+@@ -168,7 +168,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+    csr.io := DontCare
+-   csr.io.decode(0).csr_addr  := csr_addr << 20
++   csr.io.decode(0).inst  := csr_addr << 20
+    csr.io.rw.addr  := csr_addr
+    csr.io.rw.wdata := csr_wdata
+    csr.io.rw.cmd   := io.ctl.csr_cmd
+
+From 5643a8e245d562647f626295ad2dab9b4d5f6a13 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Thu, 20 Jan 2022 16:24:23 -0800
+Subject: [PATCH 6/6] Add virtual IO field
+
+---
+ src/main/scala/common/sodor_internal_tile.scala | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/main/scala/common/sodor_internal_tile.scala b/src/main/scala/common/sodor_internal_tile.scala
+index 3098aa6..b7b582c 100644
+--- a/src/main/scala/common/sodor_internal_tile.scala
++++ b/src/main/scala/common/sodor_internal_tile.scala
+@@ -28,6 +28,7 @@ abstract class AbstractCore extends Module {
+   val interrupt: CoreInterrupts
+   val hartid: UInt
+   val reset_vector: UInt
++  val io: Data
+ }
+ abstract class AbstractInternalTile(ports: Int)(implicit val p: Parameters, val conf: SodorCoreParams) extends Module {
+   val io = IO(new Bundle {

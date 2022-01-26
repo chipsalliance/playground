@@ -1,0 +1,900 @@
+From 62d34e7a411eaf5071e0c43f4f2d9eaf0c42f4b8 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Thu, 7 Oct 2021 15:51:52 +0800
+Subject: [PATCH 1/9] remove cloneType
+
+---
+ src/main/scala/lsu/lsu.scala | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/main/scala/lsu/lsu.scala b/src/main/scala/lsu/lsu.scala
+index 06416ae8d..184e9100d 100644
+--- a/src/main/scala/lsu/lsu.scala
++++ b/src/main/scala/lsu/lsu.scala
+@@ -106,7 +106,6 @@ class LSUDMemIO(implicit p: Parameters, edge: TLEdgeOut) extends BoomBundle()(p)
+     val release = Bool()
+   })
+ 
+-  override def cloneType = new LSUDMemIO().asInstanceOf[this.type]
+ }
+ 
+ class LSUCoreIO(implicit p: Parameters) extends BoomBundle()(p)
+
+From e3352bc97c0bc4e27dc58943aeb5e2ea3c9146d2 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Fri, 7 Jan 2022 18:48:20 +0800
+Subject: [PATCH 2/9] bump for bump for chipsalliance/rocket-chip#2841
+
+---
+ src/main/scala/common/parameters.scala | 2 ++
+ src/main/scala/exu/decode.scala        | 2 +-
+ src/main/scala/lsu/tlb.scala           | 2 +-
+ 3 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/main/scala/common/parameters.scala b/src/main/scala/common/parameters.scala
+index 4f22b1979..24e2beb45 100644
+--- a/src/main/scala/common/parameters.scala
++++ b/src/main/scala/common/parameters.scala
+@@ -80,6 +80,7 @@ case class BoomCoreParams(
+   mulDiv: Option[freechips.rocketchip.rocket.MulDivParams] = Some(MulDivParams(divEarlyOut=true)),
+   nBreakpoints: Int = 0, // TODO Fix with better frontend breakpoint unit
+   nL2TLBEntries: Int = 512,
++  val nPTECacheEntries: Int = 8, // TODO: check
+   nL2TLBWays: Int = 1,
+   nLocalInterrupts: Int = 0,
+   useNMI: Boolean = false,
+@@ -87,6 +88,7 @@ case class BoomCoreParams(
+   useDebug: Boolean = true,
+   useUser: Boolean = true,
+   useSupervisor: Boolean = false,
++  useHypervisor: Boolean = false,
+   useVM: Boolean = true,
+   useSCIE: Boolean = false,
+   useRVE: Boolean = false,
+diff --git a/src/main/scala/exu/decode.scala b/src/main/scala/exu/decode.scala
+index 4036d1ef9..f0c99f6f1 100644
+--- a/src/main/scala/exu/decode.scala
++++ b/src/main/scala/exu/decode.scala
+@@ -485,7 +485,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
+   val cs = Wire(new CtrlSigs()).decode(inst, decode_table)
+ 
+   // Exception Handling
+-  io.csr_decode.csr := inst(31,20)
++  io.csr_decode.csr_addr := inst
+   val csr_en = cs.csr_cmd.isOneOf(CSR.S, CSR.C, CSR.W)
+   val csr_ren = cs.csr_cmd.isOneOf(CSR.S, CSR.C) && uop.lrs1 === 0.U
+   val system_insn = cs.csr_cmd === CSR.I
+diff --git a/src/main/scala/lsu/tlb.scala b/src/main/scala/lsu/tlb.scala
+index 805bbbf0e..732f1ecaf 100644
+--- a/src/main/scala/lsu/tlb.scala
++++ b/src/main/scala/lsu/tlb.scala
+@@ -181,7 +181,7 @@ class NBDTLB(instruction: Boolean, lgMaxSize: Int, cfg: TLBConfig)(implicit edge
+     newEntry.c := cacheable(0)
+     newEntry.u := pte.u
+     newEntry.g := pte.g
+-    newEntry.ae := io.ptw.resp.bits.ae
++    newEntry.ae := io.ptw.resp.bits.ae_final
+     newEntry.sr := pte.sr()
+     newEntry.sw := pte.sw()
+     newEntry.sx := pte.sx()
+
+From 42dc388e755b8a1b7631e355d532d9b6b6730743 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Mon, 17 Jan 2022 15:12:40 -0800
+Subject: [PATCH 3/9] Convert fire() to fire
+
+---
+ src/main/scala/exu/core.scala                 |  4 +-
+ .../exu/execution-units/functional-unit.scala |  2 +-
+ src/main/scala/exu/fp-pipeline.scala          |  4 +-
+ src/main/scala/ifu/fetch-target-queue.scala   |  4 +-
+ src/main/scala/ifu/frontend.scala             | 10 ++--
+ src/main/scala/ifu/icache.scala               |  8 +--
+ src/main/scala/lsu/dcache.scala               | 58 +++++++++----------
+ src/main/scala/lsu/lsu.scala                  | 10 ++--
+ src/main/scala/lsu/mshrs.scala                | 42 +++++++-------
+ src/main/scala/lsu/prefetcher.scala           |  2 +-
+ src/main/scala/lsu/tlb.scala                  |  2 +-
+ src/main/scala/util/elastic-reg.scala         |  8 +--
+ src/main/scala/util/util.scala                |  2 +-
+ 13 files changed, 78 insertions(+), 78 deletions(-)
+
+diff --git a/src/main/scala/exu/core.scala b/src/main/scala/exu/core.scala
+index 579fce896..063d9b619 100644
+--- a/src/main/scala/exu/core.scala
++++ b/src/main/scala/exu/core.scala
+@@ -786,10 +786,10 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
+   var iss_wu_idx = 1
+   var ren_wu_idx = 1
+   // The 0th wakeup port goes to the ll_wbarb
+-  int_iss_wakeups(0).valid := ll_wbarb.io.out.fire() && ll_wbarb.io.out.bits.uop.dst_rtype === RT_FIX
++  int_iss_wakeups(0).valid := ll_wbarb.io.out.fire && ll_wbarb.io.out.bits.uop.dst_rtype === RT_FIX
+   int_iss_wakeups(0).bits  := ll_wbarb.io.out.bits
+ 
+-  int_ren_wakeups(0).valid := ll_wbarb.io.out.fire() && ll_wbarb.io.out.bits.uop.dst_rtype === RT_FIX
++  int_ren_wakeups(0).valid := ll_wbarb.io.out.fire && ll_wbarb.io.out.bits.uop.dst_rtype === RT_FIX
+   int_ren_wakeups(0).bits  := ll_wbarb.io.out.bits
+ 
+   for (i <- 1 until memWidth) {
+diff --git a/src/main/scala/exu/execution-units/functional-unit.scala b/src/main/scala/exu/execution-units/functional-unit.scala
+index 6b08d1e2e..366b2771d 100644
+--- a/src/main/scala/exu/execution-units/functional-unit.scala
++++ b/src/main/scala/exu/execution-units/functional-unit.scala
+@@ -647,7 +647,7 @@ abstract class IterativeFunctionalUnit(dataWidth: Int)(implicit p: Parameters)
+   val do_kill = Wire(Bool())
+   do_kill := io.req.bits.kill // irrelevant default
+ 
+-  when (io.req.fire()) {
++  when (io.req.fire) {
+     // update incoming uop
+     do_kill := IsKilledByBranch(io.brupdate, io.req.bits.uop) || io.req.bits.kill
+     r_uop := io.req.bits.uop
+diff --git a/src/main/scala/exu/fp-pipeline.scala b/src/main/scala/exu/fp-pipeline.scala
+index e6470352d..e9b161d00 100644
+--- a/src/main/scala/exu/fp-pipeline.scala
++++ b/src/main/scala/exu/fp-pipeline.scala
+@@ -212,8 +212,8 @@ class FpPipeline(implicit p: Parameters) extends BoomModule with tile.HasFPUPara
+ 
+   val fpiu_unit = exe_units.fpiu_unit
+   val fpiu_is_sdq = fpiu_unit.io.ll_iresp.bits.uop.uopc === uopSTA
+-  io.to_int.valid := fpiu_unit.io.ll_iresp.fire() && !fpiu_is_sdq
+-  io.to_sdq.valid := fpiu_unit.io.ll_iresp.fire() &&  fpiu_is_sdq
++  io.to_int.valid := fpiu_unit.io.ll_iresp.fire && !fpiu_is_sdq
++  io.to_sdq.valid := fpiu_unit.io.ll_iresp.fire &&  fpiu_is_sdq
+   io.to_int.bits  := fpiu_unit.io.ll_iresp.bits
+   io.to_sdq.bits  := fpiu_unit.io.ll_iresp.bits
+   fpiu_unit.io.ll_iresp.ready := io.to_sdq.ready && io.to_int.ready
+diff --git a/src/main/scala/ifu/fetch-target-queue.scala b/src/main/scala/ifu/fetch-target-queue.scala
+index dee157171..7f9ded640 100644
+--- a/src/main/scala/ifu/fetch-target-queue.scala
++++ b/src/main/scala/ifu/fetch-target-queue.scala
+@@ -148,7 +148,7 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
+     None
+   }
+ 
+-  val do_enq = io.enq.fire()
++  val do_enq = io.enq.fire
+ 
+ 
+   // This register lets us initialize the ghist to 0
+@@ -344,7 +344,7 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
+   for (i <- 0 until 2) {
+     val idx = io.get_ftq_pc(i).ftq_idx
+     val next_idx = WrapInc(idx, num_entries)
+-    val next_is_enq = (next_idx === enq_ptr) && io.enq.fire()
++    val next_is_enq = (next_idx === enq_ptr) && io.enq.fire
+     val next_pc = Mux(next_is_enq, io.enq.bits.pc, pcs(next_idx))
+     val get_entry = ram(idx)
+     val next_entry = ram(next_idx)
+diff --git a/src/main/scala/ifu/frontend.scala b/src/main/scala/ifu/frontend.scala
+index 20699889d..f8b8b4e55 100644
+--- a/src/main/scala/ifu/frontend.scala
++++ b/src/main/scala/ifu/frontend.scala
+@@ -338,7 +338,7 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
+   icache.io.invalidate := io.cpu.flush_icache
+   val tlb = Module(new TLB(true, log2Ceil(fetchBytes), TLBConfig(nTLBSets, nTLBWays)))
+   io.ptw <> tlb.io.ptw
+-  io.cpu.perf.tlbMiss := io.ptw.req.fire()
++  io.cpu.perf.tlbMiss := io.ptw.req.fire
+   io.cpu.perf.acquire := icache.io.perf.acquire
+ 
+   // --------------------------------------------------------
+@@ -539,7 +539,7 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
+   // RAS takes a cycle to read
+   val ras_read_idx = RegInit(0.U(log2Ceil(nRasEntries).W))
+   ras.io.read_idx := ras_read_idx
+-  when (f3.io.enq.fire()) {
++  when (f3.io.enq.fire) {
+     ras_read_idx := f3.io.enq.bits.ghist.ras_idx
+     ras.io.read_idx := f3.io.enq.bits.ghist.ras_idx
+   }
+@@ -548,7 +548,7 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
+   // The BPD resp comes in f3
+   f3_bpd_resp.io.enq.valid := f3.io.deq.valid && RegNext(f3.io.enq.ready)
+   f3_bpd_resp.io.enq.bits  := bpd.io.resp.f3
+-  when (f3_bpd_resp.io.enq.fire()) {
++  when (f3_bpd_resp.io.enq.fire) {
+     bpd.io.f3_fire := true.B
+   }
+ 
+@@ -764,7 +764,7 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
+   f3_fetch_bundle.end_half.valid := bank_prev_is_half
+   f3_fetch_bundle.end_half.bits  := bank_prev_half
+ 
+-  when (f3.io.deq.fire()) {
++  when (f3.io.deq.fire) {
+     f3_prev_is_half := bank_prev_is_half
+     f3_prev_half    := bank_prev_half
+     assert(f3_bpd_resp.io.deq.bits.pc === f3_fetch_bundle.pc)
+@@ -840,7 +840,7 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
+ 
+   // When f3 finds a btb mispredict, queue up a bpd correction update
+   val f4_btb_corrections = Module(new Queue(new BranchPredictionUpdate, 2))
+-  f4_btb_corrections.io.enq.valid := f3.io.deq.fire() && f3_btb_mispredicts.reduce(_||_) && enableBTBFastRepair.B
++  f4_btb_corrections.io.enq.valid := f3.io.deq.fire && f3_btb_mispredicts.reduce(_||_) && enableBTBFastRepair.B
+   f4_btb_corrections.io.enq.bits  := DontCare
+   f4_btb_corrections.io.enq.bits.is_mispredict_update := false.B
+   f4_btb_corrections.io.enq.bits.is_repair_update     := false.B
+diff --git a/src/main/scala/ifu/icache.scala b/src/main/scala/ifu/icache.scala
+index 1e926bcbf..5867c3e5a 100644
+--- a/src/main/scala/ifu/icache.scala
++++ b/src/main/scala/ifu/icache.scala
+@@ -149,7 +149,7 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+ 
+ 
+ 
+-  val s0_valid = io.req.fire()
++  val s0_valid = io.req.fire
+   val s0_vaddr = io.req.bits.addr
+ 
+   val s1_valid = RegNext(s0_valid)
+@@ -161,12 +161,12 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+ 
+   val invalidated = Reg(Bool())
+   val refill_valid = RegInit(false.B)
+-  val refill_fire = tl_out.a.fire()
++  val refill_fire = tl_out.a.fire
+   val s2_miss = s2_valid && !s2_hit && !RegNext(refill_valid)
+   val refill_paddr = RegEnable(io.s1_paddr, s1_valid && !(refill_valid || s2_miss))
+   val refill_tag = refill_paddr(tagBits+untagBits-1,untagBits)
+   val refill_idx = refill_paddr(untagBits-1,blockOffBits)
+-  val refill_one_beat = tl_out.d.fire() && edge_out.hasData(tl_out.d.bits)
++  val refill_one_beat = tl_out.d.fire && edge_out.hasData(tl_out.d.bits)
+ 
+   io.req.ready := !refill_one_beat
+ 
+@@ -357,7 +357,7 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+   tl_out.c.valid := false.B
+   tl_out.e.valid := false.B
+ 
+-  io.perf.acquire := tl_out.a.fire()
++  io.perf.acquire := tl_out.a.fire
+ 
+   when (!refill_valid) { invalidated := false.B }
+   when (refill_fire) { refill_valid := true.B }
+diff --git a/src/main/scala/lsu/dcache.scala b/src/main/scala/lsu/dcache.scala
+index a8887a343..d0b0f1022 100644
+--- a/src/main/scala/lsu/dcache.scala
++++ b/src/main/scala/lsu/dcache.scala
+@@ -79,7 +79,7 @@ class BoomWritebackUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1Hella
+ 
+   when (state === s_invalid) {
+     io.req.ready := true.B
+-    when (io.req.fire()) {
++    when (io.req.fire) {
+       state := s_fill_buffer
+       data_req_cnt := 0.U
+       req := io.req.bits
+@@ -100,7 +100,7 @@ class BoomWritebackUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1Hella
+     r1_data_req_cnt   := 0.U
+     r2_data_req_fired := r1_data_req_fired
+     r2_data_req_cnt   := r1_data_req_cnt
+-    when (io.data_req.fire() && io.meta_read.fire()) {
++    when (io.data_req.fire && io.meta_read.fire) {
+       r1_data_req_fired := true.B
+       r1_data_req_cnt   := data_req_cnt
+       data_req_cnt := data_req_cnt + 1.U
+@@ -116,7 +116,7 @@ class BoomWritebackUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1Hella
+   } .elsewhen (state === s_lsu_release) {
+     io.lsu_release.valid := true.B
+     io.lsu_release.bits := probeResponse
+-    when (io.lsu_release.fire()) {
++    when (io.lsu_release.fire) {
+      state := s_active
+     }
+   } .elsewhen (state === s_active) {
+@@ -126,10 +126,10 @@ class BoomWritebackUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1Hella
+     when (io.mem_grant) {
+       acked := true.B
+     }
+-    when (io.release.fire()) {
++    when (io.release.fire) {
+       data_req_cnt := data_req_cnt + 1.U
+     }
+-    when ((data_req_cnt === (refillCycles-1).U) && io.release.fire()) {
++    when ((data_req_cnt === (refillCycles-1).U) && io.release.fire) {
+       state := Mux(req.voluntary, s_grant, s_invalid)
+     }
+   } .elsewhen (state === s_grant) {
+@@ -211,12 +211,12 @@ class BoomProbeUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1HellaCach
+ 
+   // state === s_invalid
+   when (state === s_invalid) {
+-    when (io.req.fire()) {
++    when (io.req.fire) {
+       state := s_meta_read
+       req := io.req.bits
+     }
+   } .elsewhen (state === s_meta_read) {
+-    when (io.meta_read.fire()) {
++    when (io.meta_read.fire) {
+       state := s_meta_resp
+     }
+   } .elsewhen (state === s_meta_resp) {
+@@ -230,7 +230,7 @@ class BoomProbeUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1HellaCach
+   } .elsewhen (state === s_mshr_resp) {
+     state := Mux(tag_matches && is_dirty, s_writeback_req, s_lsu_release)
+   } .elsewhen (state === s_lsu_release) {
+-    when (io.lsu_release.fire()) {
++    when (io.lsu_release.fire) {
+       state := s_release
+     }
+   } .elsewhen (state === s_release) {
+@@ -238,7 +238,7 @@ class BoomProbeUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1HellaCach
+       state := Mux(tag_matches, s_meta_write, s_invalid)
+     }
+   } .elsewhen (state === s_writeback_req) {
+-    when (io.wb_req.fire()) {
++    when (io.wb_req.fire) {
+       state := s_writeback_resp
+     }
+   } .elsewhen (state === s_writeback_resp) {
+@@ -247,7 +247,7 @@ class BoomProbeUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1HellaCach
+       state := s_meta_write
+     }
+   } .elsewhen (state === s_meta_write) {
+-    when (io.meta_write.fire()) {
++    when (io.meta_write.fire) {
+       state := s_meta_write_resp
+     }
+   } .elsewhen (state === s_meta_write_resp) {
+@@ -447,7 +447,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+ 
+   metaReadArb.io.in := DontCare
+   for (w <- 0 until memWidth) {
+-    meta(w).io.write.valid := metaWriteArb.io.out.fire()
++    meta(w).io.write.valid := metaWriteArb.io.out.fire
+     meta(w).io.write.bits  := metaWriteArb.io.out.bits
+     meta(w).io.read.valid  := metaReadArb.io.out.valid
+     meta(w).io.read.bits   := metaReadArb.io.out.bits.req(w)
+@@ -469,7 +469,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+   }
+   dataReadArb.io.out.ready := true.B
+ 
+-  data.io.write.valid := dataWriteArb.io.out.fire()
++  data.io.write.valid := dataWriteArb.io.out.fire
+   data.io.write.bits  := dataWriteArb.io.out.bits
+   dataWriteArb.io.out.ready := true.B
+ 
+@@ -527,7 +527,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+ 
+   // -----------
+   // Write-backs
+-  val wb_fire = wb.io.meta_read.fire() && wb.io.data_req.fire()
++  val wb_fire = wb.io.meta_read.fire && wb.io.data_req.fire
+   val wb_req = Wire(Vec(memWidth, new BoomDCacheReq))
+   wb_req             := DontCare
+   wb_req(0).uop      := NullMicroOp
+@@ -544,11 +544,11 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+   dataReadArb.io.in(1).bits.req(0)  := wb.io.data_req.bits
+   dataReadArb.io.in(1).bits.valid   := widthMap(w => (w == 0).B)
+   wb.io.data_req.ready  := metaReadArb.io.in(2).ready && dataReadArb.io.in(1).ready
+-  assert(!(wb.io.meta_read.fire() ^ wb.io.data_req.fire()))
++  assert(!(wb.io.meta_read.fire ^ wb.io.data_req.fire))
+ 
+   // -------
+   // Prober
+-  val prober_fire  = prober.io.meta_read.fire()
++  val prober_fire  = prober.io.meta_read.fire
+   val prober_req   = Wire(Vec(memWidth, new BoomDCacheReq))
+   prober_req             := DontCare
+   prober_req(0).uop      := NullMicroOp
+@@ -563,7 +563,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+ 
+   // -------
+   // Prefetcher
+-  val prefetch_fire = mshrs.io.prefetch.fire()
++  val prefetch_fire = mshrs.io.prefetch.fire
+   val prefetch_req  = Wire(Vec(memWidth, new BoomDCacheReq))
+   prefetch_req    := DontCare
+   prefetch_req(0) := mshrs.io.prefetch.bits
+@@ -575,25 +575,25 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+   mshrs.io.prefetch.ready := metaReadArb.io.in(5).ready
+   // Prefetch does not need to read data array
+ 
+-  val s0_valid = Mux(io.lsu.req.fire(), VecInit(io.lsu.req.bits.map(_.valid)),
+-                 Mux(mshrs.io.replay.fire() || wb_fire || prober_fire || prefetch_fire || mshrs.io.meta_read.fire(),
++  val s0_valid = Mux(io.lsu.req.fire, VecInit(io.lsu.req.bits.map(_.valid)),
++                 Mux(mshrs.io.replay.fire || wb_fire || prober_fire || prefetch_fire || mshrs.io.meta_read.fire,
+                                         VecInit(1.U(memWidth.W).asBools), VecInit(0.U(memWidth.W).asBools)))
+-  val s0_req   = Mux(io.lsu.req.fire()        , VecInit(io.lsu.req.bits.map(_.bits)),
++  val s0_req   = Mux(io.lsu.req.fire        , VecInit(io.lsu.req.bits.map(_.bits)),
+                  Mux(wb_fire                  , wb_req,
+                  Mux(prober_fire              , prober_req,
+                  Mux(prefetch_fire            , prefetch_req,
+-                 Mux(mshrs.io.meta_read.fire(), mshr_read_req
++                 Mux(mshrs.io.meta_read.fire, mshr_read_req
+                                               , replay_req)))))
+-  val s0_type  = Mux(io.lsu.req.fire()        , t_lsu,
++  val s0_type  = Mux(io.lsu.req.fire        , t_lsu,
+                  Mux(wb_fire                  , t_wb,
+                  Mux(prober_fire              , t_probe,
+                  Mux(prefetch_fire            , t_prefetch,
+-                 Mux(mshrs.io.meta_read.fire(), t_mshr_meta_read
++                 Mux(mshrs.io.meta_read.fire, t_mshr_meta_read
+                                               , t_replay)))))
+ 
+   // Does this request need to send a response or nack
+-  val s0_send_resp_or_nack = Mux(io.lsu.req.fire(), s0_valid,
+-    VecInit(Mux(mshrs.io.replay.fire() && isRead(mshrs.io.replay.bits.uop.mem_cmd), 1.U(memWidth.W), 0.U(memWidth.W)).asBools))
++  val s0_send_resp_or_nack = Mux(io.lsu.req.fire, s0_valid,
++    VecInit(Mux(mshrs.io.replay.fire && isRead(mshrs.io.replay.bits.uop.mem_cmd), 1.U(memWidth.W), 0.U(memWidth.W)).asBools))
+ 
+ 
+   val s1_req          = RegNext(s0_req)
+@@ -604,10 +604,10 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+                  RegNext(s0_valid(w)                                     &&
+                          !IsKilledByBranch(io.lsu.brupdate, s0_req(w).uop) &&
+                          !(io.lsu.exception && s0_req(w).uop.uses_ldq)   &&
+-                         !(s2_store_failed && io.lsu.req.fire() && s0_req(w).uop.uses_stq),
++                         !(s2_store_failed && io.lsu.req.fire && s0_req(w).uop.uses_stq),
+                          init=false.B))
+   for (w <- 0 until memWidth)
+-    assert(!(io.lsu.s1_kill(w) && !RegNext(io.lsu.req.fire()) && !RegNext(io.lsu.req.bits(w).valid)))
++    assert(!(io.lsu.s1_kill(w) && !RegNext(io.lsu.req.fire) && !RegNext(io.lsu.req.bits(w).valid)))
+   val s1_addr         = s1_req.map(_.addr)
+   val s1_nack         = s1_addr.map(a => a(idxMSB,idxLSB) === prober.io.meta_write.bits.idx && !prober.io.req.ready)
+   val s1_send_resp_or_nack = RegNext(s0_send_resp_or_nack)
+@@ -730,7 +730,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+ 
+   s2_nack           := widthMap(w => (s2_nack_miss(w) || s2_nack_hit(w) || s2_nack_victim(w) || s2_nack_data(w) || s2_nack_wb(w)) && s2_type =/= t_replay)
+   val s2_send_resp = widthMap(w => (RegNext(s1_send_resp_or_nack(w)) && !s2_nack(w) &&
+-                      (s2_hit(w) || (mshrs.io.req(w).fire() && isWrite(s2_req(w).uop.mem_cmd) && !isRead(s2_req(w).uop.mem_cmd)))))
++                      (s2_hit(w) || (mshrs.io.req(w).fire && isWrite(s2_req(w).uop.mem_cmd) && !isRead(s2_req(w).uop.mem_cmd)))))
+   val s2_send_nack = widthMap(w => (RegNext(s1_send_resp_or_nack(w)) && s2_nack(w)))
+   for (w <- 0 until memWidth)
+     assert(!(s2_send_resp(w) && s2_send_nack(w)))
+@@ -770,7 +770,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+ 
+   mshrs.io.meta_resp.valid      := !s2_nack_hit(0) || prober.io.mshr_wb_rdy
+   mshrs.io.meta_resp.bits       := Mux1H(s2_tag_match_way(0), RegNext(meta(0).io.resp))
+-  when (mshrs.io.req.map(_.fire()).reduce(_||_)) { replacer.miss }
++  when (mshrs.io.req.map(_.fire).reduce(_||_)) { replacer.miss }
+   tl_out.a <> mshrs.io.mem_acquire
+ 
+   // probes and releases
+@@ -808,7 +808,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
+   wb.io.req            <> wbArb.io.out
+   wb.io.data_resp       := s2_data_muxed(0)
+   mshrs.io.wb_resp      := wb.io.resp
+-  wb.io.mem_grant       := tl_out.d.fire() && tl_out.d.bits.source === cfg.nMSHRs.U
++  wb.io.mem_grant       := tl_out.d.fire && tl_out.d.bits.source === cfg.nMSHRs.U
+ 
+   val lsu_release_arb = Module(new Arbiter(new TLBundleC(edge.bundle), 2))
+   io.lsu.release <> lsu_release_arb.io.out
+diff --git a/src/main/scala/lsu/lsu.scala b/src/main/scala/lsu/lsu.scala
+index 184e9100d..7c527a21e 100644
+--- a/src/main/scala/lsu/lsu.scala
++++ b/src/main/scala/lsu/lsu.scala
+@@ -249,7 +249,7 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
+     instruction = false, lgMaxSize = log2Ceil(coreDataBytes), rocket.TLBConfig(dcacheParams.nTLBSets, dcacheParams.nTLBWays)))
+ 
+   io.ptw <> dtlb.io.ptw
+-  io.core.perf.tlbMiss := io.ptw.req.fire()
++  io.core.perf.tlbMiss := io.ptw.req.fire
+   io.core.perf.acquire := io.dmem.perf.acquire
+   io.core.perf.release := io.dmem.perf.release
+ 
+@@ -748,7 +748,7 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
+   val dmem_req = Wire(Vec(memWidth, Valid(new BoomDCacheReq)))
+   io.dmem.req.valid := dmem_req.map(_.valid).reduce(_||_)
+   io.dmem.req.bits  := dmem_req
+-  val dmem_req_fire = widthMap(w => dmem_req(w).valid && io.dmem.req.fire())
++  val dmem_req_fire = widthMap(w => dmem_req(w).valid && io.dmem.req.fire)
+ 
+   val s0_executing_loads = WireInit(VecInit((0 until numLdqEntries).map(x=>false.B)))
+ 
+@@ -863,7 +863,7 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
+     // Write data into the STQ
+     if (w == 0)
+       io.core.fp_stdata.ready := !will_fire_std_incoming(w) && !will_fire_stad_incoming(w)
+-    val fp_stdata_fire = io.core.fp_stdata.fire() && (w == 0).B
++    val fp_stdata_fire = io.core.fp_stdata.fire && (w == 0).B
+     when (will_fire_std_incoming(w) || will_fire_stad_incoming(w) || fp_stdata_fire)
+     {
+       val sidx = Mux(will_fire_std_incoming(w) || will_fire_stad_incoming(w),
+@@ -877,7 +877,7 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
+         "[lsu] Incoming store is overwriting a valid data entry")
+     }
+   }
+-  val will_fire_stdf_incoming = io.core.fp_stdata.fire()
++  val will_fire_stdf_incoming = io.core.fp_stdata.fire
+   require (xLen >= fLen) // for correct SDQ size
+ 
+   //-------------------------------------------------------------
+@@ -1525,7 +1525,7 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
+   io.hellacache.resp.valid := false.B
+   when (hella_state === h_ready) {
+     io.hellacache.req.ready := true.B
+-    when (io.hellacache.req.fire()) {
++    when (io.hellacache.req.fire) {
+       hella_req   := io.hellacache.req.bits
+       hella_state := h_s1
+     }
+diff --git a/src/main/scala/lsu/mshrs.scala b/src/main/scala/lsu/mshrs.scala
+index dde46693b..57562f150 100644
+--- a/src/main/scala/lsu/mshrs.scala
++++ b/src/main/scala/lsu/mshrs.scala
+@@ -144,7 +144,7 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+   // Block probes if a tag write we started is still in the pipeline
+   val meta_hazard = RegInit(0.U(2.W))
+   when (meta_hazard =/= 0.U) { meta_hazard := meta_hazard + 1.U }
+-  when (io.meta_write.fire()) { meta_hazard := 1.U }
++  when (io.meta_write.fire) { meta_hazard := 1.U }
+   io.probe_rdy   := (meta_hazard === 0.U && (state.isOneOf(s_invalid, s_refill_req, s_refill_resp, s_drain_rpq_loads) || (state === s_meta_read && grantack.valid)))
+   io.idx.valid := state =/= s_invalid
+   io.tag.valid := state =/= s_invalid
+@@ -216,7 +216,7 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+       toAddress       = Cat(req_tag, req_idx) << blockOffBits,
+       lgSize          = lgCacheBlockBytes.U,
+       growPermissions = grow_param)._2
+-    when (io.mem_acquire.fire()) {
++    when (io.mem_acquire.fire) {
+       state := s_refill_resp
+     }
+   } .elsewhen (state === s_refill_resp) {
+@@ -230,7 +230,7 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+       io.mem_grant.ready      := true.B
+     }
+ 
+-    when (io.mem_grant.fire()) {
++    when (io.mem_grant.fire) {
+       grant_had_data := edge.hasData(io.mem_grant.bits)
+     }
+     when (refill_done) {
+@@ -261,16 +261,16 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+     io.lb_read.bits.id     := io.id
+     io.lb_read.bits.offset := rpq.io.deq.bits.addr >> rowOffBits
+ 
+-    io.resp.valid     := rpq.io.deq.valid && io.lb_read.fire() && drain_load
++    io.resp.valid     := rpq.io.deq.valid && io.lb_read.fire && drain_load
+     io.resp.bits.uop  := rpq.io.deq.bits.uop
+     io.resp.bits.data := loadgen.data
+     io.resp.bits.is_hella := rpq.io.deq.bits.is_hella
+-    when (rpq.io.deq.fire()) {
++    when (rpq.io.deq.fire) {
+       commit_line   := true.B
+     }
+       .elsewhen (rpq.io.empty && !commit_line)
+     {
+-      when (!rpq.io.enq.fire()) {
++      when (!rpq.io.enq.fire) {
+         state := s_mem_finish_1
+         finish_to_prefetch := enablePrefetching.B
+       }
+@@ -285,7 +285,7 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+     io.meta_read.bits.idx := req_idx
+     io.meta_read.bits.tag := req_tag
+     io.meta_read.bits.way_en := req.way_en
+-    when (io.meta_read.fire()) {
++    when (io.meta_read.fire) {
+       state := s_meta_resp_1
+     }
+   } .elsewhen (state === s_meta_resp_1) {
+@@ -301,7 +301,7 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+     io.meta_write.bits.data.tag := req_tag
+     io.meta_write.bits.way_en   := req.way_en
+ 
+-    when (io.meta_write.fire()) {
++    when (io.meta_write.fire) {
+       state      := s_wb_req
+     }
+   } .elsewhen (state === s_wb_req) {
+@@ -313,7 +313,7 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+     io.wb_req.bits.way_en    := req.way_en
+     io.wb_req.bits.source    := io.id
+     io.wb_req.bits.voluntary := true.B
+-    when (io.wb_req.fire()) {
++    when (io.wb_req.fire) {
+       state := s_wb_resp
+     }
+   } .elsewhen (state === s_wb_resp) {
+@@ -325,12 +325,12 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+     io.lb_read.bits.id     := io.id
+     io.lb_read.bits.offset := refill_ctr
+ 
+-    io.refill.valid       := io.lb_read.fire()
++    io.refill.valid       := io.lb_read.fire
+     io.refill.bits.addr   := req_block_addr | (refill_ctr << rowOffBits)
+     io.refill.bits.way_en := req.way_en
+     io.refill.bits.wmask  := ~(0.U(rowWords.W))
+     io.refill.bits.data   := io.lb_resp
+-    when (io.refill.fire()) {
++    when (io.refill.fire) {
+       refill_ctr := refill_ctr + 1.U
+       when (refill_ctr === (cacheDataBeats - 1).U) {
+         state := s_drain_rpq
+@@ -340,7 +340,7 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+     io.replay <> rpq.io.deq
+     io.replay.bits.way_en    := req.way_en
+     io.replay.bits.addr := Cat(req_tag, req_idx, rpq.io.deq.bits.addr(blockOffBits-1,0))
+-    when (io.replay.fire() && isWrite(rpq.io.deq.bits.uop.mem_cmd)) {
++    when (io.replay.fire && isWrite(rpq.io.deq.bits.uop.mem_cmd)) {
+       // Set dirty bit
+       val (is_hit, _, coh_on_hit) = new_coh.onAccess(rpq.io.deq.bits.uop.mem_cmd)
+       assert(is_hit, "We still don't have permissions for this store")
+@@ -355,14 +355,14 @@ class BoomMSHR(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p)
+     io.meta_write.bits.data.coh := new_coh
+     io.meta_write.bits.data.tag := req_tag
+     io.meta_write.bits.way_en   := req.way_en
+-    when (io.meta_write.fire()) {
++    when (io.meta_write.fire) {
+       state := s_mem_finish_1
+       finish_to_prefetch := false.B
+     }
+   } .elsewhen (state === s_mem_finish_1) {
+     io.mem_finish.valid := grantack.valid
+     io.mem_finish.bits  := grantack.bits
+-    when (io.mem_finish.fire() || !grantack.valid) {
++    when (io.mem_finish.fire || !grantack.valid) {
+       grantack.valid := false.B
+       state := s_mem_finish_2
+     }
+@@ -451,11 +451,11 @@ class BoomIOMSHR(id: Int)(implicit edge: TLEdgeOut, p: Parameters) extends BoomM
+   io.resp.bits.uop  := req.uop
+   io.resp.bits.data := loadgen.data
+ 
+-  when (io.req.fire()) {
++  when (io.req.fire) {
+     req   := io.req.bits
+     state := s_mem_access
+   }
+-  when (io.mem_access.fire()) {
++  when (io.mem_access.fire) {
+     state := s_mem_ack
+   }
+   when (state === s_mem_ack && io.mem_ack.valid) {
+@@ -465,7 +465,7 @@ class BoomIOMSHR(id: Int)(implicit edge: TLEdgeOut, p: Parameters) extends BoomM
+     }
+   }
+   when (state === s_resp) {
+-    when (!send_resp || io.resp.fire()) {
++    when (!send_resp || io.resp.fire) {
+       state := s_idle
+     }
+   }
+@@ -555,7 +555,7 @@ class BoomMSHRFile(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()
+   val sdq_val      = RegInit(0.U(cfg.nSDQ.W))
+   val sdq_alloc_id = PriorityEncoder(~sdq_val(cfg.nSDQ-1,0))
+   val sdq_rdy      = !sdq_val.andR
+-  val sdq_enq      = req.fire() && cacheable && isWrite(req.bits.uop.mem_cmd)
++  val sdq_enq      = req.fire && cacheable && isWrite(req.bits.uop.mem_cmd)
+   val sdq          = Mem(cfg.nSDQ, UInt(coreDataBits.W))
+ 
+   when (sdq_enq) {
+@@ -573,11 +573,11 @@ class BoomMSHRFile(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()
+   lb_write_arb.io.out.ready := true.B
+ 
+   val lb_read_data = WireInit(0.U(encRowBits.W))
+-  when (lb_write_arb.io.out.fire()) {
++  when (lb_write_arb.io.out.fire) {
+     lb.write(lb_write_arb.io.out.bits.lb_addr, lb_write_arb.io.out.bits.data)
+   } .otherwise {
+     lb_read_arb.io.out.ready := true.B
+-    when (lb_read_arb.io.out.fire()) {
++    when (lb_read_arb.io.out.fire) {
+       lb_read_data := lb.read(lb_read_arb.io.out.bits.lb_addr)
+     }
+   }
+@@ -748,7 +748,7 @@ class BoomMSHRFile(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()
+   }
+   io.refill         <> refill_arb.io.out
+ 
+-  val free_sdq = io.replay.fire() && isWrite(io.replay.bits.uop.mem_cmd)
++  val free_sdq = io.replay.fire && isWrite(io.replay.bits.uop.mem_cmd)
+ 
+   io.replay <> replay_arb.io.out
+   io.replay.bits.data := sdq(replay_arb.io.out.bits.sdq_id)
+diff --git a/src/main/scala/lsu/prefetcher.scala b/src/main/scala/lsu/prefetcher.scala
+index 7f0dcee75..c96ebf53d 100644
+--- a/src/main/scala/lsu/prefetcher.scala
++++ b/src/main/scala/lsu/prefetcher.scala
+@@ -58,7 +58,7 @@ class NLPrefetcher(implicit edge: TLEdgeOut, p: Parameters) extends DataPrefetch
+     req_valid := true.B
+     req_addr  := mshr_req_addr
+     req_cmd   := Mux(ClientStates.hasWritePermission(io.req_coh.state), M_PFW, M_PFR)
+-  } .elsewhen (io.prefetch.fire()) {
++  } .elsewhen (io.prefetch.fire) {
+     req_valid := false.B
+   }
+ 
+diff --git a/src/main/scala/lsu/tlb.scala b/src/main/scala/lsu/tlb.scala
+index 732f1ecaf..1b279e8ca 100644
+--- a/src/main/scala/lsu/tlb.scala
++++ b/src/main/scala/lsu/tlb.scala
+@@ -311,7 +311,7 @@ class NBDTLB(instruction: Boolean, lgMaxSize: Int, cfg: TLBConfig)(implicit edge
+   if (usingVM) {
+     val sfence = io.sfence.valid
+     for (w <- 0 until memWidth) {
+-      when (io.req(w).fire() && tlb_miss(w) && state === s_ready) {
++      when (io.req(w).fire && tlb_miss(w) && state === s_ready) {
+         state := s_request
+         r_refill_tag := vpn(w)
+ 
+diff --git a/src/main/scala/util/elastic-reg.scala b/src/main/scala/util/elastic-reg.scala
+index adcb0867a..b24fc93f7 100644
+--- a/src/main/scala/util/elastic-reg.scala
++++ b/src/main/scala/util/elastic-reg.scala
+@@ -27,13 +27,13 @@ class ElasticReg[T <: Data](gen: T) extends Module
+ 
+     val wdata = if (i == entries-1) io.enq.bits else Mux(valid(i+1), elts(i+1), io.enq.bits)
+     val wen = Mux(io.deq.ready,
+-                  paddedValid(i+1) || io.enq.fire() && ((i == 0).B || valid(i)),
+-                  io.enq.fire() && paddedValid(i-1) && !valid(i))
++                  paddedValid(i+1) || io.enq.fire && ((i == 0).B || valid(i)),
++                  io.enq.fire && paddedValid(i-1) && !valid(i))
+     when (wen) { elts(i) := wdata }
+ 
+     valid(i) := Mux(io.deq.ready,
+-                    paddedValid(i+1) || io.enq.fire() && ((i == 0).B || valid(i)),
+-                    io.enq.fire() && paddedValid(i-1) || valid(i))
++                    paddedValid(i+1) || io.enq.fire && ((i == 0).B || valid(i)),
++                    io.enq.fire && paddedValid(i-1) || valid(i))
+   }
+ 
+   io.enq.ready := !valid(entries-1)
+diff --git a/src/main/scala/util/util.scala b/src/main/scala/util/util.scala
+index ee6e3e87e..2039d4cd1 100644
+--- a/src/main/scala/util/util.scala
++++ b/src/main/scala/util/util.scala
+@@ -472,7 +472,7 @@ class BranchKillableQueue[T <: boom.common.HasBoomUOP](gen: T, entries: Int, flu
+   val ptr_match = enq_ptr.value === deq_ptr.value
+   io.empty := ptr_match && !maybe_full
+   val full = ptr_match && maybe_full
+-  val do_enq = WireInit(io.enq.fire())
++  val do_enq = WireInit(io.enq.fire)
+   val do_deq = WireInit((io.deq.ready || !valids(deq_ptr.value)) && !io.empty)
+ 
+   for (i <- 0 until entries) {
+
+From d90e6639cea70397850380c6f14ae6e93aa60727 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Mon, 17 Jan 2022 16:17:06 -0800
+Subject: [PATCH 4/9] Update Chipyard hash for CI
+
+---
+ CHIPYARD.hash | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CHIPYARD.hash b/CHIPYARD.hash
+index 5a867f74f..b9f45f0d7 100644
+--- a/CHIPYARD.hash
++++ b/CHIPYARD.hash
+@@ -1 +1 @@
+-45684f1b875f018a1945476cec9269068e1618ca
++cd0d194ba63f5f148fb5c73a2a3b6bc354b912fc
+
+From 259445fea8c4f470cd3b4a3d71f52a90fedab067 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Mon, 17 Jan 2022 16:24:29 -0800
+Subject: [PATCH 5/9] Update Chipyard CI hash
+
+---
+ CHIPYARD.hash | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CHIPYARD.hash b/CHIPYARD.hash
+index b9f45f0d7..f41949c33 100644
+--- a/CHIPYARD.hash
++++ b/CHIPYARD.hash
+@@ -1 +1 @@
+-cd0d194ba63f5f148fb5c73a2a3b6bc354b912fc
++117624d8eea27bafd613eec09e9b9b3e31239e08
+
+From 5c813dbc1fa033b2cd1d2566e6320f1f30c3d239 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Wed, 19 Jan 2022 21:46:40 -0800
+Subject: [PATCH 6/9] Update CSRDecodeIO inst input
+
+---
+ src/main/scala/exu/decode.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/main/scala/exu/decode.scala b/src/main/scala/exu/decode.scala
+index f0c99f6f1..02bc514ae 100644
+--- a/src/main/scala/exu/decode.scala
++++ b/src/main/scala/exu/decode.scala
+@@ -485,7 +485,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
+   val cs = Wire(new CtrlSigs()).decode(inst, decode_table)
+ 
+   // Exception Handling
+-  io.csr_decode.csr_addr := inst
++  io.csr_decode.inst := inst
+   val csr_en = cs.csr_cmd.isOneOf(CSR.S, CSR.C, CSR.W)
+   val csr_ren = cs.csr_cmd.isOneOf(CSR.S, CSR.C) && uop.lrs1 === 0.U
+   val system_insn = cs.csr_cmd === CSR.I
+
+From efe2b35cc2224edf3a417381d437cfdcb37e02a8 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Thu, 20 Jan 2022 17:06:26 -0800
+Subject: [PATCH 7/9] Deal with TLB/CSRFile changes
+
+---
+ src/main/scala/exu/core.scala     | 4 ++++
+ src/main/scala/ifu/frontend.scala | 2 ++
+ src/main/scala/lsu/lsu.scala      | 3 +++
+ 3 files changed, 9 insertions(+)
+
+diff --git a/src/main/scala/exu/core.scala b/src/main/scala/exu/core.scala
+index 063d9b619..b267c0202 100644
+--- a/src/main/scala/exu/core.scala
++++ b/src/main/scala/exu/core.scala
+@@ -1055,6 +1055,10 @@ class BoomCore(usingTrace: Boolean)(implicit p: Parameters) extends BoomModule
+   csr.io.hartid := io.hartid
+   csr.io.interrupts := io.interrupts
+ 
++  // we do not support the H-extension
++  csr.io.htval := DontCare
++  csr.io.gva := DontCare
++
+ // TODO can we add this back in, but handle reset properly and save us
+ //      the mux above on csr.io.rw.cmd?
+ //   assert (!(csr_rw_cmd =/= rocket.CSR.N && !exe_units(0).io.resp(0).valid),
+diff --git a/src/main/scala/ifu/frontend.scala b/src/main/scala/ifu/frontend.scala
+index f8b8b4e55..868debc5f 100644
+--- a/src/main/scala/ifu/frontend.scala
++++ b/src/main/scala/ifu/frontend.scala
+@@ -390,6 +390,8 @@ class BoomFrontendModule(outer: BoomFrontend) extends LazyModuleImp(outer)
+   tlb.io.req.bits.vaddr := s1_vpc
+   tlb.io.req.bits.passthrough := false.B
+   tlb.io.req.bits.size  := log2Ceil(coreInstBytes * fetchWidth).U
++  tlb.io.req.bits.v     := io.ptw.status.v
++  tlb.io.req.bits.prv   := io.ptw.status.prv
+   tlb.io.sfence         := RegNext(io.cpu.sfence)
+   tlb.io.kill           := false.B
+ 
+diff --git a/src/main/scala/lsu/lsu.scala b/src/main/scala/lsu/lsu.scala
+index 7c527a21e..1f17835d8 100644
+--- a/src/main/scala/lsu/lsu.scala
++++ b/src/main/scala/lsu/lsu.scala
+@@ -254,6 +254,7 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
+   io.core.perf.release := io.dmem.perf.release
+ 
+ 
++
+   val clear_store     = WireInit(false.B)
+   val live_store_mask = RegInit(0.U(numStqEntries.W))
+   var next_live_store_mask = Mux(clear_store, live_store_mask & ~(1.U << stq_head),
+@@ -650,6 +651,8 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
+     dtlb.io.req(w).bits.size        := exe_size(w)
+     dtlb.io.req(w).bits.cmd         := exe_cmd(w)
+     dtlb.io.req(w).bits.passthrough := exe_passthr(w)
++    dtlb.io.req(w).bits.v           := io.ptw.status.v
++    dtlb.io.req(w).bits.prv         := io.ptw.status.prv
+   }
+   dtlb.io.kill                      := exe_kill.reduce(_||_)
+   dtlb.io.sfence                    := exe_sfence
+
+From 1ad28828673f2fce7a18f7255facd4705f04a58a Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Thu, 20 Jan 2022 20:33:06 -0800
+Subject: [PATCH 8/9] Bump Chipyard hash
+
+---
+ CHIPYARD.hash | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CHIPYARD.hash b/CHIPYARD.hash
+index f41949c33..cfed0d56a 100644
+--- a/CHIPYARD.hash
++++ b/CHIPYARD.hash
+@@ -1 +1 @@
+-117624d8eea27bafd613eec09e9b9b3e31239e08
++0e6080682b3dd0ce11cdfed1292ec20e70d75f80
+
+From 90a4ec647e9fbb5a7d0f396835d87adb7b8274af Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Tue, 25 Jan 2022 09:56:48 -0800
+Subject: [PATCH 9/9] Bump Chipyard CI hash
+
+---
+ CHIPYARD.hash | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CHIPYARD.hash b/CHIPYARD.hash
+index cfed0d56a..8880ec44f 100644
+--- a/CHIPYARD.hash
++++ b/CHIPYARD.hash
+@@ -1 +1 @@
+-0e6080682b3dd0ce11cdfed1292ec20e70d75f80
++4180463d52bc0a6b4c004530601ccdabebf0ab7d
