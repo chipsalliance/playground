@@ -79,21 +79,18 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
-hwacha https://github.com/ucb-bar/hwacha/pull/30  
 fpga-shells https://github.com/sifive/fpga-shells/pull/161  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
-riscv-boom https://github.com/riscv-boom/riscv-boom/pull/565  
-riscv-boom https://github.com/riscv-boom/riscv-boom/pull/587  
-icenet https://github.com/firesim/icenet/pull/32  
-firesim https://github.com/firesim/firesim/pull/843  
-hwacha https://github.com/ucb-bar/hwacha/pull/33  
-chipyard https://github.com/ucb-bar/chipyard/pull/1001  
-chipyard https://github.com/ucb-bar/chipyard/pull/1076  
-gemmini https://github.com/ucb-bar/gemmini/pull/150  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 sha3 https://github.com/ucb-bar/sha3/pull/33  
-riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/69  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
+riscv-boom https://github.com/riscv-boom/riscv-boom/pull/589  
+hwacha https://github.com/ucb-bar/hwacha/pull/35  
+icenet https://github.com/firesim/icenet/pull/33  
+riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/71  
+firesim https://github.com/firesim/firesim/pull/843
+chipyard https://github.com/ucb-bar/chipyard/pull/1001
+chipyard https://github.com/ucb-bar/chipyard/pull/1076
 <!-- END-PATCH -->
 
 ## Why not Chipyard
