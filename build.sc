@@ -74,6 +74,8 @@ object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) 
   def firrtlModule: Option[PublishModule] = Some(myfirrtl)
 
   def treadleModule: Option[PublishModule] = Some(mytreadle)
+
+  def chiseltestModule: Option[PublishModule] = Some(mychiseltest)
 }
 
 object mytreadle extends dependencies.treadle.build.treadleCrossModule(ivys.sv) {
