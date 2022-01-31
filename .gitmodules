@@ -113,3 +113,6 @@
 [submodule "dependencies/llvm-project"]
 	path = dependencies/llvm-project
 	url = git@github.com:llvm/llvm-project
+[submodule "dependencies/musl"]
+	path = dependencies/musl
+	url = git@github.com:bminor/musl.git

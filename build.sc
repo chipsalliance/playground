@@ -432,6 +432,28 @@ object compilerrt extends Module {
   }
 }
 
+object musl extends Module {
+  override def millSourcePath = os.pwd / "dependencies" / "musl"
+  // ask make to cache file.
+  def compile = T.persistent {
+    os.proc(millSourcePath / "configure", "--target", "riscv64-none-elf").call(
+      T.ctx.dest,
+      Map (
+        "CC" -> "clang",
+        "CXX" -> "clang++",
+        "AR" -> "llvm-ar",
+        "RANLIB" -> "llvm-ranlib",
+        "LD" -> "lld",
+        "LIBCC" -> "-lclang_rt.builtins-riscv64",
+        "CFLAGS" -> "--target=riscv64 -mno-relax",
+        "LDFLAGS" -> s"-fuse-ld=lld --target=riscv64 -nostartfiles -nodefaultlibs -nolibc -nostdlib -L${compilerrt.compile()}",
+      )
+    )
+    os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
+    T.ctx.dest / "lib"
+  }
+}
+
 // Dummy
 
 object playground extends CommonModule {
