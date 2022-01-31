@@ -473,6 +473,30 @@ object pk extends Module {
   }
 }
 
+object hello extends Module {
+  override def millSourcePath = os.pwd / "sanitytests" / "rocketchip" / "resources" / "csrc"
+  // ask make to cache file.
+  def compile = T.persistent {
+    os.proc("clang",
+      "-o", "hello",
+      millSourcePath / "hello.c",
+      "--target=riscv64",
+      "-mno-relax",
+      "-fuse-ld=lld",
+      "-nostdlib",
+      s"${musl.compile()}/crt1.o",
+      s"${musl.compile()}/crti.o",
+      s"-L${compilerrt.compile()}",
+      "-lclang_rt.builtins-riscv64",
+      s"-L${musl.compile()}",
+      "-lc",
+      s"${musl.compile()}/crtn.o",
+      "-static",
+    ).call(T.ctx.dest)
+    T.ctx.dest / "hello"
+  }
+}
+
 // Dummy
 
 object playground extends CommonModule {
