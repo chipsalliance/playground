@@ -383,7 +383,7 @@ object spike extends Module {
   // ask make to cache file.
   def compile = T.persistent {
     os.proc(millSourcePath / "configure", "--prefix", "/usr", "--without-boost", "--without-boost-asio", "--without-boost-regex").call(
-      T.ctx.dest, Map("CC" -> "clang", "CXX" -> "clang++", "LD" -> "ldd")
+      T.ctx.dest, Map("CC" -> "clang", "CXX" -> "clang++", "LD" -> "lld")
     )
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
     T.ctx.dest
