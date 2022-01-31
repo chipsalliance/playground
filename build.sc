@@ -454,6 +454,26 @@ object musl extends Module {
   }
 }
 
+object pk extends Module {
+  override def millSourcePath = os.pwd / "dependencies" / "riscv-pk"
+  // ask make to cache file.
+  def compile = T.persistent {
+    os.proc(millSourcePath / "configure", "--host=riscv64-unknown-elf").call(
+      T.ctx.dest, Map (
+        "CC" -> "clang",
+        "CXX" -> "clang++",
+        "AR" -> "llvm-ar",
+        "RANLIB" -> "llvm-ranlib",
+        "LD" -> "lld",
+        "CFLAGS" -> "--target=riscv64 -mno-relax",
+        "LDFLAGS" -> s"-fuse-ld=lld --target=riscv64 -nostdlib",
+      )
+    )
+    os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest)
+    T.ctx.dest / "pk"
+  }
+}
+
 // Dummy
 
 object playground extends CommonModule {

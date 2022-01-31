@@ -116,3 +116,6 @@
 [submodule "dependencies/musl"]
 	path = dependencies/musl
 	url = git@github.com:bminor/musl.git
+[submodule "dependencies/riscv-pk"]
+	path = dependencies/riscv-pk
+	url = git@github.com:riscv-software-src/riscv-pk.git
