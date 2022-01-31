@@ -14,9 +14,11 @@ let
   clang-multiple-target =
     pkgs.writeScriptBin "clang" ''
       #!${pkgs.bash}/bin/bash
-      if [[ "$*" == *--target=riscv64* ]]; then
+      if [[ "$*" == *--target=riscv64* || "$*" == *-target\ riscv64* ]]; then
         # works partially, namely no ld
-        ${pkgs.clang.cc}/bin/clang --target=riscv64 $@
+        ${pkgs.pkgsCross.riscv64.buildPackages.clang}/bin/riscv64-unknown-linux-gnu-clang \
+          --target=riscv64 \
+          $@
       else
         # works fully
         ${pkgs.clang}/bin/clang $@
@@ -25,9 +27,11 @@ let
   clangpp-multiple-target =
     pkgs.writeScriptBin "clang++" ''
       #!${pkgs.bash}/bin/bash
-      if [[ "$*" == *--target=riscv64* ]]; then
+      if [[ "$*" == *--target=riscv64* || "$*" == *-target\ riscv64* ]]; then
         # works partially, namely no ld
-        ${pkgs.clang.cc}/bin/clang++ --target=riscv64 $@
+        ${pkgs.pkgsCross.riscv64.buildPackages.clang}/bin/riscv64-unknown-linux-gnu-clang++ \
+          --target=riscv64 \
+          $@
       else
         # works fully
         ${pkgs.clang}/bin/clang++ $@
@@ -39,13 +43,13 @@ let
   '';
 in pkgs.callPackage (
   {
-    mkShell,
+    mkShellNoCC,
     jdk,
     gnumake, git, mill, wget, parallel, dtc, protobuf, antlr4,
     llvmPackages, clang, lld, verilator, cmake, ninja, strace
   }:
 
-  mkShell {
+  mkShellNoCC {
     name = "sequencer-playground";
     depsBuildBuild = [
       jdk gnumake git mill wget parallel dtc protobuf antlr4
