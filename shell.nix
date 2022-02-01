@@ -6,6 +6,7 @@ with import <nixpkgs> {
       lld = lld_13;
       jdk = if stdenv.isDarwin then jdk11_headless else graalvm11-ce;
       protobuf = protobuf3_15; # required by firrtl
+      python = python3Full;
     };
   };
 };
@@ -47,14 +48,14 @@ in pkgs.callPackage (
     jdk,
     python,
     gnumake, git, mill, wget, parallel, dtc, protobuf, antlr4,
-    llvmPackages, clang, lld, verilator, cmake, ninja, strace
+    llvmPackages, clang, lld, verilator, cmake, ninja, rcs
   }:
 
   mkShellNoCC {
     name = "sequencer-playground";
     depsBuildBuild = [
       jdk gnumake git mill wget parallel dtc protobuf antlr4
-      verilator cmake ninja
+      verilator cmake ninja rcs
       llvmPackages.llvm lld
       python
 
