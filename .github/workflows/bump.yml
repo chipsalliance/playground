@@ -9,7 +9,7 @@ jobs:
     container: archlinux/archlinux:latest
     steps:
       - name: Install dependencies
-        run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4
+        run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 python
       - uses: actions/checkout@v2
         with:
           submodules: 'true'
@@ -79,7 +79,7 @@ jobs:
       - nix
     steps:
       - name: Install dependencies
-        run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4
+        run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 python
       - uses: actions/checkout@v2
         with:
           submodules: 'true'
