@@ -458,18 +458,17 @@ object pk extends Module {
   override def millSourcePath = os.pwd / "dependencies" / "riscv-pk"
   // ask make to cache file.
   def compile = T.persistent {
-    os.proc(millSourcePath / "configure", "--host=riscv64-unknown-elf").call(
-      T.ctx.dest, Map (
-        "CC" -> "clang",
-        "CXX" -> "clang++",
-        "AR" -> "llvm-ar",
-        "RANLIB" -> "llvm-ranlib",
-        "LD" -> "lld",
-        "CFLAGS" -> "--target=riscv64 -mno-relax",
-        "LDFLAGS" -> s"-fuse-ld=lld --target=riscv64 -nostdlib",
-      )
+    val env = Map (
+      "CC" -> "clang",
+      "CXX" -> "clang++",
+      "AR" -> "llvm-ar",
+      "RANLIB" -> "llvm-ranlib",
+      "LD" -> "lld",
+      "CFLAGS" -> "--target=riscv64 -mno-relax -Wno-uninitialized -Wno-unknown-pragmas",
+      "LDFLAGS" -> "-fuse-ld=lld --target=riscv64 -nostdlib",
     )
-    os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest)
+    os.proc(millSourcePath / "configure", "--host=riscv64-unknown-elf").call(T.ctx.dest, env)
+    os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest, env)
     T.ctx.dest / "pk"
   }
 }
