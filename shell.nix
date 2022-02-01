@@ -45,6 +45,7 @@ in pkgs.callPackage (
   {
     mkShellNoCC,
     jdk,
+    python,
     gnumake, git, mill, wget, parallel, dtc, protobuf, antlr4,
     llvmPackages, clang, lld, verilator, cmake, ninja, strace
   }:
@@ -55,6 +56,7 @@ in pkgs.callPackage (
       jdk gnumake git mill wget parallel dtc protobuf antlr4
       verilator cmake ninja
       llvmPackages.llvm lld
+      python
 
       clang-multiple-target
       clangpp-multiple-target
