@@ -431,18 +431,24 @@ object compilerrt extends Module {
       "-DCMAKE_C_COMPILER=clang",
       "-DCMAKE_CXX_COMPILER=clang++",
       "-DCMAKE_C_FLAGS=-nodefaultlibs -fno-exceptions -mno-relax -Wno-macro-redefined -fPIC",
+      "-DCMAKE_INSTALL_PREFIX=/usr",
       "-Wno-dev",
     ).call(T.ctx.dest)
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
-    T.ctx.dest / "lib" / "riscv64"
+    T.ctx.dest
   }
 }
 
 object musl extends Module {
   override def millSourcePath = os.pwd / "dependencies" / "musl"
   // ask make to cache file.
+  def libraryResources = T.persistent {
+    os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(compilerrt.compile())
+    PathRef(T.ctx.dest)
+  }
   def compile = T.persistent {
-    os.proc(millSourcePath / "configure", "--target", "riscv64-none-elf").call(
+    val p = libraryResources().path
+    os.proc(millSourcePath / "configure", "--target=riscv64-none-elf", "--prefix=/usr").call(
       T.ctx.dest,
       Map (
         "CC" -> "clang",
@@ -451,29 +457,34 @@ object musl extends Module {
         "RANLIB" -> "llvm-ranlib",
         "LD" -> "lld",
         "LIBCC" -> "-lclang_rt.builtins-riscv64",
-        "CFLAGS" -> "--target=riscv64 -mno-relax",
-        "LDFLAGS" -> s"-fuse-ld=lld --target=riscv64 -nostartfiles -nodefaultlibs -nolibc -nostdlib -L${compilerrt.compile()}",
+        "CFLAGS" -> "--target=riscv64 -mno-relax -nostdinc",
+        "LDFLAGS" -> s"-fuse-ld=lld --target=riscv64 -nostdlib -L${p}/usr/lib/riscv64",
       )
     )
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
-    T.ctx.dest / "lib"
+    T.ctx.dest
   }
 }
 
 object pk extends Module {
   override def millSourcePath = os.pwd / "dependencies" / "riscv-pk"
   // ask make to cache file.
+  def libraryResources = T.persistent {
+    os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(musl.compile())
+    PathRef(T.ctx.dest)
+  }
   def compile = T.persistent {
+    val p = libraryResources().path
     val env = Map (
       "CC" -> "clang",
       "CXX" -> "clang++",
       "AR" -> "llvm-ar",
       "RANLIB" -> "llvm-ranlib",
       "LD" -> "lld",
-      "CFLAGS" -> "--target=riscv64 -mno-relax -Wno-uninitialized -Wno-unknown-pragmas",
+      "CFLAGS" -> s"--target=riscv64 -mno-relax -nostdinc -I${p}/usr/include -Wno-uninitialized -Wno-unknown-pragmas",
       "LDFLAGS" -> "-fuse-ld=lld --target=riscv64 -nostdlib",
     )
-    os.proc(millSourcePath / "configure", "--host=riscv64-unknown-elf").call(T.ctx.dest, env)
+    os.proc(millSourcePath / "configure", "--host=riscv64-none-elf").call(T.ctx.dest, env)
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest, env)
     T.ctx.dest / "pk"
   }
@@ -482,21 +493,29 @@ object pk extends Module {
 object hello extends Module {
   override def millSourcePath = os.pwd / "sanitytests" / "rocketchip" / "resources" / "csrc"
   // ask make to cache file.
+  def libraryResources = T.persistent {
+    os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(compilerrt.compile())
+    os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(musl.compile())
+    PathRef(T.ctx.dest)
+  }
   def compile = T.persistent {
+    val p = libraryResources().path
     os.proc("clang",
       "-o", "hello",
       millSourcePath / "hello.c",
       "--target=riscv64",
       "-mno-relax",
+      "-nostdinc",
+      s"-I${p}/usr/include",
       "-fuse-ld=lld",
       "-nostdlib",
-      s"${musl.compile()}/crt1.o",
-      s"${musl.compile()}/crti.o",
-      s"-L${compilerrt.compile()}",
+      s"${p}/usr/lib/crt1.o",
+      s"${p}/usr/lib/crti.o",
+      s"-L${p}/usr/lib/riscv64",
       "-lclang_rt.builtins-riscv64",
-      s"-L${musl.compile()}",
+      s"-L${p}/usr/lib",
       "-lc",
-      s"${musl.compile()}/crtn.o",
+      s"${p}/usr/lib/crtn.o",
       "-static",
     ).call(T.ctx.dest)
     T.ctx.dest / "hello"
