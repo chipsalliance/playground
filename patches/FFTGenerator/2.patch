@@ -1,0 +1,109 @@
+From 511e33f933e83020f3f7b535641da0b46ceb6923 Mon Sep 17 00:00:00 2001
+From: abejgonzalez <abe.j.gonza@gmail.com>
+Date: Mon, 31 Jan 2022 11:17:30 -0800
+Subject: [PATCH] Move scala to src/main/scala | Remove cloneType
+
+---
+ .gitignore                                                     | 2 ++
+ Deserialize.scala => src/main/scala/Deserialize.scala          | 2 --
+ FFT.scala => src/main/scala/FFT.scala                          | 3 ---
+ FFTConfig.scala => src/main/scala/FFTConfig.scala              | 0
+ .../main/scala/FFTGeneratorConfigs.scala                       | 0
+ FFTUtilities.scala => src/main/scala/FFTUtilities.scala        | 0
+ Tail.scala => src/main/scala/Tail.scala                        | 2 --
+ Unscramble.scala => src/main/scala/Unscramble.scala            | 2 --
+ 8 files changed, 2 insertions(+), 9 deletions(-)
+ create mode 100644 .gitignore
+ rename Deserialize.scala => src/main/scala/Deserialize.scala (97%)
+ rename FFT.scala => src/main/scala/FFT.scala (99%)
+ rename FFTConfig.scala => src/main/scala/FFTConfig.scala (100%)
+ rename FFTGeneratorConfigs.scala => src/main/scala/FFTGeneratorConfigs.scala (100%)
+ rename FFTUtilities.scala => src/main/scala/FFTUtilities.scala (100%)
+ rename Tail.scala => src/main/scala/Tail.scala (98%)
+ rename Unscramble.scala => src/main/scala/Unscramble.scala (97%)
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..9409674
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,2 @@
++target
++.*.swp
+diff --git a/Deserialize.scala b/src/main/scala/Deserialize.scala
+similarity index 97%
+rename from Deserialize.scala
+rename to src/main/scala/Deserialize.scala
+index cd61e0a..e7a9a66 100644
+--- a/Deserialize.scala
++++ b/src/main/scala/Deserialize.scala
+@@ -58,8 +58,6 @@ class DeserializeIO[T <: Data](params: DeserializeParams[T]) extends Bundle {
+ 
+   // Deserialized output (parallel vector)
+   val out = Output(ValidWithSync(Vec(params.lanes, params.protoOutDes.cloneType)))
+-
+-  override def cloneType: this.type = DeserializeIO(params).asInstanceOf[this.type]
+ }
+ object DeserializeIO {
+   def apply[T <: Data](params: DeserializeParams[T]): DeserializeIO[T] =
+diff --git a/FFT.scala b/src/main/scala/FFT.scala
+similarity index 99%
+rename from FFT.scala
+rename to src/main/scala/FFT.scala
+index 257088c..58844fe 100644
+--- a/FFT.scala
++++ b/src/main/scala/FFT.scala
+@@ -221,9 +221,6 @@ class FFTIO[T<:Data:Real](lanes: Int, genIn: DspComplex[T], genOut: DspComplex[T
+ 
+   val in = Input(ValidWithSync(Vec(lanes, genIn)))
+   val out = Output(ValidWithSync(Vec(lanes, genOut)))
+-
+-  override def cloneType = new FFTIO(lanes, genIn, genOut).asInstanceOf[this.type]
+-
+ }
+ 
+ /**
+diff --git a/FFTConfig.scala b/src/main/scala/FFTConfig.scala
+similarity index 100%
+rename from FFTConfig.scala
+rename to src/main/scala/FFTConfig.scala
+diff --git a/FFTGeneratorConfigs.scala b/src/main/scala/FFTGeneratorConfigs.scala
+similarity index 100%
+rename from FFTGeneratorConfigs.scala
+rename to src/main/scala/FFTGeneratorConfigs.scala
+diff --git a/FFTUtilities.scala b/src/main/scala/FFTUtilities.scala
+similarity index 100%
+rename from FFTUtilities.scala
+rename to src/main/scala/FFTUtilities.scala
+diff --git a/Tail.scala b/src/main/scala/Tail.scala
+similarity index 98%
+rename from Tail.scala
+rename to src/main/scala/Tail.scala
+index 805183b..e22ea71 100644
+--- a/Tail.scala
++++ b/src/main/scala/Tail.scala
+@@ -73,8 +73,6 @@ class TailIO[T <: Data](params: TailParams[T]) extends Bundle {
+   // Outputs
+   // -- Signal Output
+   val signalOut = Decoupled((Vec(params.lanes, params.protoOut.cloneType)))
+-
+-  override def cloneType: this.type = TailIO(params).asInstanceOf[this.type]
+ }
+ 
+ object TailIO {
+diff --git a/Unscramble.scala b/src/main/scala/Unscramble.scala
+similarity index 97%
+rename from Unscramble.scala
+rename to src/main/scala/Unscramble.scala
+index c2f8283..139d68c 100644
+--- a/Unscramble.scala
++++ b/src/main/scala/Unscramble.scala
+@@ -65,8 +65,6 @@ class UnscrambleIO[T <: Data](params: UnscrambleParams[T]) extends Bundle {
+   // Unscrambled output (parallel vector)
+   // Change this to Decoupled later
+   val out = Decoupled((Vec(params.lanes, params.protoOut.cloneType)))
+-
+-  override def cloneType: this.type = UnscrambleIO(params).asInstanceOf[this.type]
+ }
+ object UnscrambleIO {
+   def apply[T <: Data](params: UnscrambleParams[T]): UnscrambleIO[T] =
