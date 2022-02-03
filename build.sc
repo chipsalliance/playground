@@ -256,6 +256,13 @@ object rocketdsputils extends CommonModule with SbtModule {
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools)
 }
 
+object FFTGenerator extends CommonModule with SbtModule {
+  // TODO: FIX
+  override def scalacOptions = Seq("-Xsource:2.11")
+  override def millSourcePath = os.pwd / "dependencies" / "FFTGenerator"
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools, rocketdsputils)
+}
+
 object gemmini extends CommonModule with SbtModule {
   // TODO: FIX
   override def scalacOptions = Seq("-Xsource:2.11")
@@ -328,7 +335,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
   override def scalacOptions = Seq("-Xsource:2.11")
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator)
 
   object tracegen extends CommonModule with SbtModule {
     // TODO: FIX
