@@ -371,6 +371,9 @@ object sanitytests extends CommonModule {
     override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
     def libraryResources = T.sources {
       os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(spike.compile())
+      os.proc("make", s"DESTDIR=${T.ctx.dest / "riscv64"}", "install").call(compilerrt.compile())
+      os.proc("make", s"DESTDIR=${T.ctx.dest / "riscv64"}", "install").call(musl.compile())
+      os.proc("cp", s"${pk.compile()}", s"${T.ctx.dest / "riscv64"}").call()
       T.ctx.dest
     }
     override def resources: Sources = T.sources {
@@ -488,38 +491,6 @@ object pk extends Module {
     os.proc(millSourcePath / "configure", "--host=riscv64-none-elf").call(T.ctx.dest, env)
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest, env)
     T.ctx.dest / "pk"
-  }
-}
-
-object hello extends Module {
-  override def millSourcePath = os.pwd / "sanitytests" / "rocketchip" / "resources" / "csrc"
-  // ask make to cache file.
-  def libraryResources = T.persistent {
-    os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(compilerrt.compile())
-    os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(musl.compile())
-    PathRef(T.ctx.dest)
-  }
-  def compile = T.persistent {
-    val p = libraryResources().path
-    os.proc("clang",
-      "-o", "hello",
-      millSourcePath / "hello.c",
-      "--target=riscv64",
-      "-mno-relax",
-      "-nostdinc",
-      s"-I${p}/usr/include",
-      "-fuse-ld=lld",
-      "-nostdlib",
-      s"${p}/usr/lib/crt1.o",
-      s"${p}/usr/lib/crti.o",
-      s"-L${p}/usr/lib/riscv64",
-      "-lclang_rt.builtins-riscv64",
-      s"-L${p}/usr/lib",
-      "-lc",
-      s"${p}/usr/lib/crtn.o",
-      "-static",
-    ).call(T.ctx.dest)
-    T.ctx.dest / "hello"
   }
 }
 
