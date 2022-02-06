@@ -112,7 +112,7 @@
 	url = git@github.com:ucb-bar/FFTGenerator.git
 [submodule "dependencies/llvm-project"]
 	path = dependencies/llvm-project
-	url = git@github.com:llvm/llvm-project
+	url = git@github.com:llvm/llvm-project.git
 [submodule "dependencies/musl"]
 	path = dependencies/musl
 	url = git@github.com:bminor/musl.git
