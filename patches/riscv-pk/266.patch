@@ -1,0 +1,22 @@
+From 160f837033f7726a0fa927eb2637a1a56dbd0245 Mon Sep 17 00:00:00 2001
+From: Zenithal <i@zenithal.me>
+Date: Sun, 6 Feb 2022 20:15:03 +0800
+Subject: [PATCH] Eliminate Wuninitialized for Clang/LLVM
+
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 81492de5..7df0b611 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -91,7 +91,7 @@ AS_IF([test "x$enable_print_device_tree" = "xyes"], [
+   AC_DEFINE([PK_PRINT_DEVICE_TREE],,[Define if the DTS is to be displayed])
+ ])
+ 
+-CFLAGS="-Wall -Werror -D__NO_INLINE__ -mcmodel=medany -O2 -std=gnu99 -Wno-unused -Wno-attributes -fno-delete-null-pointer-checks -fno-PIE"
++CFLAGS="-Wall -Werror -D__NO_INLINE__ -mcmodel=medany -O2 -std=gnu99 -Wno-unused -Wno-attributes -Wno-uninitialized -fno-delete-null-pointer-checks -fno-PIE"
+ LDFLAGS="$LDFLAGS -Wl,--build-id=none"
+ 
+ AC_SUBST(CFLAGS)

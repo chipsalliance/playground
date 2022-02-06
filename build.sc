@@ -481,9 +481,10 @@ object pk extends Module {
       "AR" -> "llvm-ar",
       "RANLIB" -> "llvm-ranlib",
       "LD" -> "lld",
-      "CFLAGS" -> s"--target=riscv64 -mno-relax -nostdinc -I${p}/usr/include -Wno-uninitialized -Wno-unknown-pragmas",
+      "CFLAGS" -> s"--target=riscv64 -mno-relax -nostdinc -I${p}/usr/include",
       "LDFLAGS" -> "-fuse-ld=lld --target=riscv64 -nostdlib",
     )
+    os.proc("autoreconf", "-fi").call(millSourcePath)
     os.proc(millSourcePath / "configure", "--host=riscv64-none-elf").call(T.ctx.dest, env)
     os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest, env)
     T.ctx.dest / "pk"
