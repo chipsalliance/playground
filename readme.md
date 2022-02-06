@@ -91,11 +91,11 @@ riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/71
 firesim https://github.com/firesim/firesim/pull/843  
 chipyard https://github.com/ucb-bar/chipyard/pull/1001  
 chipyard https://github.com/ucb-bar/chipyard/pull/1076  
-FFTGenerator https://github.com/ucb-bar/FFTGenerator/pull/2
-riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/263
-riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/264
-riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/265
-riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/266
+FFTGenerator https://github.com/ucb-bar/FFTGenerator/pull/2  
+riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/263  
+riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/264  
+riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/265  
+riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/266  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
