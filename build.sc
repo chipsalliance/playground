@@ -370,10 +370,12 @@ object sanitytests extends CommonModule {
     )
     override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
     def libraryResources = T.sources {
-      os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(spike.compile())
-      os.proc("make", s"DESTDIR=${T.ctx.dest / "riscv64"}", "install").call(compilerrt.compile())
-      os.proc("make", s"DESTDIR=${T.ctx.dest / "riscv64"}", "install").call(musl.compile())
-      os.proc("cp", s"${pk.compile()}", s"${T.ctx.dest / "riscv64"}").call()
+      val x86Dir = T.ctx.dest
+      val riscv64Dir = T.ctx.dest / "riscv64"
+      os.proc("make", s"DESTDIR=${x86Dir}", "install").call(spike.compile())
+      os.proc("make", s"DESTDIR=${riscv64Dir}", "install").call(compilerrt.compile())
+      os.proc("make", s"DESTDIR=${riscv64Dir}", "install").call(musl.compile())
+      os.copy.into(pk.compile(), riscv64Dir)
       T.ctx.dest
     }
     override def resources: Sources = T.sources {
