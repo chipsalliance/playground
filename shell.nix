@@ -48,14 +48,15 @@ in pkgs.callPackage (
     jdk,
     python,
     gnumake, git, mill, wget, parallel, dtc, protobuf, antlr4,
-    llvmPackages, clang, lld, verilator, cmake, ninja, rcs
+    llvmPackages, clang, lld, verilator, cmake, ninja, rcs,
+    autoconf, automake
   }:
 
   mkShellNoCC {
     name = "sequencer-playground";
     depsBuildBuild = [
       jdk gnumake git mill wget parallel dtc protobuf antlr4
-      verilator cmake ninja rcs
+      verilator cmake ninja rcs autoconf automake
       llvmPackages.llvm lld
       python
 
