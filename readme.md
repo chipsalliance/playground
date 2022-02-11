@@ -83,15 +83,7 @@ fpga-shells https://github.com/sifive/fpga-shells/pull/161
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 sha3 https://github.com/ucb-bar/sha3/pull/33  
-dsptools https://github.com/ucb-bar/dsptools/pull/240  
-riscv-boom https://github.com/riscv-boom/riscv-boom/pull/589  
-hwacha https://github.com/ucb-bar/hwacha/pull/35  
-icenet https://github.com/firesim/icenet/pull/33  
-riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/71  
-firesim https://github.com/firesim/firesim/pull/843  
-chipyard https://github.com/ucb-bar/chipyard/pull/1001  
-chipyard https://github.com/ucb-bar/chipyard/pull/1076  
-FFTGenerator https://github.com/ucb-bar/FFTGenerator/pull/2  
+dsptools https://github.com/ucb-bar/dsptools/pull/240      
 riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/263  
 riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/264  
 <!-- END-PATCH -->
