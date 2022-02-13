@@ -26,5 +26,9 @@ compile:
 test:
 	mill -i -j 0 sanitytests.rocketchip
 
+regression:
+	mill -i -j 0 sanitytests.regression
+
+
 clean:
 	git clean -fd
