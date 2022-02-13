@@ -42,6 +42,11 @@ let
     #!${pkgs.bash}/bin/bash
     ${pkgs.clang}/bin/cpp $@
   '';
+  cc = if stdenv.isDarwin then [clang] else [
+    clang-multiple-target
+    clangpp-multiple-target
+    cpp-multiple-target
+  ];
 in pkgs.callPackage (
   {
     mkShellNoCC,
@@ -59,15 +64,7 @@ in pkgs.callPackage (
       verilator cmake ninja rcs autoconf automake
       llvmPackages.llvm lld
       python
-
-      clang-multiple-target
-      clangpp-multiple-target
-      cpp-multiple-target
+      cc
     ];
-    shellHook = ''
-      unset CC
-      unset CXX
-      unset LD
-    '';
   }
 ) {}
