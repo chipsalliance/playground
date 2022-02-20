@@ -55,7 +55,8 @@ case class TestHarness[M <: RawModule](
       "+define+RANDOMIZE_GARBAGE_ASSIGN",
       "--output-split 20000",
       "--output-split-cfuncs 20000",
-      "--max-num-width 1048576"
+      "--max-num-width 1048576",
+      "--trace",
       // format: on
     ).mkString(" ")
     val csrcs = Seq("csrc/emulator.cc", "csrc/SimDTM.cc", "csrc/SimJTAG.cc", "csrc/remote_bitbang.cc")
