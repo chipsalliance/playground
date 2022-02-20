@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron: '10 * * * *'
+    - cron: '10 0 * * *'
   push:
 jobs:
   archlinux:
