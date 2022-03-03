@@ -39,6 +39,8 @@ object VerilatorTest extends TestSuite {
         test("Hello World!") {
           os.proc(
             s"$emulator",
+            "+max-cycles=10000000",
+            s"-v${outputDirectory / "trace.vcd"}",
             s"${resource("riscv64/pk")}",
             "hello",
           ).call(outputDirectory)
