@@ -3,7 +3,7 @@
 ## Introduction
 This is a template repository for those who want to develop RTL based on rocket-chip and even chipyard, being able to edit all sources from chisel environments without publish them to local ivy.
 You can add your own submodule in `build.sc`.  
-For more information please visit [mill documentation](https://com-lihaoyi.github.io/mill/page/configuring-mill.html)
+For more information please visit [Mill documentation](https://com-lihaoyi.github.io/mill/mill/Intro_to_Mill.html)
 after adding your own code, you can add your library to playground dependency, and re-index Intellij to add your own library.
 
 ## Quick Start
