@@ -78,14 +78,20 @@ then open by your favorite IDE, which supports [BSP](https://build-server-protoc
 Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
+cva6-wrapper https://github.com/ucb-bar/cva6-wrapper/pull/15  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2967  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2810  
-fpga-shells https://github.com/sifive/fpga-shells/pull/161  
+block-inclusivecache-sifive https://github.com/sifive/block-inclusivecache-sifive/pull/22  
+chipyard https://github.com/ucb-bar/chipyard/pull/1160  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
+fpga-shells https://github.com/sifive/fpga-shells/pull/168  
+riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/72  
+riscv-boom https://github.com/riscv-boom/riscv-boom/pull/600  
+sifive-blocks https://github.com/sifive/sifive-blocks/pull/176  
+chisel3 https://github.com/chipsalliance/chisel3/pull/2501  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
-sha3 https://github.com/ucb-bar/sha3/pull/33  
-dsptools https://github.com/ucb-bar/dsptools/pull/240      
-riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/263  
-riscv-pk https://github.com/riscv-software-src/riscv-pk/pull/264  
+dsptools https://github.com/ucb-bar/dsptools/pull/240  
 <!-- END-PATCH -->
 
 ## Why not Chipyard

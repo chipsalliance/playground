@@ -14,6 +14,8 @@ jobs:
         with:
           submodules: 'true'
           fetch-depth: '0'
+      - name: work around https://github.com/actions/checkout/issues/760
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Coursier Cache
         uses: coursier/cache-action@v5
       - name: Init
