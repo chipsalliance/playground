@@ -1,0 +1,92 @@
+From e7e21d035f21db298143a3357fab66e06b6af1e6 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sun, 24 Apr 2022 07:20:54 +0800
+Subject: [PATCH] remove objectmodule
+
+---
+ src/main/scala/shell/GPIOOverlay.scala     | 2 +-
+ src/main/scala/shell/I2COverlay.scala      | 2 +-
+ src/main/scala/shell/PWMOverlay.scala      | 2 +-
+ src/main/scala/shell/PorGenOverlay.scala   | 2 +-
+ src/main/scala/shell/SPIFlashOverlay.scala | 2 +-
+ src/main/scala/shell/UARTOverlay.scala     | 2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/main/scala/shell/GPIOOverlay.scala b/src/main/scala/shell/GPIOOverlay.scala
+index 83b3e4bc..8d9f870a 100644
+--- a/src/main/scala/shell/GPIOOverlay.scala
++++ b/src/main/scala/shell/GPIOOverlay.scala
+@@ -8,7 +8,7 @@ import freechips.rocketchip.config._
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.tilelink.TLBusWrapper
+ import freechips.rocketchip.interrupts.IntInwardNode
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.LogicalTreeNode
++
+ 
+ import sifive.blocks.devices.gpio._
+ 
+diff --git a/src/main/scala/shell/I2COverlay.scala b/src/main/scala/shell/I2COverlay.scala
+index f5604932..1028b164 100644
+--- a/src/main/scala/shell/I2COverlay.scala
++++ b/src/main/scala/shell/I2COverlay.scala
+@@ -9,7 +9,7 @@ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.subsystem.{BaseSubsystem, PeripheryBus, PeripheryBusKey}
+ import freechips.rocketchip.tilelink.TLBusWrapper
+ import freechips.rocketchip.interrupts.IntInwardNode
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.LogicalTreeNode
++
+ 
+ import sifive.blocks.devices.i2c._
+ 
+diff --git a/src/main/scala/shell/PWMOverlay.scala b/src/main/scala/shell/PWMOverlay.scala
+index 8cd4eb3e..29c321a6 100644
+--- a/src/main/scala/shell/PWMOverlay.scala
++++ b/src/main/scala/shell/PWMOverlay.scala
+@@ -9,7 +9,7 @@ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.subsystem.{BaseSubsystem, PeripheryBus, PeripheryBusKey}
+ import freechips.rocketchip.tilelink.TLBusWrapper
+ import freechips.rocketchip.interrupts.IntInwardNode
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.LogicalTreeNode
++
+ 
+ import sifive.blocks.devices.pwm._
+ 
+diff --git a/src/main/scala/shell/PorGenOverlay.scala b/src/main/scala/shell/PorGenOverlay.scala
+index 33a37d0e..d9f9de97 100644
+--- a/src/main/scala/shell/PorGenOverlay.scala
++++ b/src/main/scala/shell/PorGenOverlay.scala
+@@ -9,7 +9,7 @@ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.subsystem.{BaseSubsystem, PeripheryBus, PeripheryBusKey}
+ import freechips.rocketchip.tilelink.TLBusWrapper
+ import freechips.rocketchip.interrupts.IntInwardNode
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.LogicalTreeNode
++
+ 
+ import sifive.blocks.devices.porgen._
+ 
+diff --git a/src/main/scala/shell/SPIFlashOverlay.scala b/src/main/scala/shell/SPIFlashOverlay.scala
+index 75894491..bf77bb33 100644
+--- a/src/main/scala/shell/SPIFlashOverlay.scala
++++ b/src/main/scala/shell/SPIFlashOverlay.scala
+@@ -8,7 +8,7 @@ import freechips.rocketchip.config._
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.tilelink.TLBusWrapper
+ import freechips.rocketchip.interrupts.IntInwardNode
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.LogicalTreeNode
++
+ 
+ import sifive.blocks.devices.spi._
+ 
+diff --git a/src/main/scala/shell/UARTOverlay.scala b/src/main/scala/shell/UARTOverlay.scala
+index 7e820b31..17d05e2c 100644
+--- a/src/main/scala/shell/UARTOverlay.scala
++++ b/src/main/scala/shell/UARTOverlay.scala
+@@ -9,7 +9,7 @@ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.subsystem.{BaseSubsystem, PeripheryBus, PeripheryBusKey}
+ import freechips.rocketchip.tilelink.TLBusWrapper
+ import freechips.rocketchip.interrupts.IntInwardNode
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.LogicalTreeNode
++
+ 
+ import sifive.blocks.devices.uart._
+ 

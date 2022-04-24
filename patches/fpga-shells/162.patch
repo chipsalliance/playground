@@ -8,7 +8,7 @@ Subject: [PATCH 1/2] fix critical warning for Vivado 2020.2.
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/main/scala/shell/xilinx/XilinxShell.scala b/src/main/scala/shell/xilinx/XilinxShell.scala
-index 72ed647..7bf0176 100644
+index 72ed6476..7bf01768 100644
 --- a/src/main/scala/shell/xilinx/XilinxShell.scala
 +++ b/src/main/scala/shell/xilinx/XilinxShell.scala
 @@ -29,9 +29,9 @@ class XDC(val name: String)
@@ -42,7 +42,7 @@ The IOB constraint on port will be ignored.
  1 file changed, 1 deletion(-)
 
 diff --git a/src/main/scala/shell/xilinx/VCU118NewShell.scala b/src/main/scala/shell/xilinx/VCU118NewShell.scala
-index dd56091..136351c 100644
+index dd56091f..136351c1 100644
 --- a/src/main/scala/shell/xilinx/VCU118NewShell.scala
 +++ b/src/main/scala/shell/xilinx/VCU118NewShell.scala
 @@ -263,7 +263,6 @@ class JTAGDebugVCU118PlacedOverlay(val shell: VCU118ShellBasicOverlays, name: St

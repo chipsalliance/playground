@@ -1,0 +1,663 @@
+From 50f34c0ce670cee6a46abc37e47013c9af8dc0dc Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sun, 24 Apr 2022 07:26:16 +0800
+Subject: [PATCH] remove objectmodule
+
+---
+ src/main/scala/devices/gpio/GPIO.scala      | 22 ++---------
+ src/main/scala/devices/gpio/OMGPIO.scala    | 12 ------
+ src/main/scala/devices/porgen/PorGen.scala  |  6 +--
+ src/main/scala/devices/pwm/OM_PWM.scala     | 12 ------
+ src/main/scala/devices/pwm/PWM.scala        | 23 ++---------
+ src/main/scala/devices/spi/OM_SPI.scala     | 33 ----------------
+ src/main/scala/devices/spi/OM_SPIXIP.scala  | 24 ------------
+ src/main/scala/devices/spi/SPI.scala        | 10 ++---
+ src/main/scala/devices/spi/SPIFlash.scala   |  6 +--
+ src/main/scala/devices/spi/TLSPI.scala      | 30 ++------------
+ src/main/scala/devices/spi/TLSPIFlash.scala | 43 ++-------------------
+ src/main/scala/devices/timer/OM_Timer.scala | 11 ------
+ src/main/scala/devices/timer/Timer.scala    | 20 ++--------
+ src/main/scala/devices/uart/OM_UART.scala   | 21 ----------
+ src/main/scala/devices/uart/UART.scala      | 31 ++-------------
+ src/main/scala/devices/wdt/OM_WDT.scala     | 10 -----
+ src/main/scala/devices/wdt/TLWDT.scala      | 21 ++--------
+ src/main/scala/util/Devices.scala           |  5 +--
+ src/main/scala/util/Hierarchy.scala         |  2 +-
+ 19 files changed, 33 insertions(+), 309 deletions(-)
+ delete mode 100644 src/main/scala/devices/gpio/OMGPIO.scala
+ delete mode 100644 src/main/scala/devices/pwm/OM_PWM.scala
+ delete mode 100644 src/main/scala/devices/spi/OM_SPI.scala
+ delete mode 100644 src/main/scala/devices/spi/OM_SPIXIP.scala
+ delete mode 100644 src/main/scala/devices/timer/OM_Timer.scala
+ delete mode 100644 src/main/scala/devices/uart/OM_UART.scala
+ delete mode 100644 src/main/scala/devices/wdt/OM_WDT.scala
+
+diff --git a/src/main/scala/devices/gpio/GPIO.scala b/src/main/scala/devices/gpio/GPIO.scala
+index 20ef489..8e5ac08 100644
+--- a/src/main/scala/devices/gpio/GPIO.scala
++++ b/src/main/scala/devices/gpio/GPIO.scala
+@@ -14,9 +14,9 @@ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ 
+ import sifive.blocks.devices.pinctrl.{PinCtrl, Pin, BasePin, EnhancedPin, EnhancedPinCtrl}
+ import sifive.blocks.util.{DeviceParams,DeviceAttachParams}
+@@ -177,7 +177,6 @@ abstract class GPIO(busWidthBytes: Int, c: GPIOParams)(implicit p: Parameters)
+     GPIOCtrlRegs.poe + dsOffset -> poeFields
+   )
+   regmap(mapping ++ dsRegMap :_*)
+-  val omRegMap = OMRegister.convert(mapping:_*)
+ 
+   //--------------------------------------------------
+   // Actual Pinmux
+@@ -248,19 +247,6 @@ abstract class GPIO(busWidthBytes: Int, c: GPIOParams)(implicit p: Parameters)
+       iofPort.get.iof_1(pin).i.ival := inSyncReg(pin)
+     }
+   }}
+-
+-  val logicalTreeNode = new LogicalTreeNode(() => Some(device)) {
+-    def getOMComponents(resourceBindings: ResourceBindings, children: Seq[OMComponent] = Nil): Seq[OMComponent] = {
+-      Seq(
+-        OMGPIO(
+-          hasIOF = c.includeIOF,
+-          nPins = c.width,
+-          memoryRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("GPIO", resourceBindings, Some(module.omRegMap)),
+-          interrupts = DiplomaticObjectModelAddressing.describeGlobalInterrupts(device.describe(resourceBindings).name, resourceBindings),
+-        )
+-      )
+-    }
+-  }
+ }
+ 
+ class TLGPIO(busWidthBytes: Int, params: GPIOParams)(implicit p: Parameters)
+@@ -313,8 +299,6 @@ case class GPIOAttachParams(
+       case _: AsynchronousCrossing => where.ibus.fromAsync
+     }) := gpio.intXing(intXType)
+ 
+-    LogicalModuleTree.add(where.logicalTreeNode, gpio.logicalTreeNode)
+-
+     gpio
+   }
+ }
+diff --git a/src/main/scala/devices/gpio/OMGPIO.scala b/src/main/scala/devices/gpio/OMGPIO.scala
+deleted file mode 100644
+index 537cd51..0000000
+--- a/src/main/scala/devices/gpio/OMGPIO.scala
++++ /dev/null
+@@ -1,12 +0,0 @@
+-// See LICENSE for license details.
+-package sifive.blocks.devices.gpio
+-
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
+-
+-case class OMGPIO(
+-  hasIOF: Boolean,
+-  nPins: Int,
+-  memoryRegions: Seq[OMMemoryRegion],
+-  interrupts: Seq[OMInterrupt],
+-  _types: Seq[String] = Seq("OMGPIO", "OMDevice", "OMComponent"),
+-) extends OMDevice
+diff --git a/src/main/scala/devices/porgen/PorGen.scala b/src/main/scala/devices/porgen/PorGen.scala
+index 1e63c48..fff31a8 100644
+--- a/src/main/scala/devices/porgen/PorGen.scala
++++ b/src/main/scala/devices/porgen/PorGen.scala
+@@ -13,9 +13,9 @@ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ import sifive.blocks.util._
+ 
+ // Ideally, we want SOFT(configurable) reset inputs like this. 
+diff --git a/src/main/scala/devices/pwm/OM_PWM.scala b/src/main/scala/devices/pwm/OM_PWM.scala
+deleted file mode 100644
+index 4a1f036..0000000
+--- a/src/main/scala/devices/pwm/OM_PWM.scala
++++ /dev/null
+@@ -1,12 +0,0 @@
+-// See LICENSE for license details.
+-package sifive.blocks.devices.pwm
+-
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
+-
+-case class OMPWM(
+-  numComparators: Int,
+-  compareWidth: Int,
+-  memoryRegions: Seq[OMMemoryRegion],
+-  interrupts: Seq[OMInterrupt],
+-  _types: Seq[String] = Seq("OMPWM", "OMDevice", "OMComponent"),
+-) extends OMDevice
+diff --git a/src/main/scala/devices/pwm/PWM.scala b/src/main/scala/devices/pwm/PWM.scala
+index 8a04838..b09aeed 100644
+--- a/src/main/scala/devices/pwm/PWM.scala
++++ b/src/main/scala/devices/pwm/PWM.scala
+@@ -15,9 +15,9 @@ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ 
+ import sifive.blocks.util._
+ 
+@@ -98,22 +98,7 @@ abstract class PWM(busWidthBytes: Int, val params: PWMParams)(implicit p: Parame
+     //regmap((GenericTimer.timerRegMap(pwm, 0, params.regBytes)):_*)
+     val mapping = (GenericTimer.timerRegMap(pwm, 0, params.regBytes))
+     regmap(mapping:_*)
+-    val omRegMap = OMRegister.convert(mapping:_*)
+   }
+-  val logicalTreeNode = new LogicalTreeNode(() => Some(device)) {
+-    def getOMComponents(resourceBindings: ResourceBindings, children: Seq[OMComponent] = Nil): Seq[OMComponent] = {
+-      Seq(
+-        OMPWM(
+-          numComparators = params.ncmp,
+-          compareWidth   = params.cmpWidth,
+-          //TODO CHECK FOR REG BINDINGS memoryRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("UART", resourceBindings, Some(omRegMap)),
+-          memoryRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("PWM", resourceBindings, Some(module.omRegMap)),
+-          interrupts = DiplomaticObjectModelAddressing.describeGlobalInterrupts(device.describe(resourceBindings).name, resourceBindings),
+-        )
+-      )
+-    }
+-  }
+-
+ }
+ 
+ class TLPWM(busWidthBytes: Int, params: PWMParams)(implicit p: Parameters)
+@@ -166,8 +151,6 @@ case class PWMAttachParams(
+       case _: AsynchronousCrossing => where.ibus.fromAsync
+     }) := pwm.intXing(intXType)
+ 
+-    LogicalModuleTree.add(where.logicalTreeNode, pwm.logicalTreeNode)
+-
+     pwm
+   }
+ }
+diff --git a/src/main/scala/devices/spi/OM_SPI.scala b/src/main/scala/devices/spi/OM_SPI.scala
+deleted file mode 100644
+index 57f1d22..0000000
+--- a/src/main/scala/devices/spi/OM_SPI.scala
++++ /dev/null
+@@ -1,33 +0,0 @@
+-// See LICENSE for license details.
+-package sifive.blocks.devices.spi
+-
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
+-
+-trait baseSPI{
+- def  rxDepth: Int
+- def  txDepth: Int
+- def  csWidthBits: Int
+- def  frameBits: Int
+- def  delayBits: Int
+- def  divisorBits: Int
+- def  coarseDelayBits: Int
+- def  fineDelayBits: Int
+- def  sampleDelayBits: Int
+- def  defaultSampleDelay: Int
+-}
+-
+-case class OMSPI(
+-  rxDepth: Int,
+-  txDepth: Int,
+-  csWidthBits: Int,
+-  frameBits: Int,
+-  delayBits: Int,
+-  divisorBits: Int,
+-  coarseDelayBits: Int,
+-  fineDelayBits: Int,
+-  sampleDelayBits: Int,
+-  defaultSampleDelay: Int,
+-  memoryRegions: Seq[OMMemoryRegion],
+-  interrupts: Seq[OMInterrupt],
+-  _types: Seq[String] = Seq("OMSPI", "OMDevice", "OMComponent"),
+-) extends baseSPI with OMDevice
+diff --git a/src/main/scala/devices/spi/OM_SPIXIP.scala b/src/main/scala/devices/spi/OM_SPIXIP.scala
+deleted file mode 100644
+index 0f64543..0000000
+--- a/src/main/scala/devices/spi/OM_SPIXIP.scala
++++ /dev/null
+@@ -1,24 +0,0 @@
+-// See LICENSE for license details.
+-package sifive.blocks.devices.spi
+-
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
+-
+-case class OMSPIXIP(
+-  rxDepth: Int,
+-  txDepth: Int,
+-  csWidthBits: Int,
+-  frameBits: Int,
+-  delayBits: Int,
+-  divisorBits: Int,
+-  coarseDelayBits: Int,
+-  fineDelayBits: Int,
+-  sampleDelayBits: Int,
+-  defaultSampleDelay: Int,
+-  instructionAddressBytes: Int,
+-  instructionPadLengthBits: Int,
+-  memMapAddressBase: BigInt,
+-  memMapAddressSizeBytes: BigInt,
+-  memoryRegions: Seq[OMMemoryRegion],
+-  interrupts: Seq[OMInterrupt],
+-  _types: Seq[String] = Seq("OMSPIXIP", "OMDevice", "OMComponent"),
+-) extends baseSPI with OMDevice
+diff --git a/src/main/scala/devices/spi/SPI.scala b/src/main/scala/devices/spi/SPI.scala
+index 0d95eb9..96d54ce 100644
+--- a/src/main/scala/devices/spi/SPI.scala
++++ b/src/main/scala/devices/spi/SPI.scala
+@@ -14,9 +14,9 @@ import freechips.rocketchip.regmapper._
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.devices.tilelink._
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ 
+ import sifive.blocks.util._
+ 
+@@ -67,8 +67,6 @@ case class SPIAttachParams(
+       case _: AsynchronousCrossing => where.ibus.fromAsync
+     }) := spi.intXing(intXType)
+ 
+-    LogicalModuleTree.add(where.logicalTreeNode, spi.logicalTreeNode)
+-
+     spi
+   }
+ }
+@@ -139,8 +137,6 @@ case class SPIFlashAttachParams(
+       case _: AsynchronousCrossing => where.ibus.fromAsync
+     }) := qspi.intXing(intXType)
+ 
+-    LogicalModuleTree.add(where.logicalTreeNode, qspi.logicalTreeNode)
+-
+     qspi
+   }
+ }
+diff --git a/src/main/scala/devices/spi/SPIFlash.scala b/src/main/scala/devices/spi/SPIFlash.scala
+index eb3dfdb..6ad85af 100644
+--- a/src/main/scala/devices/spi/SPIFlash.scala
++++ b/src/main/scala/devices/spi/SPIFlash.scala
+@@ -3,9 +3,9 @@ package sifive.blocks.devices.spi
+ 
+ import Chisel.{defaultCompileOptions => _, _}
+ import freechips.rocketchip.util.CompileOptions.NotStrictInferReset
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ 
+ class SPIFlashInsn(c: SPIFlashParamsBase) extends SPIBundle(c) {
+   val cmd = new Bundle with HasSPIProtocol {
+diff --git a/src/main/scala/devices/spi/TLSPI.scala b/src/main/scala/devices/spi/TLSPI.scala
+index 4fc3c98..ed7ae69 100644
+--- a/src/main/scala/devices/spi/TLSPI.scala
++++ b/src/main/scala/devices/spi/TLSPI.scala
+@@ -11,9 +11,9 @@ import freechips.rocketchip.interrupts._
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.util.HeterogeneousBag
+ import sifive.blocks.util.{NonBlockingEnqueue, NonBlockingDequeue}
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
++
++
++
+ import sifive.blocks.util._
+ 
+ trait SPIParamsBase {
+@@ -196,29 +196,5 @@ class TLSPI(w: Int, c: SPIParams)(implicit p: Parameters)
+     mac.io.link <> fifo.io.link
+     val mapping = (regmapBase)
+     regmap(mapping:_*)
+-    val omRegMap = OMRegister.convert(mapping:_*)
+   }
+-
+-  val logicalTreeNode = new LogicalTreeNode(() => Some(device)) {
+-    def getOMComponents(resourceBindings: ResourceBindings, children: Seq[OMComponent] = Nil): Seq[OMComponent] = {
+-      Seq(
+-        OMSPI(
+-          rxDepth = c.rxDepth,
+-          txDepth = c.txDepth,
+-          csWidthBits = c.csWidth,
+-          frameBits = c.frameBits,
+-          delayBits = c.delayBits,
+-          divisorBits = c.divisorBits,
+-          coarseDelayBits = c.divisorBits,
+-          fineDelayBits = c.fineDelayBits,
+-          sampleDelayBits = c.sampleDelayBits,
+-          defaultSampleDelay = c.defaultSampleDel,
+-          memoryRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("SPI", resourceBindings, Some(module.omRegMap)),
+-          interrupts = DiplomaticObjectModelAddressing.describeGlobalInterrupts(device.describe(resourceBindings).name, resourceBindings)
+-        )
+-      )
+-    }
+-  }
+-
+-
+ }
+diff --git a/src/main/scala/devices/spi/TLSPIFlash.scala b/src/main/scala/devices/spi/TLSPIFlash.scala
+index f5e65a5..85567da 100644
+--- a/src/main/scala/devices/spi/TLSPIFlash.scala
++++ b/src/main/scala/devices/spi/TLSPIFlash.scala
+@@ -9,9 +9,9 @@ import freechips.rocketchip.regmapper._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.util.HeterogeneousBag
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
++
++
++
+ import sifive.blocks.util._
+ 
+ trait SPIFlashParamsBase extends SPIParamsBase {
+@@ -141,42 +141,5 @@ class TLSPIFlash(w: Int, c: SPIFlashParams)(implicit p: Parameters)
+ 
+     val totalMapping = (regmapBase ++ regmapFlash)
+     regmap(totalMapping:_*)
+-    val omRegMap = OMRegister.convert(totalMapping:_*)
+   }
+-
+-  val logicalTreeNode = new LogicalTreeNode(() => Some(device)) {
+-    def getOMComponents(resourceBindings: ResourceBindings, children: Seq[OMComponent] = Nil): Seq[OMComponent] = {
+-      // Get all the memory regions, but don't associate a register map to any of them yet
+-      val diplomaticRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("SPIXIP", resourceBindings/*, Some(module.omRegMap)*/)
+-      // The regmap goes with the "control" region so add it and don't alter the others.
+-      require(diplomaticRegions.exists(_.description == "control"),
+-        "There should be a memory region with description \"control\" to connect the regmap to")
+-      val memoryRegions = diplomaticRegions.map{ memRegion =>
+-        if (memRegion.description == "control") { memRegion.copy(registerMap = Some(module.omRegMap)) } else {memRegion}
+-      }
+-
+-      Seq(
+-        OMSPIXIP(
+-          rxDepth = c.rxDepth,
+-          txDepth = c.txDepth,
+-          csWidthBits = c.csWidth,
+-          frameBits = c.frameBits,
+-          delayBits = c.delayBits,
+-          divisorBits = c.divisorBits,
+-          coarseDelayBits = c.divisorBits,
+-          fineDelayBits = c.fineDelayBits,
+-          sampleDelayBits = c.sampleDelayBits,
+-          defaultSampleDelay = c.defaultSampleDel,
+-          instructionAddressBytes = c.insnAddrBytes,
+-          instructionPadLengthBits = c.insnPadLenBits,
+-          memMapAddressBase = c.fAddress,
+-          memMapAddressSizeBytes = c.fSize,
+-          memoryRegions = memoryRegions,
+-          interrupts = DiplomaticObjectModelAddressing.describeGlobalInterrupts(device.describe(resourceBindings).name, resourceBindings)
+-        )
+-      )
+-    }
+-  }
+-
+-
+ }
+diff --git a/src/main/scala/devices/timer/OM_Timer.scala b/src/main/scala/devices/timer/OM_Timer.scala
+deleted file mode 100644
+index 2603b81..0000000
+--- a/src/main/scala/devices/timer/OM_Timer.scala
++++ /dev/null
+@@ -1,11 +0,0 @@
+-// See LICENSE for license details.
+-package sifive.blocks.devices.timer
+-
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
+-
+-case class OMTimer(
+-  comparatorWidthBits: Int,
+-  memoryRegions: Seq[OMMemoryRegion],
+-  interrupts: Seq[OMInterrupt],
+-  _types: Seq[String] = Seq("OMTimer", "OMDevice", "OMComponent"),
+-) extends OMDevice
+diff --git a/src/main/scala/devices/timer/Timer.scala b/src/main/scala/devices/timer/Timer.scala
+index 6f83b22..e7fd7be 100644
+--- a/src/main/scala/devices/timer/Timer.scala
++++ b/src/main/scala/devices/timer/Timer.scala
+@@ -13,9 +13,9 @@ import freechips.rocketchip.regmapper.{RegisterRouter, RegisterRouterParams}
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.devices.tilelink._
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ 
+ import sifive.blocks.util._
+ import sifive.blocks.devices.pwm._
+@@ -47,18 +47,6 @@ class Timer(w: Int, c: TimerParams)(implicit p: Parameters)
+     interrupts := timer.io.ip
+     val mapping = (GenericTimer.timerRegMap(timer, 0, c.regBytes))
+     regmap(mapping:_*)
+-    val omRegMap = OMRegister.convert(mapping:_*)  
+-  }
+-  val logicalTreeNode = new LogicalTreeNode(() => Some(device)) {
+-    def getOMComponents(resourceBindings: ResourceBindings, children: Seq[OMComponent] = Nil): Seq[OMComponent] = {
+-      Seq(
+-        OMTimer(
+-          comparatorWidthBits = c.cmpWidth,
+-          memoryRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("Timer", resourceBindings, Some(module.omRegMap)),
+-          interrupts = DiplomaticObjectModelAddressing.describeGlobalInterrupts(device.describe(resourceBindings).name, resourceBindings)
+-        )
+-      )
+-    }
+   }
+ }
+ 
+@@ -124,8 +112,6 @@ case class TimerAttachParams(
+       case _: AsynchronousCrossing => where.ibus.fromAsync
+     }) := timer.intXing(intXType)
+ 
+-    LogicalModuleTree.add(where.logicalTreeNode, timer.logicalTreeNode)
+-
+     timer
+   }
+ }
+diff --git a/src/main/scala/devices/uart/OM_UART.scala b/src/main/scala/devices/uart/OM_UART.scala
+deleted file mode 100644
+index e5c408e..0000000
+--- a/src/main/scala/devices/uart/OM_UART.scala
++++ /dev/null
+@@ -1,21 +0,0 @@
+-// See LICENSE for license details.
+-package sifive.blocks.devices.uart
+-
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
+-
+-case class OMUART(
+-  divisorWidthBits: Int,
+-  divisorInit: Int,
+-  nRxEntries: Int,
+-  nTxEntries: Int,
+-  dataBits: Int,
+-  stopBits: Int,
+-  oversample: Int,
+-  nSamples: Int,
+-  includeFourWire: Boolean,
+-  includeParity: Boolean,
+-  includeIndependentParity: Boolean,
+-  memoryRegions: Seq[OMMemoryRegion],
+-  interrupts: Seq[OMInterrupt],
+-  _types: Seq[String] = Seq("OMUART", "OMDevice", "OMComponent"),
+-) extends OMDevice
+diff --git a/src/main/scala/devices/uart/UART.scala b/src/main/scala/devices/uart/UART.scala
+index 6a65759..e5cf54c 100755
+--- a/src/main/scala/devices/uart/UART.scala
++++ b/src/main/scala/devices/uart/UART.scala
+@@ -13,9 +13,9 @@ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ 
+ import sifive.blocks.util._
+ 
+@@ -198,30 +198,7 @@ class UART(busWidthBytes: Int, val c: UARTParams, divisorInit: Int = 0)
+       RegField(1, data8or9,
+                RegFieldDesc("databits8or9","Data Bits to be 8(1) or 9(0)", reset=Some(1)))))) else Nil
+   regmap(mapping ++ optionalparity ++ optionalwire4 ++ optional8or9:_*)
+-  val omRegMap = OMRegister.convert(mapping ++ optionalparity ++ optionalwire4 ++ optional8or9:_*)
+ }
+-
+-  val logicalTreeNode = new LogicalTreeNode(() => Some(device)) {
+-    def getOMComponents(resourceBindings: ResourceBindings, children: Seq[OMComponent] = Nil): Seq[OMComponent] = {
+-      Seq(
+-        OMUART(
+-          divisorWidthBits = c.divisorBits,
+-          divisorInit = divisorInit,
+-          nRxEntries = c.nRxEntries,
+-          nTxEntries = c.nTxEntries,
+-          dataBits = c.dataBits,
+-          stopBits = c.stopBits,
+-          oversample = c.oversample,
+-          nSamples = c.nSamples,
+-          includeFourWire = c.includeFourWire,
+-          includeParity = c.includeParity,
+-          includeIndependentParity = c.includeIndependentParity,
+-          memoryRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("UART", resourceBindings, Some(module.omRegMap)),
+-          interrupts = DiplomaticObjectModelAddressing.describeGlobalInterrupts(device.describe(resourceBindings).name, resourceBindings),
+-        )
+-      )
+-    }
+-  }
+ }
+ class TLUART(busWidthBytes: Int, params: UARTParams, divinit: Int)(implicit p: Parameters)
+   extends UART(busWidthBytes, params, divinit) with HasTLControlRegMap
+@@ -274,8 +251,6 @@ case class UARTAttachParams(
+       case _: AsynchronousCrossing => where.ibus.fromAsync
+     }) := uart.intXing(intXType)
+ 
+-    LogicalModuleTree.add(where.logicalTreeNode, uart.logicalTreeNode)
+-
+     uart
+   }
+ }
+diff --git a/src/main/scala/devices/wdt/OM_WDT.scala b/src/main/scala/devices/wdt/OM_WDT.scala
+deleted file mode 100644
+index c4a3165..0000000
+--- a/src/main/scala/devices/wdt/OM_WDT.scala
++++ /dev/null
+@@ -1,10 +0,0 @@
+-// See LICENSE for license details.
+-package sifive.blocks.devices.wdt
+-
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
+-
+-case class OMWDT(
+-  memoryRegions: Seq[OMMemoryRegion],
+-  interrupts: Seq[OMInterrupt],
+-  _types: Seq[String] = Seq("OMWDT", "OMDevice", "OMComponent"),
+-) extends OMDevice
+diff --git a/src/main/scala/devices/wdt/TLWDT.scala b/src/main/scala/devices/wdt/TLWDT.scala
+index 0d78528..0564488 100644
+--- a/src/main/scala/devices/wdt/TLWDT.scala
++++ b/src/main/scala/devices/wdt/TLWDT.scala
+@@ -15,9 +15,9 @@ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.util._
+-import freechips.rocketchip.diplomaticobjectmodel.DiplomaticObjectModelAddressing
+-import freechips.rocketchip.diplomaticobjectmodel.model.{OMComponent, OMRegister}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalModuleTree, LogicalTreeNode}
++
++
++
+ 
+ import sifive.blocks.util._
+ import sifive.blocks.devices.mockaon.WatchdogTimer
+@@ -53,20 +53,7 @@ abstract class WDT(busWidthBytes: Int, val params: WDTParams)(implicit p: Parame
+     //regmap((GenericTimer.timerRegMap(wdt, 0, params.regBytes)):_*)
+     val mapping = (GenericTimer.timerRegMap(wdt, 0, params.regBytes))
+     regmap(mapping:_*)
+-    val omRegMap = OMRegister.convert(mapping:_*)  
+-  }
+-
+-  val logicalTreeNode = new LogicalTreeNode(() => Some(device)) {
+-    def getOMComponents(resourceBindings: ResourceBindings, children: Seq[OMComponent] = Nil): Seq[OMComponent] = {
+-      Seq(
+-        OMWDT(
+-          memoryRegions = DiplomaticObjectModelAddressing.getOMMemoryRegions("WDT", resourceBindings, Some(module.omRegMap)),
+-          interrupts = DiplomaticObjectModelAddressing.describeGlobalInterrupts(device.describe(resourceBindings).name, resourceBindings)
+-        )
+-      )
+-    }
+   }
+-
+ }
+ 
+ class TLWDT(busWidthBytes: Int, params: WDTParams)(implicit p: Parameters)
+@@ -119,8 +106,6 @@ case class WDTAttachParams(
+       case _: AsynchronousCrossing => where.ibus.fromAsync
+     }) := wdt.intXing(intXType)
+ 
+-    LogicalModuleTree.add(where.logicalTreeNode, wdt.logicalTreeNode)
+-
+     wdt
+   }
+ }
+diff --git a/src/main/scala/util/Devices.scala b/src/main/scala/util/Devices.scala
+index a94cefc..ecb35cb 100644
+--- a/src/main/scala/util/Devices.scala
++++ b/src/main/scala/util/Devices.scala
+@@ -5,7 +5,7 @@ import Chisel.{defaultCompileOptions => _, _}
+ import freechips.rocketchip.util.CompileOptions.NotStrictInferReset
+ 
+ import freechips.rocketchip.config.{Field, Parameters}
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.LogicalTreeNode
++
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.prci._
+@@ -44,8 +44,7 @@ class DevicesSubsystem(
+   val hierarchyName: String,
+   val location: HierarchicalLocation,
+   val ibus: InterruptBusWrapper,
+-  val asyncClockGroupsNode: ClockGroupEphemeralNode,
+-  val logicalTreeNode: LogicalTreeNode)(implicit p: Parameters) extends LazyModule
++  val asyncClockGroupsNode: ClockGroupEphemeralNode)(implicit p: Parameters) extends LazyModule
+     with Attachable
+     with HasConfigurableTLNetworkTopology
+     with CanHaveDevices {
+diff --git a/src/main/scala/util/Hierarchy.scala b/src/main/scala/util/Hierarchy.scala
+index 2f81ff0..865d50a 100644
+--- a/src/main/scala/util/Hierarchy.scala
++++ b/src/main/scala/util/Hierarchy.scala
+@@ -33,7 +33,7 @@ trait HasConfigurableHierarchy { this: Attachable =>
+         location = edge,
+         ibus = context.ibus,
+         asyncClockGroupsNode = context.asyncClockGroupsNode,
+-        logicalTreeNode = context.logicalTreeNode)) }
++        )) }
+       dss.suggestName(edge.name)
+       createHierarchyMap(edge, graph, dss)
+     }

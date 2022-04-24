@@ -1,0 +1,63 @@
+From a91f0dd8305dbbc0aa175e9efedc8aa8c2849cdf Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sun, 24 Apr 2022 07:22:22 +0800
+Subject: [PATCH] remove objectmodule
+
+---
+ src/main/scala/common/master_adapter.scala      | 2 +-
+ src/main/scala/common/scratchpad_adapter.scala  | 2 +-
+ src/main/scala/common/sodor_internal_tile.scala | 2 +-
+ src/main/scala/common/sodor_tile.scala          | 1 -
+ 4 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/src/main/scala/common/master_adapter.scala b/src/main/scala/common/master_adapter.scala
+index 5267817..5c52e75 100644
+--- a/src/main/scala/common/master_adapter.scala
++++ b/src/main/scala/common/master_adapter.scala
+@@ -7,7 +7,7 @@ import freechips.rocketchip.config._
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.diplomacy._
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalTreeNode}
++
+ import freechips.rocketchip.rocket._
+ import freechips.rocketchip.subsystem.{RocketCrossingParams}
+ import freechips.rocketchip.tilelink._
+diff --git a/src/main/scala/common/scratchpad_adapter.scala b/src/main/scala/common/scratchpad_adapter.scala
+index f2c8fba..5b3829a 100644
+--- a/src/main/scala/common/scratchpad_adapter.scala
++++ b/src/main/scala/common/scratchpad_adapter.scala
+@@ -8,7 +8,7 @@ import freechips.rocketchip.rocket._
+ import freechips.rocketchip.config.{Parameters, Field}
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.diplomacy._
+-import freechips.rocketchip.diplomaticobjectmodel.model.OMSRAM
++
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.util._
+diff --git a/src/main/scala/common/sodor_internal_tile.scala b/src/main/scala/common/sodor_internal_tile.scala
+index b7b582c..9ba9c9d 100644
+--- a/src/main/scala/common/sodor_internal_tile.scala
++++ b/src/main/scala/common/sodor_internal_tile.scala
+@@ -7,7 +7,7 @@ import freechips.rocketchip.config._
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.diplomacy._
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalTreeNode}
++
+ import freechips.rocketchip.rocket._
+ import freechips.rocketchip.subsystem.{RocketCrossingParams}
+ import freechips.rocketchip.tilelink._
+diff --git a/src/main/scala/common/sodor_tile.scala b/src/main/scala/common/sodor_tile.scala
+index feda4e5..b48e30c 100644
+--- a/src/main/scala/common/sodor_tile.scala
++++ b/src/main/scala/common/sodor_tile.scala
+@@ -7,7 +7,6 @@ import freechips.rocketchip.config._
+ import freechips.rocketchip.subsystem._
+ import freechips.rocketchip.devices.tilelink._
+ import freechips.rocketchip.diplomacy._
+-import freechips.rocketchip.diplomaticobjectmodel.logicaltree.{LogicalTreeNode}
+ import freechips.rocketchip.rocket._
+ import freechips.rocketchip.subsystem.{RocketCrossingParams}
+ import freechips.rocketchip.tilelink._
