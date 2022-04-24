@@ -78,7 +78,6 @@ jobs:
     container: archlinux/archlinux:latest
     needs:
       - archlinux
-      - nix
     steps:
       - name: Install dependencies
         run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 python autoconf automake
