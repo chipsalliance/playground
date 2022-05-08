@@ -1,0 +1,130 @@
+From 3d29454e0a8b191a69380307bd9e14c2f2f20c27 Mon Sep 17 00:00:00 2001
+From: Zenithal <i@zenithal.me>
+Date: Sun, 8 May 2022 22:25:54 +0800
+Subject: [PATCH] Fix decode from rocket-chip new opcode
+
+Ref to https://github.com/chipsalliance/rocket-chip/pull/2972
+---
+ src/main/scala/common/consts.scala            |  4 ++--
+ src/main/scala/exu/decode.scala               | 19 ++++++++++++-------
+ src/main/scala/exu/execution-units/fpu.scala  |  6 +++---
+ .../exu/register-read/func-unit-decode.scala  |  6 +++---
+ 4 files changed, 20 insertions(+), 15 deletions(-)
+
+diff --git a/src/main/scala/common/consts.scala b/src/main/scala/common/consts.scala
+index 259769e8a..4e88f7038 100644
+--- a/src/main/scala/common/consts.scala
++++ b/src/main/scala/common/consts.scala
+@@ -202,9 +202,9 @@ trait ScalarOpConstants
+   //               =  66.U(UOPC_SZ.W)
+   val uopAMO_AG    =  67.U(UOPC_SZ.W) // AMO-address gen (use normal STD for datagen)
+ 
+-  val uopFMV_S_X   =  68.U(UOPC_SZ.W)
++  val uopFMV_W_X   =  68.U(UOPC_SZ.W)
+   val uopFMV_D_X   =  69.U(UOPC_SZ.W)
+-  val uopFMV_X_S   =  70.U(UOPC_SZ.W)
++  val uopFMV_X_W   =  70.U(UOPC_SZ.W)
+   val uopFMV_X_D   =  71.U(UOPC_SZ.W)
+ 
+   val uopFSGNJ_S   =  72.U(UOPC_SZ.W)
+diff --git a/src/main/scala/exu/decode.scala b/src/main/scala/exu/decode.scala
+index 02bc514ae..94c81cabb 100644
+--- a/src/main/scala/exu/decode.scala
++++ b/src/main/scala/exu/decode.scala
+@@ -10,6 +10,8 @@ import chisel3.util._
+ 
+ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.rocket.Instructions._
++import freechips.rocketchip.rocket.Instructions32
++import freechips.rocketchip.rocket.CustomInstructions._
+ import freechips.rocketchip.rocket.RVCExpander
+ import freechips.rocketchip.rocket.{CSR,Causes}
+ import freechips.rocketchip.util.{uintToBitPat,UIntIsOneOf}
+@@ -107,9 +109,12 @@ object X32Decode extends DecodeConstants
+             //     |  |  |  |         |        |        regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
+             //     |  |  |  |         |        |        |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
+   val table: Array[(BitPat, List[BitPat])] = Array(//   |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  |
+-  SLLI_RV32-> List(Y, N, X, uopSLLI , IQT_INT, FU_ALU , RT_FIX, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 1.U, Y, N, N, N, N, CSR.N),
+-  SRLI_RV32-> List(Y, N, X, uopSRLI , IQT_INT, FU_ALU , RT_FIX, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 1.U, Y, N, N, N, N, CSR.N),
+-  SRAI_RV32-> List(Y, N, X, uopSRAI , IQT_INT, FU_ALU , RT_FIX, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 1.U, Y, N, N, N, N, CSR.N)
++  Instructions32.SLLI ->
++              List(Y, N, X, uopSLLI , IQT_INT, FU_ALU , RT_FIX, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 1.U, Y, N, N, N, N, CSR.N),
++  Instructions32.SRLI ->
++              List(Y, N, X, uopSRLI , IQT_INT, FU_ALU , RT_FIX, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 1.U, Y, N, N, N, N, CSR.N),
++  Instructions32.SRAI ->
++              List(Y, N, X, uopSRAI , IQT_INT, FU_ALU , RT_FIX, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 1.U, Y, N, N, N, N, CSR.N)
+   )
+ }
+ 
+@@ -231,8 +236,8 @@ object XDecode extends DecodeConstants
+   CSRRCI  -> List(Y, N, X, uopCSRRCI,IQT_INT, FU_CSR , RT_FIX, RT_PAS, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, Y, Y, CSR.C),
+ 
+   SFENCE_VMA->List(Y,N, X, uopSFENCE,IQT_MEM, FU_MEM , RT_X  , RT_FIX, RT_FIX, N, IS_X, N, N, N, N, N,M_SFENCE,0.U,N, N, N, Y, Y, CSR.N),
+-  SCALL   -> List(Y, N, X, uopERET  ,IQT_INT, FU_CSR , RT_X  , RT_X  , RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, Y, Y, Y, CSR.I),
+-  SBREAK  -> List(Y, N, X, uopERET  ,IQT_INT, FU_CSR , RT_X  , RT_X  , RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, Y, Y, Y, CSR.I),
++  ECALL   -> List(Y, N, X, uopERET  ,IQT_INT, FU_CSR , RT_X  , RT_X  , RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, Y, Y, Y, CSR.I),
++  EBREAK  -> List(Y, N, X, uopERET  ,IQT_INT, FU_CSR , RT_X  , RT_X  , RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, Y, Y, Y, CSR.I),
+   SRET    -> List(Y, N, X, uopERET  ,IQT_INT, FU_CSR , RT_X  , RT_X  , RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, Y, Y, CSR.I),
+   MRET    -> List(Y, N, X, uopERET  ,IQT_INT, FU_CSR , RT_X  , RT_X  , RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, Y, Y, CSR.I),
+   DRET    -> List(Y, N, X, uopERET  ,IQT_INT, FU_CSR , RT_X  , RT_X  , RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, Y, Y, CSR.I),
+@@ -305,9 +310,9 @@ object FDecode extends DecodeConstants
+   FCLASS_S-> List(Y, Y, Y, uopFCLASS_S,IQT_FP , FU_F2I, RT_FIX, RT_FLT, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+   FCLASS_D-> List(Y, Y, N, uopFCLASS_D,IQT_FP , FU_F2I, RT_FIX, RT_FLT, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+ 
+-  FMV_S_X -> List(Y, Y, Y, uopFMV_S_X, IQT_INT, FU_I2F, RT_FLT, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
++  FMV_W_X -> List(Y, Y, Y, uopFMV_W_X, IQT_INT, FU_I2F, RT_FLT, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+   FMV_D_X -> List(Y, Y, N, uopFMV_D_X, IQT_INT, FU_I2F, RT_FLT, RT_FIX, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+-  FMV_X_S -> List(Y, Y, Y, uopFMV_X_S, IQT_FP , FU_F2I, RT_FIX, RT_FLT, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
++  FMV_X_W -> List(Y, Y, Y, uopFMV_X_W, IQT_FP , FU_F2I, RT_FIX, RT_FLT, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+   FMV_X_D -> List(Y, Y, N, uopFMV_X_D, IQT_FP , FU_F2I, RT_FIX, RT_FLT, RT_X  , N, IS_I, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+ 
+   FSGNJ_S -> List(Y, Y, Y, uopFSGNJ_S, IQT_FP , FU_FPU, RT_FLT, RT_FLT, RT_FLT, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+diff --git a/src/main/scala/exu/execution-units/fpu.scala b/src/main/scala/exu/execution-units/fpu.scala
+index baadeaf2a..af9fa0c16 100644
+--- a/src/main/scala/exu/execution-units/fpu.scala
++++ b/src/main/scala/exu/execution-units/fpu.scala
+@@ -51,8 +51,8 @@ class UOPCodeFPUDecoder(implicit p: Parameters) extends BoomModule with HasFPUPa
+     //                          | | | | |  | | | | | | |  | | | |
+     Array(
+     BitPat(uopFCLASS_S) -> List(X,X,Y,N,N, N,X,S,S,N,Y,N, N,N,N,N),
+-    BitPat(uopFMV_S_X)  -> List(X,X,N,N,N, X,X,S,D,Y,N,N, N,N,N,N),
+-    BitPat(uopFMV_X_S)  -> List(X,X,Y,N,N, N,X,D,S,N,Y,N, N,N,N,N),
++    BitPat(uopFMV_W_X)  -> List(X,X,N,N,N, X,X,S,D,Y,N,N, N,N,N,N),
++    BitPat(uopFMV_X_W)  -> List(X,X,Y,N,N, N,X,D,S,N,Y,N, N,N,N,N),
+ 
+     BitPat(uopFCVT_S_X) -> List(X,X,N,N,N, X,X,S,S,Y,N,N, N,N,N,Y),
+ 
+@@ -192,7 +192,7 @@ class FPU(implicit p: Parameters) extends BoomModule with tile.HasFPUParameters
+     when (fp_ctrl.swap23) { req.in3 := req.in2 }
+     req.typ := ImmGenTyp(io_req.uop.imm_packed)
+     req.fmt := Mux(tag === S, 0.U, 1.U) // TODO support Zfh and avoid special-case below
+-    when (io_req.uop.uopc === uopFMV_X_S) {
++    when (io_req.uop.uopc === uopFMV_X_W) {
+       req.fmt := 0.U
+     }
+ 
+diff --git a/src/main/scala/exu/register-read/func-unit-decode.scala b/src/main/scala/exu/register-read/func-unit-decode.scala
+index aa70df4a5..40c76b350 100644
+--- a/src/main/scala/exu/register-read/func-unit-decode.scala
++++ b/src/main/scala/exu/register-read/func-unit-decode.scala
+@@ -220,9 +220,9 @@ object FpuRRdDecode extends RRdDecodeConstants
+          BitPat(uopFCLASS_S)->List(BR_N, Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+          BitPat(uopFCLASS_D)->List(BR_N, Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+ 
+-//         BitPat(uopFMV_S_X)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
++//         BitPat(uopFMV_W_X)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+ //         BitPat(uopFMV_D_X)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+-         BitPat(uopFMV_X_S)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
++         BitPat(uopFMV_X_W)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+          BitPat(uopFMV_X_D)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+          BitPat(uopFSGNJ_S)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+          BitPat(uopFSGNJ_D)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+@@ -273,7 +273,7 @@ object IfmvRRdDecode extends RRdDecodeConstants
+                                // |      |  |  use mem pipe        |         |         |     rf wen |
+                                // |      |  |  |  alu fcn  wd/word?|         |         |     |      |
+                                // |      |  |  |  |        |       |         |         |     |      |
+-         BitPat(uopFMV_S_X)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
++         BitPat(uopFMV_W_X)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+          BitPat(uopFMV_D_X)->List(BR_N , Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
+ 
+          BitPat(uopFCVT_S_X) ->List(BR_N,Y, N, N, FN_X   , DW_X  , OP1_X   , OP2_X   , IS_X, REN_1, CSR.N),
