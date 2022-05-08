@@ -88,6 +88,7 @@ fpga-shells https://github.com/sifive/fpga-shells/pull/162
 fpga-shells https://github.com/sifive/fpga-shells/pull/168  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/72  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/600  
+riscv-boom https://github.com/riscv-boom/riscv-boom/pull/601  
 sifive-blocks https://github.com/sifive/sifive-blocks/pull/176  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
