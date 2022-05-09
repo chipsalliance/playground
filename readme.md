@@ -17,7 +17,7 @@ git clone git@github.com:sequencer/playground.git
 ```
 
 0. Install dependencies and setup environments:
-- Arch Linux `pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4`
+- Arch Linux `pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 numactl`
 - Nix `nix-shell`
 
 0. [Optional] Remove unused dependences to accelerate bsp compile in `build.sc` `playground.moduleDeps`;
@@ -141,7 +141,7 @@ This package is the standalone tests to check is bumping correct or not, served 
 * lld: LLVM based linker
   - Arch Linux: lld
 * verilator -> Verilog -> C++ generation
-  - Arch Linux: verilator
+  - Arch Linux: verilator numactl
 * cmake -> verilator emulator build system
   - Arch Linux: cmake
 * ninja -> verilator emulator build system

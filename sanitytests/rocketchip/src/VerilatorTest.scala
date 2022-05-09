@@ -38,6 +38,10 @@ object VerilatorTest extends TestSuite {
         ).call(outputDirectory)
         test("Hello World!") {
           os.proc(
+            s"numactl",
+            s"--cpunodebind=0",
+            s"--membind=0",
+            s"--",
             s"$emulator",
             s"${resource("riscv64/pk")}",
             "hello",
