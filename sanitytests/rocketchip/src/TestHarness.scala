@@ -10,6 +10,7 @@ import freechips.rocketchip.stage._
 import freechips.rocketchip.system.RocketChipStage
 import logger.LazyLogging
 import os._
+import VerilatorTest.numaMaxSize
 
 case class TestHarness[M <: RawModule](
   testHarness: Class[M],
@@ -56,7 +57,7 @@ case class TestHarness[M <: RawModule](
       "--output-split 20000",
       "--output-split-cfuncs 20000",
       "--max-num-width 1048576",
-      "--threads 24",
+      s"--threads ${numaMaxSize + 1}",
       "--threads-dpi all"
       // format: on
     ).mkString(" ")

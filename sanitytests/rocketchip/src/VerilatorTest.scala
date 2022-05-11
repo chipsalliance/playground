@@ -13,6 +13,15 @@ object VerilatorTest extends TestSuite {
   val outputDirectory = os.pwd / "out" / "VerilatorTest"
   os.remove.all(outputDirectory)
   os.makeDir(outputDirectory)
+  os.proc(
+    "clang",
+    "-o", "numa_check",
+    s"${resource("csrc/numa_check.c")}",
+    s"-lnuma"
+  ).call(outputDirectory)
+  val numaCheckRes: Seq[Int] = os.proc("./numa_check").call(outputDirectory).out.string.split("\n").map(_.toInt).toSeq
+  val numaMaxNode: Int = numaCheckRes(0)
+  val numaMaxSize: Int = numaCheckRes(1)
   val tests = Tests {
     test("build TestHarness emulator") {
       val testHarness = classOf[freechips.rocketchip.system.TestHarness]
@@ -36,16 +45,25 @@ object VerilatorTest extends TestSuite {
           s"${resource("riscv64/usr/lib/crtn.o")}",
           "-static",
         ).call(outputDirectory)
+
         test("Hello World!") {
-          os.proc(
-            s"numactl",
-            s"--cpunodebind=0",
-            s"--membind=0",
-            s"--",
-            s"$emulator",
-            s"${resource("riscv64/pk")}",
-            "hello",
-          ).call(outputDirectory)
+          if (numaMaxNode == -1) {
+            os.proc(
+              s"$emulator",
+              s"${resource("riscv64/pk")}",
+              "hello",
+            ).call(outputDirectory)
+          } else {
+            os.proc(
+              "numactl",
+              s"--cpunodebind=$numaMaxNode",
+              s"--membind=$numaMaxNode",
+              "--",
+              s"$emulator",
+              s"${resource("riscv64/pk")}",
+              "hello",
+            ).call(outputDirectory)
+          }
         }
       }
     }
