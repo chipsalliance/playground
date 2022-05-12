@@ -8,7 +8,7 @@ Subject: [PATCH] use HasBlackBoxResource for EICG_wrapper
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/src/main/scala/util/ClockGate.scala b/src/main/scala/util/ClockGate.scala
-index 4cc66838896..acf6dd70cd6 100644
+index 4cc6683889..acf6dd70cd 100644
 --- a/src/main/scala/util/ClockGate.scala
 +++ b/src/main/scala/util/ClockGate.scala
 @@ -3,6 +3,7 @@
