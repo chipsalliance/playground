@@ -17,7 +17,7 @@ git clone git@github.com:sequencer/playground.git
 ```
 
 0. Install dependencies and setup environments:
-- Arch Linux `pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4`
+- Arch Linux `pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 numactl`
 - Nix `nix-shell`
 
 0. [Optional] Remove unused dependences to accelerate bsp compile in `build.sc` `playground.moduleDeps`;
@@ -80,17 +80,16 @@ This repository always tracks remote developing branches, it may need some patch
 <!-- BEGIN-PATCH -->
 cva6-wrapper https://github.com/ucb-bar/cva6-wrapper/pull/15  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2986  
 block-inclusivecache-sifive https://github.com/sifive/block-inclusivecache-sifive/pull/22  
 chipyard https://github.com/ucb-bar/chipyard/pull/1160  
 fpga-shells https://github.com/sifive/fpga-shells/pull/162  
 fpga-shells https://github.com/sifive/fpga-shells/pull/168  
-fpga-shells https://github.com/sifive/fpga-shells/pull/169
+fpga-shells https://github.com/sifive/fpga-shells/pull/169  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/72  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/600  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/601  
 sifive-blocks https://github.com/sifive/sifive-blocks/pull/176  
-sifive-blocks https://github.com/sifive/sifive-blocks/pull/177
+sifive-blocks https://github.com/sifive/sifive-blocks/pull/177  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
 <!-- END-PATCH -->
@@ -142,7 +141,7 @@ This package is the standalone tests to check is bumping correct or not, served 
 * lld: LLVM based linker
   - Arch Linux: lld
 * verilator -> Verilog -> C++ generation
-  - Arch Linux: verilator
+  - Arch Linux: verilator numactl
 * cmake -> verilator emulator build system
   - Arch Linux: cmake
 * ninja -> verilator emulator build system
