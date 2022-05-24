@@ -9,7 +9,7 @@ Subject: [PATCH] bump json-jackson to 4.0.5
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/build.sbt b/build.sbt
-index 2313f634fd..85c7a8b2fd 100644
+index 2313f634fd9..85c7a8b2fd8 100644
 --- a/build.sbt
 +++ b/build.sbt
 @@ -15,7 +15,7 @@ lazy val commonSettings = Seq(
@@ -22,7 +22,7 @@ index 2313f634fd..85c7a8b2fd 100644
    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
    resolvers ++= Seq(
 diff --git a/common.sc b/common.sc
-index 4187dd183a..52092e7e86 100644
+index 4187dd183a0..52092e7e86e 100644
 --- a/common.sc
 +++ b/common.sc
 @@ -84,7 +84,7 @@ trait CommonRocketChip extends SbtModule with PublishModule {
