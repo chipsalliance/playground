@@ -78,6 +78,7 @@ then open by your favorite IDE, which supports [BSP](https://build-server-protoc
 Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
+chisel3 https://github.com/chipsalliance/chisel3/pull/2542
 cva6-wrapper https://github.com/ucb-bar/cva6-wrapper/pull/15  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968  
 block-inclusivecache-sifive https://github.com/sifive/block-inclusivecache-sifive/pull/22  
