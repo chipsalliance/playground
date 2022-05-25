@@ -13,6 +13,7 @@ import $file.dependencies.`chisel-testers2`.build
 import $file.dependencies.cde.build
 import $file.dependencies.`berkeley-hardfloat`.build
 import $file.dependencies.`rocket-chip`.common
+import $file.dependencies.`chisel-circt`.build
 
 // Global Scala Version
 object ivys {
@@ -112,6 +113,11 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 
 
 // SiFive
+object mychiselCirct extends dependencies.`chisel-circt`.build.chiselCirctCrossModule(ivys.sv) {
+  override def millSourcePath = os.pwd / "dependencies" / "chisel-circt"
+  override def chisel3Module = Some(mychisel3)
+}
+
 
 object inclusivecache extends CommonModule {
   // TODO: FIX
@@ -554,7 +560,31 @@ object pk extends Module {
     T.ctx.dest / "pk"
   }
 }
+// Xiangshan
+// So actually I(sequencer) doesn't maintain the XiangShan build system, which means, I have to maintain a standalone one.
+object xiangshan extends CommonModule with SbtModule {
+  override def millSourcePath = os.pwd / "dependencies" / "XiangShan"
+  override def scalacOptions = T {
+    super.scalacOptions() ++ Agg("-Xsource:2.11")
+  }
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, huancun, difftest, fudian, mychiselCirct)
+}
 
+object huancun extends CommonModule with SbtModule {
+  override def millSourcePath = os.pwd / "dependencies" / "huancun"
+  override def scalacOptions = T {
+    super.scalacOptions() ++ Agg("-Xsource:2.11")
+  }
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
+}
+
+object fudian extends CommonModule with SbtModule {
+  override def millSourcePath = os.pwd / "dependencies" / "fudian"
+}
+
+object difftest extends CommonModule with SbtModule {
+  override def millSourcePath = os.pwd / "dependencies" / "difftest"
+}
 // Dummy
 
 object playground extends CommonModule {

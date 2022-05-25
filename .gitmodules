@@ -91,3 +91,20 @@
 [submodule "dependencies/riscv-pk"]
 	path = dependencies/riscv-pk
 	url = git@github.com:riscv-software-src/riscv-pk.git
+[submodule "dependencies/XiangShan"]
+	path = dependencies/XiangShan
+	url = git@github.com:OpenXiangShan/XiangShan.git
+[submodule "dependencies/difftest"]
+	path = dependencies/difftest
+	url = git@github.com:OpenXiangShan/difftest.git
+[submodule "dependencies/huancun"]
+	path = dependencies/huancun
+	url = git@github.com:OpenXiangShan/huancun.git
+[submodule "dependencies/fudian"]
+	path = dependencies/fudian
+	url = git@github.com:OpenXiangShan/fudian.git
+	# OMG, it's crazy to make xiangshan depending on this...
+	branch = fdiv-dont-use-decoder
+[submodule "dependencies/chisel-circt.git"]
+	path = dependencies/chisel-circt
+	url = git@github.com:sifive/chisel-circt
