@@ -1,103 +1,75 @@
 [submodule "chisel3"]
 	path = dependencies/chisel3
 	url = git@github.com:chipsalliance/chisel3.git
-	branch = master
 [submodule "firrtl"]
 	path = dependencies/firrtl
 	url = git@github.com:chipsalliance/firrtl.git
-	branch = master
 [submodule "treadle"]
 	path = dependencies/treadle
 	url = git@github.com:chipsalliance/treadle.git
-	branch = master
 [submodule "chisel-testers2"]
 	path = dependencies/chisel-testers2
 	url = git@github.com:ucb-bar/chisel-testers2.git
-	branch = main
-[submodule "api-config-chipsalliance"]
-	path = dependencies/api-config-chipsalliance
-	url = git@github.com:chipsalliance/api-config-chipsalliance.git
-	branch = master
+[submodule "cde"]
+	path = dependencies/cde
+	url = git@github.com:chipsalliance/cde.git
 [submodule "berkeley-hardfloat"]
 	path = dependencies/berkeley-hardfloat
 	url = git@github.com:ucb-bar/berkeley-hardfloat.git
-	branch = master
 [submodule "rocket-chip"]
 	path = dependencies/rocket-chip
 	url = git@github.com:chipsalliance/rocket-chip.git
-	branch = master
 [submodule "sifive-blocks"]
 	path = dependencies/sifive-blocks
 	url = git@github.com:sifive/sifive-blocks.git
-	branch = master
 [submodule "block-inclusivecache-sifive"]
 	path = dependencies/block-inclusivecache-sifive
 	url = git@github.com:sifive/block-inclusivecache-sifive.git
-	branch = master
 [submodule "fpga-shells"]
 	path = dependencies/fpga-shells
 	url = git@github.com:sifive/fpga-shells.git
-	branch = master
 [submodule "firesim"]
 	path = dependencies/firesim
 	url = git@github.com:firesim/firesim.git
-	branch = dev
 [submodule "plsi-mdf"]
 	path = dependencies/plsi-mdf
-	url = git@github.com:ucb-bar/plsi-mdf
-	branch = master
+	url = git@github.com:ucb-bar/plsi-mdf.git
 [submodule "testchipip"]
 	path = dependencies/testchipip
-	url = git@github.com:ucb-bar/testchipip
-	branch = master
+	url = git@github.com:ucb-bar/testchipip.git
 [submodule "icenet"]
 	path = dependencies/icenet
-	url = git@github.com:firesim/icenet
-	branch = master
+	url = git@github.com:firesim/icenet.git
 [submodule "riscv-boom"]
 	path = dependencies/riscv-boom
-	url = git@github.com:riscv-boom/riscv-boom
-	branch = master
+	url = git@github.com:riscv-boom/riscv-boom.git
 [submodule "chipyard"]
 	path = dependencies/chipyard
-	url = git@github.com:ucb-bar/chipyard
-	branch = dev
+	url = git@github.com:ucb-bar/chipyard.git
 [submodule "barstools"]
 	path = dependencies/barstools
-	url = git@github.com:ucb-bar/barstools
-	branch = master
+	url = git@github.com:ucb-bar/barstools.git
 [submodule "dsptools"]
 	path = dependencies/dsptools
-	url = git@github.com:ucb-bar/dsptools
-	branch = master
-[submodule "firrtl-interpreter"]
-	path = dependencies/firrtl-interpreter
-	url = git@github.com:freechipsproject/firrtl-interpreter
-	branch = master
+	url = git@github.com:ucb-bar/dsptools.git
 [submodule "gemmini"]
 	path = dependencies/gemmini
-	url = git@github.com:ucb-bar/gemmini
-	branch = dev
+	url = git@github.com:ucb-bar/gemmini.git
 [submodule "nvdla-wrapper"]
 	path = dependencies/nvdla-wrapper
-	url = git@github.com:ucb-bar/nvdla-wrapper
-	branch = master
+	url = git@github.com:ucb-bar/nvdla-wrapper.git
 [submodule "hwacha"]
 	path = dependencies/hwacha
-	url = git@github.com:ucb-bar/hwacha
-	branch = master
+	url = git@github.com:ucb-bar/hwacha.git
 [submodule "cva6-wrapper"]
 	path = dependencies/cva6-wrapper
-	url = git@github.com:ucb-bar/cva6-wrapper
-	branch = master
+	url = git@github.com:ucb-bar/cva6-wrapper.git
 [submodule "riscv-sodor"]
 	path = dependencies/riscv-sodor
-	url = git@github.com:ucb-bar/riscv-sodor
-	branch = master
+	url = git@github.com:ucb-bar/riscv-sodor.git
 [submodule "sha3"]
 	path = dependencies/sha3
-	url = git@github.com:ucb-bar/sha3
-	branch = master
+	url = git@github.com:ucb-bar/sha3.git
 [submodule "dependencies/riscv-isa-sim"]
 	path = dependencies/riscv-isa-sim
 	url = git@github.com:riscv/riscv-isa-sim.git
