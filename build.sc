@@ -110,16 +110,13 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
   def configModule: PublishModule = mycde
 }
 
-
-// SiFive
-
 object inclusivecache extends CommonModule {
   // TODO: FIX
   override def scalacOptions = T {
     super.scalacOptions() ++ Agg("-Xsource:2.11")
   }
 
-  override def millSourcePath = os.pwd / "dependencies" / "block-inclusivecache-sifive" / 'design / 'craft / "inclusivecache"
+  override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-inclusive-cache" / 'design / 'craft / "inclusivecache"
 
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
@@ -130,7 +127,7 @@ object blocks extends CommonModule with SbtModule {
     super.scalacOptions() ++ Agg("-Xsource:2.11")
   }
 
-  override def millSourcePath = os.pwd / "dependencies" / "sifive-blocks"
+  override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-blocks"
 
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
@@ -141,7 +138,7 @@ object shells extends CommonModule with SbtModule {
     super.scalacOptions() ++ Agg("-Xsource:2.11")
   }
 
-  override def millSourcePath = os.pwd / "dependencies" / "fpga-shells"
+  override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-fpga-shells"
 
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, blocks)
 }

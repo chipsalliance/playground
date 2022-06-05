@@ -19,15 +19,15 @@
 [submodule "rocket-chip"]
 	path = dependencies/rocket-chip
 	url = git@github.com:chipsalliance/rocket-chip.git
-[submodule "sifive-blocks"]
-	path = dependencies/sifive-blocks
-	url = git@github.com:sifive/sifive-blocks.git
-[submodule "block-inclusivecache-sifive"]
-	path = dependencies/block-inclusivecache-sifive
-	url = git@github.com:sifive/block-inclusivecache-sifive.git
-[submodule "fpga-shells"]
-	path = dependencies/fpga-shells
-	url = git@github.com:sifive/fpga-shells.git
+[submodule "rocket-chip-blocks"]
+	path = dependencies/rocket-chip-blocks
+	url = git@github.com:chipsalliance/rocket-chip-blocks.git
+[submodule "rocket-chip-inclusive-cache"]
+	path = dependencies/rocket-chip-inclusive-cache
+	url = git@github.com:chipsalliance/rocket-chip-inclusive-cache.git
+[submodule "rocket-chip-fpga-shells"]
+	path = dependencies/rocket-chip-fpga-shells
+	url = git@github.com:chipsalliance/rocket-chip-fpga-shells.git
 [submodule "firesim"]
 	path = dependencies/firesim
 	url = git@github.com:firesim/firesim.git
