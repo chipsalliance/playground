@@ -1,4 +1,4 @@
-From 55a99c8f317ee37cf77ba0b467a4e7a7e25143b8 Mon Sep 17 00:00:00 2001
+From 13991a938d12c6430223ca6fe680029cf146c230 Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sat, 14 May 2022 02:07:26 +0800
 Subject: [PATCH] fix for chipsalliance/rocket-chip#2925
@@ -8,10 +8,10 @@ Subject: [PATCH] fix for chipsalliance/rocket-chip#2925
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/main/scala/ip/microsemi/polarfire_pcie_rootport/PolarFirePCIeRootPort.scala b/src/main/scala/ip/microsemi/polarfire_pcie_rootport/PolarFirePCIeRootPort.scala
-index 24dd7e76..422d02d8 100644
+index 5657573..8f2266c 100644
 --- a/src/main/scala/ip/microsemi/polarfire_pcie_rootport/PolarFirePCIeRootPort.scala
 +++ b/src/main/scala/ip/microsemi/polarfire_pcie_rootport/PolarFirePCIeRootPort.scala
-@@ -331,7 +331,7 @@ class PolarFirePCIeX4(implicit p:Parameters) extends LazyModule
+@@ -330,7 +330,7 @@ class PolarFirePCIeX4(implicit p:Parameters) extends LazyModule
  
      //m
      m.aw.bits.cache := UInt(0)
@@ -20,7 +20,7 @@ index 24dd7e76..422d02d8 100644
      m.aw.bits.qos   := UInt(0)
  
      m.aw.bits.id                        := blackbox.io.PCIESS_AXI_1_M_AWID
-@@ -355,7 +355,7 @@ class PolarFirePCIeX4(implicit p:Parameters) extends LazyModule
+@@ -354,7 +354,7 @@ class PolarFirePCIeX4(implicit p:Parameters) extends LazyModule
      m.b.ready                           := blackbox.io.PCIESS_AXI_1_M_BREADY
  
      m.ar.bits.cache := UInt(0)

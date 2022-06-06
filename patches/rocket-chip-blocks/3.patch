@@ -1,0 +1,18 @@
+From 326c29beb139cdc20b6a0c07fc167e6f7afdbb7c Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Mon, 6 Jun 2022 16:50:42 +0800
+Subject: [PATCH] fix a bug introduced in 09afa7a
+
+---
+ src/main/scala/devices/spi/BlackBoxDelayBuffer.scala | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/main/scala/devices/spi/BlackBoxDelayBuffer.scala b/src/main/scala/devices/spi/BlackBoxDelayBuffer.scala
+index 9241998..b89e700 100644
+--- a/src/main/scala/devices/spi/BlackBoxDelayBuffer.scala
++++ b/src/main/scala/devices/spi/BlackBoxDelayBuffer.scala
+@@ -1,3 +1,4 @@
++package sifive.blocks.devices.spi
+ 
+ import Chisel._
+ import freechips.rocketchip.util.ShiftRegInit

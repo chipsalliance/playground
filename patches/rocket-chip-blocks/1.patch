@@ -1,29 +1,29 @@
-From 50f34c0ce670cee6a46abc37e47013c9af8dc0dc Mon Sep 17 00:00:00 2001
+From 1132a5980335fe817aa634795b853ba87d7862bc Mon Sep 17 00:00:00 2001
 From: Jiuyang Liu <liu@jiuyang.me>
 Date: Sun, 24 Apr 2022 07:26:16 +0800
 Subject: [PATCH] remove objectmodule
 
 ---
- src/main/scala/devices/gpio/GPIO.scala      | 22 ++---------
- src/main/scala/devices/gpio/OMGPIO.scala    | 12 ------
+ src/main/scala/devices/gpio/GPIO.scala      | 22 ++--------
+ src/main/scala/devices/gpio/OMGPIO.scala    | 27 ------------
  src/main/scala/devices/porgen/PorGen.scala  |  6 +--
- src/main/scala/devices/pwm/OM_PWM.scala     | 12 ------
- src/main/scala/devices/pwm/PWM.scala        | 23 ++---------
- src/main/scala/devices/spi/OM_SPI.scala     | 33 ----------------
- src/main/scala/devices/spi/OM_SPIXIP.scala  | 24 ------------
+ src/main/scala/devices/pwm/OM_PWM.scala     | 27 ------------
+ src/main/scala/devices/pwm/PWM.scala        | 23 ++--------
+ src/main/scala/devices/spi/OM_SPI.scala     | 48 ---------------------
+ src/main/scala/devices/spi/OM_SPIXIP.scala  | 39 -----------------
  src/main/scala/devices/spi/SPI.scala        | 10 ++---
  src/main/scala/devices/spi/SPIFlash.scala   |  6 +--
- src/main/scala/devices/spi/TLSPI.scala      | 30 ++------------
- src/main/scala/devices/spi/TLSPIFlash.scala | 43 ++-------------------
- src/main/scala/devices/timer/OM_Timer.scala | 11 ------
- src/main/scala/devices/timer/Timer.scala    | 20 ++--------
- src/main/scala/devices/uart/OM_UART.scala   | 21 ----------
- src/main/scala/devices/uart/UART.scala      | 31 ++-------------
- src/main/scala/devices/wdt/OM_WDT.scala     | 10 -----
- src/main/scala/devices/wdt/TLWDT.scala      | 21 ++--------
+ src/main/scala/devices/spi/TLSPI.scala      | 30 ++-----------
+ src/main/scala/devices/spi/TLSPIFlash.scala | 43 ++----------------
+ src/main/scala/devices/timer/OM_Timer.scala | 26 -----------
+ src/main/scala/devices/timer/Timer.scala    | 20 ++-------
+ src/main/scala/devices/uart/OM_UART.scala   | 36 ----------------
+ src/main/scala/devices/uart/UART.scala      | 31 ++-----------
+ src/main/scala/devices/wdt/OM_WDT.scala     | 25 -----------
+ src/main/scala/devices/wdt/TLWDT.scala      | 21 ++-------
  src/main/scala/util/Devices.scala           |  5 +--
  src/main/scala/util/Hierarchy.scala         |  2 +-
- 19 files changed, 33 insertions(+), 309 deletions(-)
+ 19 files changed, 33 insertions(+), 414 deletions(-)
  delete mode 100644 src/main/scala/devices/gpio/OMGPIO.scala
  delete mode 100644 src/main/scala/devices/pwm/OM_PWM.scala
  delete mode 100644 src/main/scala/devices/spi/OM_SPI.scala
@@ -33,10 +33,10 @@ Subject: [PATCH] remove objectmodule
  delete mode 100644 src/main/scala/devices/wdt/OM_WDT.scala
 
 diff --git a/src/main/scala/devices/gpio/GPIO.scala b/src/main/scala/devices/gpio/GPIO.scala
-index 20ef489..8e5ac08 100644
+index b834068..c822e5d 100644
 --- a/src/main/scala/devices/gpio/GPIO.scala
 +++ b/src/main/scala/devices/gpio/GPIO.scala
-@@ -14,9 +14,9 @@ import freechips.rocketchip.subsystem._
+@@ -13,9 +13,9 @@ import freechips.rocketchip.subsystem._
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.devices.tilelink._
  import freechips.rocketchip.util._
@@ -49,7 +49,7 @@ index 20ef489..8e5ac08 100644
  
  import sifive.blocks.devices.pinctrl.{PinCtrl, Pin, BasePin, EnhancedPin, EnhancedPinCtrl}
  import sifive.blocks.util.{DeviceParams,DeviceAttachParams}
-@@ -177,7 +177,6 @@ abstract class GPIO(busWidthBytes: Int, c: GPIOParams)(implicit p: Parameters)
+@@ -176,7 +176,6 @@ abstract class GPIO(busWidthBytes: Int, c: GPIOParams)(implicit p: Parameters)
      GPIOCtrlRegs.poe + dsOffset -> poeFields
    )
    regmap(mapping ++ dsRegMap :_*)
@@ -57,7 +57,7 @@ index 20ef489..8e5ac08 100644
  
    //--------------------------------------------------
    // Actual Pinmux
-@@ -248,19 +247,6 @@ abstract class GPIO(busWidthBytes: Int, c: GPIOParams)(implicit p: Parameters)
+@@ -247,19 +246,6 @@ abstract class GPIO(busWidthBytes: Int, c: GPIOParams)(implicit p: Parameters)
        iofPort.get.iof_1(pin).i.ival := inSyncReg(pin)
      }
    }}
@@ -77,7 +77,7 @@ index 20ef489..8e5ac08 100644
  }
  
  class TLGPIO(busWidthBytes: Int, params: GPIOParams)(implicit p: Parameters)
-@@ -313,8 +299,6 @@ case class GPIOAttachParams(
+@@ -312,8 +298,6 @@ case class GPIOAttachParams(
        case _: AsynchronousCrossing => where.ibus.fromAsync
      }) := gpio.intXing(intXType)
  
@@ -88,11 +88,10 @@ index 20ef489..8e5ac08 100644
  }
 diff --git a/src/main/scala/devices/gpio/OMGPIO.scala b/src/main/scala/devices/gpio/OMGPIO.scala
 deleted file mode 100644
-index 537cd51..0000000
+index a02c586..0000000
 --- a/src/main/scala/devices/gpio/OMGPIO.scala
 +++ /dev/null
-@@ -1,12 +0,0 @@
--// See LICENSE for license details.
+@@ -1,27 +0,0 @@
 -package sifive.blocks.devices.gpio
 -
 -import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
@@ -104,11 +103,27 @@ index 537cd51..0000000
 -  interrupts: Seq[OMInterrupt],
 -  _types: Seq[String] = Seq("OMGPIO", "OMDevice", "OMComponent"),
 -) extends OMDevice
+-
+-/*
+-   Copyright 2016 SiFive, Inc.
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-   You may obtain a copy of the License at
+-
+-       http://www.apache.org/licenses/LICENSE-2.0
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-*/
 diff --git a/src/main/scala/devices/porgen/PorGen.scala b/src/main/scala/devices/porgen/PorGen.scala
-index 1e63c48..fff31a8 100644
+index 64cf801..86855db 100644
 --- a/src/main/scala/devices/porgen/PorGen.scala
 +++ b/src/main/scala/devices/porgen/PorGen.scala
-@@ -13,9 +13,9 @@ import freechips.rocketchip.subsystem._
+@@ -12,9 +12,9 @@ import freechips.rocketchip.subsystem._
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.devices.tilelink._
  import freechips.rocketchip.util._
@@ -123,11 +138,10 @@ index 1e63c48..fff31a8 100644
  // Ideally, we want SOFT(configurable) reset inputs like this. 
 diff --git a/src/main/scala/devices/pwm/OM_PWM.scala b/src/main/scala/devices/pwm/OM_PWM.scala
 deleted file mode 100644
-index 4a1f036..0000000
+index cb9d22a..0000000
 --- a/src/main/scala/devices/pwm/OM_PWM.scala
 +++ /dev/null
-@@ -1,12 +0,0 @@
--// See LICENSE for license details.
+@@ -1,27 +0,0 @@
 -package sifive.blocks.devices.pwm
 -
 -import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
@@ -139,11 +153,27 @@ index 4a1f036..0000000
 -  interrupts: Seq[OMInterrupt],
 -  _types: Seq[String] = Seq("OMPWM", "OMDevice", "OMComponent"),
 -) extends OMDevice
+-
+-/*
+-   Copyright 2016 SiFive, Inc.
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-   You may obtain a copy of the License at
+-
+-       http://www.apache.org/licenses/LICENSE-2.0
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-*/
 diff --git a/src/main/scala/devices/pwm/PWM.scala b/src/main/scala/devices/pwm/PWM.scala
-index 8a04838..b09aeed 100644
+index ca0621d..5340a99 100644
 --- a/src/main/scala/devices/pwm/PWM.scala
 +++ b/src/main/scala/devices/pwm/PWM.scala
-@@ -15,9 +15,9 @@ import freechips.rocketchip.subsystem._
+@@ -14,9 +14,9 @@ import freechips.rocketchip.subsystem._
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.devices.tilelink._
  import freechips.rocketchip.util._
@@ -156,7 +186,7 @@ index 8a04838..b09aeed 100644
  
  import sifive.blocks.util._
  
-@@ -98,22 +98,7 @@ abstract class PWM(busWidthBytes: Int, val params: PWMParams)(implicit p: Parame
+@@ -97,22 +97,7 @@ abstract class PWM(busWidthBytes: Int, val params: PWMParams)(implicit p: Parame
      //regmap((GenericTimer.timerRegMap(pwm, 0, params.regBytes)):_*)
      val mapping = (GenericTimer.timerRegMap(pwm, 0, params.regBytes))
      regmap(mapping:_*)
@@ -179,7 +209,7 @@ index 8a04838..b09aeed 100644
  }
  
  class TLPWM(busWidthBytes: Int, params: PWMParams)(implicit p: Parameters)
-@@ -166,8 +151,6 @@ case class PWMAttachParams(
+@@ -165,8 +150,6 @@ case class PWMAttachParams(
        case _: AsynchronousCrossing => where.ibus.fromAsync
      }) := pwm.intXing(intXType)
  
@@ -190,11 +220,10 @@ index 8a04838..b09aeed 100644
  }
 diff --git a/src/main/scala/devices/spi/OM_SPI.scala b/src/main/scala/devices/spi/OM_SPI.scala
 deleted file mode 100644
-index 57f1d22..0000000
+index a16d85a..0000000
 --- a/src/main/scala/devices/spi/OM_SPI.scala
 +++ /dev/null
-@@ -1,33 +0,0 @@
--// See LICENSE for license details.
+@@ -1,48 +0,0 @@
 -package sifive.blocks.devices.spi
 -
 -import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
@@ -227,13 +256,28 @@ index 57f1d22..0000000
 -  interrupts: Seq[OMInterrupt],
 -  _types: Seq[String] = Seq("OMSPI", "OMDevice", "OMComponent"),
 -) extends baseSPI with OMDevice
+-
+-/*
+-   Copyright 2016 SiFive, Inc.
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-   You may obtain a copy of the License at
+-
+-       http://www.apache.org/licenses/LICENSE-2.0
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-*/
 diff --git a/src/main/scala/devices/spi/OM_SPIXIP.scala b/src/main/scala/devices/spi/OM_SPIXIP.scala
 deleted file mode 100644
-index 0f64543..0000000
+index d49455c..0000000
 --- a/src/main/scala/devices/spi/OM_SPIXIP.scala
 +++ /dev/null
-@@ -1,24 +0,0 @@
--// See LICENSE for license details.
+@@ -1,39 +0,0 @@
 -package sifive.blocks.devices.spi
 -
 -import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
@@ -257,11 +301,27 @@ index 0f64543..0000000
 -  interrupts: Seq[OMInterrupt],
 -  _types: Seq[String] = Seq("OMSPIXIP", "OMDevice", "OMComponent"),
 -) extends baseSPI with OMDevice
+-
+-/*
+-   Copyright 2016 SiFive, Inc.
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-   You may obtain a copy of the License at
+-
+-       http://www.apache.org/licenses/LICENSE-2.0
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-*/
 diff --git a/src/main/scala/devices/spi/SPI.scala b/src/main/scala/devices/spi/SPI.scala
-index 0d95eb9..96d54ce 100644
+index d42720b..1604f1f 100644
 --- a/src/main/scala/devices/spi/SPI.scala
 +++ b/src/main/scala/devices/spi/SPI.scala
-@@ -14,9 +14,9 @@ import freechips.rocketchip.regmapper._
+@@ -13,9 +13,9 @@ import freechips.rocketchip.regmapper._
  import freechips.rocketchip.subsystem._
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.devices.tilelink._
@@ -274,7 +334,7 @@ index 0d95eb9..96d54ce 100644
  
  import sifive.blocks.util._
  
-@@ -67,8 +67,6 @@ case class SPIAttachParams(
+@@ -66,8 +66,6 @@ case class SPIAttachParams(
        case _: AsynchronousCrossing => where.ibus.fromAsync
      }) := spi.intXing(intXType)
  
@@ -283,7 +343,7 @@ index 0d95eb9..96d54ce 100644
      spi
    }
  }
-@@ -139,8 +137,6 @@ case class SPIFlashAttachParams(
+@@ -138,8 +136,6 @@ case class SPIFlashAttachParams(
        case _: AsynchronousCrossing => where.ibus.fromAsync
      }) := qspi.intXing(intXType)
  
@@ -293,10 +353,10 @@ index 0d95eb9..96d54ce 100644
    }
  }
 diff --git a/src/main/scala/devices/spi/SPIFlash.scala b/src/main/scala/devices/spi/SPIFlash.scala
-index eb3dfdb..6ad85af 100644
+index ac69788..e19e42b 100644
 --- a/src/main/scala/devices/spi/SPIFlash.scala
 +++ b/src/main/scala/devices/spi/SPIFlash.scala
-@@ -3,9 +3,9 @@ package sifive.blocks.devices.spi
+@@ -2,9 +2,9 @@ package sifive.blocks.devices.spi
  
  import Chisel.{defaultCompileOptions => _, _}
  import freechips.rocketchip.util.CompileOptions.NotStrictInferReset
@@ -310,10 +370,10 @@ index eb3dfdb..6ad85af 100644
  class SPIFlashInsn(c: SPIFlashParamsBase) extends SPIBundle(c) {
    val cmd = new Bundle with HasSPIProtocol {
 diff --git a/src/main/scala/devices/spi/TLSPI.scala b/src/main/scala/devices/spi/TLSPI.scala
-index 4fc3c98..ed7ae69 100644
+index 2e60bee..9398f1a 100644
 --- a/src/main/scala/devices/spi/TLSPI.scala
 +++ b/src/main/scala/devices/spi/TLSPI.scala
-@@ -11,9 +11,9 @@ import freechips.rocketchip.interrupts._
+@@ -10,9 +10,9 @@ import freechips.rocketchip.interrupts._
  import freechips.rocketchip.subsystem._
  import freechips.rocketchip.util.HeterogeneousBag
  import sifive.blocks.util.{NonBlockingEnqueue, NonBlockingDequeue}
@@ -326,7 +386,7 @@ index 4fc3c98..ed7ae69 100644
  import sifive.blocks.util._
  
  trait SPIParamsBase {
-@@ -196,29 +196,5 @@ class TLSPI(w: Int, c: SPIParams)(implicit p: Parameters)
+@@ -195,31 +195,7 @@ class TLSPI(w: Int, c: SPIParams)(implicit p: Parameters)
      mac.io.link <> fifo.io.link
      val mapping = (regmapBase)
      regmap(mapping:_*)
@@ -356,11 +416,13 @@ index 4fc3c98..ed7ae69 100644
 -
 -
  }
+ 
+ /*
 diff --git a/src/main/scala/devices/spi/TLSPIFlash.scala b/src/main/scala/devices/spi/TLSPIFlash.scala
-index f5e65a5..85567da 100644
+index 4d4e192..344b277 100644
 --- a/src/main/scala/devices/spi/TLSPIFlash.scala
 +++ b/src/main/scala/devices/spi/TLSPIFlash.scala
-@@ -9,9 +9,9 @@ import freechips.rocketchip.regmapper._
+@@ -8,9 +8,9 @@ import freechips.rocketchip.regmapper._
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.subsystem._
  import freechips.rocketchip.util.HeterogeneousBag
@@ -373,7 +435,7 @@ index f5e65a5..85567da 100644
  import sifive.blocks.util._
  
  trait SPIFlashParamsBase extends SPIParamsBase {
-@@ -141,42 +141,5 @@ class TLSPIFlash(w: Int, c: SPIFlashParams)(implicit p: Parameters)
+@@ -140,44 +140,7 @@ class TLSPIFlash(w: Int, c: SPIFlashParams)(implicit p: Parameters)
  
      val totalMapping = (regmapBase ++ regmapFlash)
      regmap(totalMapping:_*)
@@ -416,13 +478,14 @@ index f5e65a5..85567da 100644
 -
 -
  }
+ 
+ /*
 diff --git a/src/main/scala/devices/timer/OM_Timer.scala b/src/main/scala/devices/timer/OM_Timer.scala
 deleted file mode 100644
-index 2603b81..0000000
+index cd73f3a..0000000
 --- a/src/main/scala/devices/timer/OM_Timer.scala
 +++ /dev/null
-@@ -1,11 +0,0 @@
--// See LICENSE for license details.
+@@ -1,26 +0,0 @@
 -package sifive.blocks.devices.timer
 -
 -import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
@@ -433,11 +496,27 @@ index 2603b81..0000000
 -  interrupts: Seq[OMInterrupt],
 -  _types: Seq[String] = Seq("OMTimer", "OMDevice", "OMComponent"),
 -) extends OMDevice
+-
+-/*
+-   Copyright 2016 SiFive, Inc.
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-   You may obtain a copy of the License at
+-
+-       http://www.apache.org/licenses/LICENSE-2.0
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-*/
 diff --git a/src/main/scala/devices/timer/Timer.scala b/src/main/scala/devices/timer/Timer.scala
-index 6f83b22..e7fd7be 100644
+index 50a55aa..e951951 100644
 --- a/src/main/scala/devices/timer/Timer.scala
 +++ b/src/main/scala/devices/timer/Timer.scala
-@@ -13,9 +13,9 @@ import freechips.rocketchip.regmapper.{RegisterRouter, RegisterRouterParams}
+@@ -12,9 +12,9 @@ import freechips.rocketchip.regmapper.{RegisterRouter, RegisterRouterParams}
  import freechips.rocketchip.subsystem._
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.devices.tilelink._
@@ -450,7 +529,7 @@ index 6f83b22..e7fd7be 100644
  
  import sifive.blocks.util._
  import sifive.blocks.devices.pwm._
-@@ -47,18 +47,6 @@ class Timer(w: Int, c: TimerParams)(implicit p: Parameters)
+@@ -46,18 +46,6 @@ class Timer(w: Int, c: TimerParams)(implicit p: Parameters)
      interrupts := timer.io.ip
      val mapping = (GenericTimer.timerRegMap(timer, 0, c.regBytes))
      regmap(mapping:_*)
@@ -469,7 +548,7 @@ index 6f83b22..e7fd7be 100644
    }
  }
  
-@@ -124,8 +112,6 @@ case class TimerAttachParams(
+@@ -123,8 +111,6 @@ case class TimerAttachParams(
        case _: AsynchronousCrossing => where.ibus.fromAsync
      }) := timer.intXing(intXType)
  
@@ -480,11 +559,10 @@ index 6f83b22..e7fd7be 100644
  }
 diff --git a/src/main/scala/devices/uart/OM_UART.scala b/src/main/scala/devices/uart/OM_UART.scala
 deleted file mode 100644
-index e5c408e..0000000
+index a303382..0000000
 --- a/src/main/scala/devices/uart/OM_UART.scala
 +++ /dev/null
-@@ -1,21 +0,0 @@
--// See LICENSE for license details.
+@@ -1,36 +0,0 @@
 -package sifive.blocks.devices.uart
 -
 -import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
@@ -505,11 +583,27 @@ index e5c408e..0000000
 -  interrupts: Seq[OMInterrupt],
 -  _types: Seq[String] = Seq("OMUART", "OMDevice", "OMComponent"),
 -) extends OMDevice
+-
+-/*
+-   Copyright 2016 SiFive, Inc.
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-   You may obtain a copy of the License at
+-
+-       http://www.apache.org/licenses/LICENSE-2.0
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-*/
 diff --git a/src/main/scala/devices/uart/UART.scala b/src/main/scala/devices/uart/UART.scala
-index 6a65759..e5cf54c 100755
+index 45f4e88..eb57423 100755
 --- a/src/main/scala/devices/uart/UART.scala
 +++ b/src/main/scala/devices/uart/UART.scala
-@@ -13,9 +13,9 @@ import freechips.rocketchip.subsystem._
+@@ -12,9 +12,9 @@ import freechips.rocketchip.subsystem._
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.devices.tilelink._
  import freechips.rocketchip.util._
@@ -522,7 +616,7 @@ index 6a65759..e5cf54c 100755
  
  import sifive.blocks.util._
  
-@@ -198,30 +198,7 @@ class UART(busWidthBytes: Int, val c: UARTParams, divisorInit: Int = 0)
+@@ -197,30 +197,7 @@ class UART(busWidthBytes: Int, val c: UARTParams, divisorInit: Int = 0)
        RegField(1, data8or9,
                 RegFieldDesc("databits8or9","Data Bits to be 8(1) or 9(0)", reset=Some(1)))))) else Nil
    regmap(mapping ++ optionalparity ++ optionalwire4 ++ optional8or9:_*)
@@ -553,7 +647,7 @@ index 6a65759..e5cf54c 100755
  }
  class TLUART(busWidthBytes: Int, params: UARTParams, divinit: Int)(implicit p: Parameters)
    extends UART(busWidthBytes, params, divinit) with HasTLControlRegMap
-@@ -274,8 +251,6 @@ case class UARTAttachParams(
+@@ -273,8 +250,6 @@ case class UARTAttachParams(
        case _: AsynchronousCrossing => where.ibus.fromAsync
      }) := uart.intXing(intXType)
  
@@ -564,11 +658,10 @@ index 6a65759..e5cf54c 100755
  }
 diff --git a/src/main/scala/devices/wdt/OM_WDT.scala b/src/main/scala/devices/wdt/OM_WDT.scala
 deleted file mode 100644
-index c4a3165..0000000
+index cec9220..0000000
 --- a/src/main/scala/devices/wdt/OM_WDT.scala
 +++ /dev/null
-@@ -1,10 +0,0 @@
--// See LICENSE for license details.
+@@ -1,25 +0,0 @@
 -package sifive.blocks.devices.wdt
 -
 -import freechips.rocketchip.diplomaticobjectmodel.model.{OMDevice, OMInterrupt, OMMemoryRegion}
@@ -578,11 +671,27 @@ index c4a3165..0000000
 -  interrupts: Seq[OMInterrupt],
 -  _types: Seq[String] = Seq("OMWDT", "OMDevice", "OMComponent"),
 -) extends OMDevice
+-
+-/*
+-   Copyright 2016 SiFive, Inc.
+-
+-   Licensed under the Apache License, Version 2.0 (the "License");
+-   you may not use this file except in compliance with the License.
+-   You may obtain a copy of the License at
+-
+-       http://www.apache.org/licenses/LICENSE-2.0
+-
+-   Unless required by applicable law or agreed to in writing, software
+-   distributed under the License is distributed on an "AS IS" BASIS,
+-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-   See the License for the specific language governing permissions and
+-   limitations under the License.
+-*/
 diff --git a/src/main/scala/devices/wdt/TLWDT.scala b/src/main/scala/devices/wdt/TLWDT.scala
-index 0d78528..0564488 100644
+index cd61118..d9f6cae 100644
 --- a/src/main/scala/devices/wdt/TLWDT.scala
 +++ b/src/main/scala/devices/wdt/TLWDT.scala
-@@ -15,9 +15,9 @@ import freechips.rocketchip.tilelink._
+@@ -14,9 +14,9 @@ import freechips.rocketchip.tilelink._
  import freechips.rocketchip.subsystem._
  import freechips.rocketchip.devices.tilelink._
  import freechips.rocketchip.util._
@@ -595,7 +704,7 @@ index 0d78528..0564488 100644
  
  import sifive.blocks.util._
  import sifive.blocks.devices.mockaon.WatchdogTimer
-@@ -53,20 +53,7 @@ abstract class WDT(busWidthBytes: Int, val params: WDTParams)(implicit p: Parame
+@@ -52,20 +52,7 @@ abstract class WDT(busWidthBytes: Int, val params: WDTParams)(implicit p: Parame
      //regmap((GenericTimer.timerRegMap(wdt, 0, params.regBytes)):_*)
      val mapping = (GenericTimer.timerRegMap(wdt, 0, params.regBytes))
      regmap(mapping:_*)
@@ -616,7 +725,7 @@ index 0d78528..0564488 100644
  }
  
  class TLWDT(busWidthBytes: Int, params: WDTParams)(implicit p: Parameters)
-@@ -119,8 +106,6 @@ case class WDTAttachParams(
+@@ -118,8 +105,6 @@ case class WDTAttachParams(
        case _: AsynchronousCrossing => where.ibus.fromAsync
      }) := wdt.intXing(intXType)
  
@@ -626,10 +735,10 @@ index 0d78528..0564488 100644
    }
  }
 diff --git a/src/main/scala/util/Devices.scala b/src/main/scala/util/Devices.scala
-index a94cefc..ecb35cb 100644
+index a91589f..b36a5ef 100644
 --- a/src/main/scala/util/Devices.scala
 +++ b/src/main/scala/util/Devices.scala
-@@ -5,7 +5,7 @@ import Chisel.{defaultCompileOptions => _, _}
+@@ -4,7 +4,7 @@ import Chisel.{defaultCompileOptions => _, _}
  import freechips.rocketchip.util.CompileOptions.NotStrictInferReset
  
  import freechips.rocketchip.config.{Field, Parameters}
@@ -638,7 +747,7 @@ index a94cefc..ecb35cb 100644
  import freechips.rocketchip.tilelink._
  import freechips.rocketchip.diplomacy._
  import freechips.rocketchip.prci._
-@@ -44,8 +44,7 @@ class DevicesSubsystem(
+@@ -43,8 +43,7 @@ class DevicesSubsystem(
    val hierarchyName: String,
    val location: HierarchicalLocation,
    val ibus: InterruptBusWrapper,
@@ -649,10 +758,10 @@ index a94cefc..ecb35cb 100644
      with HasConfigurableTLNetworkTopology
      with CanHaveDevices {
 diff --git a/src/main/scala/util/Hierarchy.scala b/src/main/scala/util/Hierarchy.scala
-index 2f81ff0..865d50a 100644
+index bbd317d..fe6c8ce 100644
 --- a/src/main/scala/util/Hierarchy.scala
 +++ b/src/main/scala/util/Hierarchy.scala
-@@ -33,7 +33,7 @@ trait HasConfigurableHierarchy { this: Attachable =>
+@@ -32,7 +32,7 @@ trait HasConfigurableHierarchy { this: Attachable =>
          location = edge,
          ibus = context.ibus,
          asyncClockGroupsNode = context.asyncClockGroupsNode,

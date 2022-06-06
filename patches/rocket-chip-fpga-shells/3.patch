@@ -1,0 +1,28 @@
+From 6ae20e36eb19d38d2a03835dd826f23214c02c77 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Mon, 6 Jun 2022 17:06:05 +0800
+Subject: [PATCH] fix a bug introduced in 58bf5b3
+
+---
+ src/main/scala/ip/xilinx/arty100tmig/arty100tmig.scala | 1 +
+ src/main/scala/shell/Util.scala                        | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/src/main/scala/ip/xilinx/arty100tmig/arty100tmig.scala b/src/main/scala/ip/xilinx/arty100tmig/arty100tmig.scala
+index 1be9d70..c8bd806 100644
+--- a/src/main/scala/ip/xilinx/arty100tmig/arty100tmig.scala
++++ b/src/main/scala/ip/xilinx/arty100tmig/arty100tmig.scala
+@@ -1,3 +1,4 @@
++package sifive.fpgashells.ip.xilinx.arty100tmig
+ 
+ import Chisel._
+ import chisel3.experimental.{Analog,attach}
+diff --git a/src/main/scala/shell/Util.scala b/src/main/scala/shell/Util.scala
+index a27bce7..846545d 100644
+--- a/src/main/scala/shell/Util.scala
++++ b/src/main/scala/shell/Util.scala
+@@ -1,3 +1,4 @@
++package sifive.fpgashells.shell
+ 
+ import chisel3._
+ import chisel3.experimental.{Analog, attach}
