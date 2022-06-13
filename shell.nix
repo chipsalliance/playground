@@ -1,11 +1,10 @@
-with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/41b500b737e0ee3d9bfb4e0175d7d3bc88c59111.tar.gz") {
+with import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/b3adce1542df29dd5a35077a3d42bcc47100e74e.tar.gz") {
   config = {
     packageOverrides = pkgs: with pkgs; {
-      llvmPackages = llvmPackages_13;
-      clang = clang_13;
-      lld = lld_13;
+      llvmPackages = llvmPackages_14;
+      clang = clang_14;
+      lld = lld_14;
       jdk = if stdenv.isDarwin then jdk11_headless else graalvm11-ce;
-      protobuf = protobuf3_15; # required by firrtl
       python = python3Full;
     };
   };
