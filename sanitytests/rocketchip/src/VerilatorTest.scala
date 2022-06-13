@@ -36,6 +36,7 @@ object VerilatorTest extends TestSuite {
           s"${resource("riscv64/usr/lib/crtn.o")}",
           "-static",
         ).call(outputDirectory)
+        os.proc("llvm-strip", "hello").call(outputDirectory)
         test("Hello World!") {
           os.proc(
             s"$emulator",
