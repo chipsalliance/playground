@@ -432,6 +432,12 @@ object sanitytests extends ScalaModule {
     )
     override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, shells)
   }
+  object fusion extends Tests with CommonModule with TestModule.Utest {
+    override def ivyDeps = Agg(
+      ivys.utest
+    )
+    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
+  }
 }
 
 object spike extends Module {
