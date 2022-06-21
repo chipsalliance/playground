@@ -26,5 +26,8 @@ compile:
 test:
 	mill -i -j 0 sanitytests.rocketchip
 
+fusion:
+	mill -i -j 0 sanitytests.fusion
+
 clean:
 	git clean -fd

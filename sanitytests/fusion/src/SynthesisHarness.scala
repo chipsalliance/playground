@@ -1,4 +1,4 @@
-package sanitytests.rocketchip
+package sanitytests.fusion
 
 import chipsalliance.rocketchip.config.Config
 import freechips.rocketchip.diplomacy.LazyModule
@@ -34,7 +34,7 @@ case class SynthesisHarness[M <: LazyModule](
           // run process memory replace blackbox
           GenVerilogMemBehaviorModelAnno(false),
           RunFirrtlTransformAnnotation(new firrtl.passes.InlineInstances),
-          new OutputBaseNameAnnotation("TestHarness")
+          new OutputBaseNameAnnotation("SynthesisHarness")
         )
       )
     ) { case (annos, stage) => stage.transform(annos) }
@@ -44,6 +44,10 @@ case class SynthesisHarness[M <: LazyModule](
     }
     val blackbox =
       os.read.lines(outputDirectory / firrtl.transforms.BlackBoxSourceHelper.defaultFileListName).map(Path(_))
+    val fusionBuildDir = outputDirectory / "build"
     // TODO: add synthesis script
+    val scriptsDir = fusionBuildDir / "scripts"
+    logger.warn(s"Scripts location: $scriptsDir")
+    scriptsDir
   }
 }

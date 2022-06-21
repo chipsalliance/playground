@@ -1,4 +1,4 @@
-package sanitytests.rocketchip
+package sanitytests.fusion
 
 import chipsalliance.rocketchip.config.Config
 import freechips.rocketchip.devices.debug.{DebugModuleKey, ExportDebug, JTAG}
