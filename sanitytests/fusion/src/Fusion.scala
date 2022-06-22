@@ -9,7 +9,7 @@ object Fusion extends TestSuite {
   os.makeDir(outputDirectory)
   val tests = Tests {
     test("build SynthesisHarness") {
-      val synthesisHarness = classOf[freechips.rocketchip.system.ExampleRocketSystem]
+      val synthesisHarness = classOf[RocketSynthesisModule]
       val configs = Seq(classOf[SynthesisConfig], classOf[freechips.rocketchip.system.DefaultConfig])
       val output = SynthesisHarness(synthesisHarness, configs, Some(outputDirectory)).output
     }

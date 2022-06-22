@@ -11,7 +11,7 @@ import freechips.rocketchip.system.RocketChipStage
 import logger.LazyLogging
 import os._
 
-case class SynthesisHarness[M <: LazyModule](
+case class SynthesisHarness[M <: chisel3.Module](
   synthesisHarness: Class[M],
   configs:     Seq[Class[_ <: Config]],
   targetDir:   Option[Path] = None) extends LazyLogging {
