@@ -4,7 +4,7 @@ import chipsalliance.rocketchip.config.Config
 import freechips.rocketchip.diplomacy.LazyModule
 import firrtl.AnnotationSeq
 import firrtl.options.TargetDirAnnotation
-import firrtl.passes.memlib.{InferReadWriteAnnotation, GenVerilogMemBehaviorModelAnno}
+import firrtl.passes.memlib.{GenVerilogMemBehaviorModelAnno, InferReadWriteAnnotation, ReplSeqMem}
 import firrtl.stage.{FirrtlStage, OutputFileAnnotation, RunFirrtlTransformAnnotation}
 import freechips.rocketchip.stage._
 import freechips.rocketchip.system.RocketChipStage
@@ -32,7 +32,8 @@ case class SynthesisHarness[M <: chisel3.Module](
           new ConfigsAnnotation(configs.map(_.getName)),
           InferReadWriteAnnotation,
           // run process memory replace blackbox
-          GenVerilogMemBehaviorModelAnno(false),
+          GenVerilogMemBehaviorModelAnno(true),
+          RunFirrtlTransformAnnotation(new ReplSeqMem),
           RunFirrtlTransformAnnotation(new firrtl.passes.InlineInstances),
           new OutputBaseNameAnnotation("SynthesisHarness")
         )
