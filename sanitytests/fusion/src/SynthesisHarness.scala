@@ -9,6 +9,8 @@ import firrtl.stage.{FirrtlStage, OutputFileAnnotation, RunFirrtlTransformAnnota
 import freechips.rocketchip.stage._
 import freechips.rocketchip.system.RocketChipStage
 import logger.LazyLogging
+import chisel3.util.log2Ceil
+import math._
 import os._
 
 case class SynthesisHarness[M <: chisel3.Module](
@@ -32,7 +34,7 @@ case class SynthesisHarness[M <: chisel3.Module](
           new ConfigsAnnotation(configs.map(_.getName)),
           InferReadWriteAnnotation,
           // run process memory replace blackbox
-          GenVerilogMemBehaviorModelAnno(true),
+          GenVerilogMemBehaviorModelAnno(false),
           RunFirrtlTransformAnnotation(new ReplSeqMem),
           RunFirrtlTransformAnnotation(new firrtl.passes.InlineInstances),
           new OutputBaseNameAnnotation("SynthesisHarness")
@@ -52,3 +54,24 @@ case class SynthesisHarness[M <: chisel3.Module](
     scriptsDir
   }
 }
+
+/** The configuration of the targeted memory*/
+case class MemCfg(
+                 name: String = "",
+                 depth: BigInt = 0,
+                 width: Int = 0,
+                 masked: Boolean = false,
+                 maskGran: Int = 0,
+                 maskSeg: Int = 0
+                 ) {
+  val addrWidth: Int = log2Ceil(depth)
+}
+
+/** The configuration of the instance IP for the memory*/
+case class InstCfg(
+                    memIPName: String,
+                    instName: String,
+                    addrPort: String,
+                    inputBus: String,
+                    outputBus: String
+                  )
