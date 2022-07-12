@@ -82,38 +82,31 @@ case class SynthesisHarness[M <: chisel3.Module](
     val memMaskGran = memCfg.maskGran
     val memMaskSeg = memCfg.maskSeg
     val memAddrWidth = memCfg.addrWidth
-    // get the number of memory banks in case the memory width is greater than 128
-    val memBankWidth = ceil(memWidth.toDouble / memWidthSeq.max.toDouble).toInt
-    // get the number of memory banks in case the depth of the memory is greater than 512
-    val memBankDepth = ceil(memDepth.toDouble / memDepthSeq.max.toDouble).toInt
-    val memBankNumber = memBankWidth * memBankDepth
-    val instBit = if (memBankWidth == 1)
+    assert(memDepth <= memDepthSeq.max, s"[ERROR] The word count should small than ${memDepthSeq.max}.")
+    // get the number of memory banks in case the memory width is greater than 512
+    val memBankNumber = ceil(memWidth.toDouble / memWidthSeq.max.toDouble).toInt
+    val instBit = if (memBankNumber == 1)
       max(memWidth, memWidthSeq.min) else
-      memWidth - memWidthSeq.max * (memBankWidth - 1)
-    val instDepth = if (memBankDepth == 1)
-      pow(2, log2Ceil(memDepth)).toInt else
-      max(pow(2, log2Ceil(memDepth - memDepthSeq.max * (memBankDepth - 1))).toInt, memDepthSeq.min)
+      memWidth - memWidthSeq.max * (memBankNumber - 1)
+    val instDepth = pow(2, log2Ceil(memDepth)).toInt
     var instIPVerilog = ""
-    for (memBankDepthId <- 0 until memBankDepth) {
-      for (memBankWidthId <- 0 until memBankWidth) {
-        val instId = memBankDepthId * memBankWidth + memBankWidthId
-        val curInstBit = if (memBankWidthId + 1 == memBankWidth) instBit else memWidthSeq.max
-        val curInstDepth = if (memBankDepthId + 1 == memBankDepth) instDepth else memDepthSeq.max
-        val dataStart = memBankWidthId * memWidthSeq.max
-        val dataEnd = dataStart + curInstBit - 1
-        val instName = s"${memName}_inst_$instId"
-        val memIPName = s"SRAM1RW${curInstDepth}x$curInstBit"
-        val inputBus = s"W0_data[$dataEnd:$dataStart]"
-        val outputBus = s"rdata_o_$instId"
-        instIPVerilog += s"    wire [${curInstBit-1}:0] $outputBus;\n"
-        instIPVerilog += genMemInstVerilog(InstCfg(
-          memIPName = memIPName,
-          instName = instName,
-          addrPort = "R0_addr", // FIXME: depth > 1
-          inputBus = inputBus,
-          outputBus = outputBus
-        ))
-      }
+    for (instId <- 0 until memBankNumber) {
+      val curInstBit = if (instId + 1 == memBankNumber) instBit else memWidthSeq.max
+      val curInstDepth = instDepth
+      val dataStart = instId * memWidthSeq.max
+      val dataEnd = dataStart + curInstBit - 1
+      val instName = s"${memName}_inst_$instId"
+      val memIPName = s"SRAM1RW${curInstDepth}x$curInstBit"
+      val inputBus = s"W0_data[$dataEnd:$dataStart]"
+      val outputBus = s"rdata_o_$instId"
+      instIPVerilog += s"    wire [${curInstBit-1}:0] $outputBus;\n"
+      instIPVerilog += genMemInstVerilog(InstCfg(
+        memIPName = memIPName,
+        instName = instName,
+        addrPort = "R0_addr",
+        inputBus = inputBus,
+        outputBus = outputBus
+      ))
     }
     instIPVerilog += s"    assign R0_data = {${Range(0, memBankNumber).map(id =>
       s"rdata_o_$id").reduce((x, y) => s"$y, $x")}};\n"
