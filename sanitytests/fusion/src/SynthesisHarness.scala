@@ -52,8 +52,9 @@ case class SynthesisHarness[M <: chisel3.Module](
     val fusionBuildDir = rootOutPath / "build"
     // TODO: add synthesis script
     val scriptsDir = fusionBuildDir / "scripts"
+    os.makeDir.all(rootOutPath / "memIPs")
     /** Verilog files that will be used for synthesis*/
-    val verilogFileSeq = os.list(rootOutPath).filter(f =>
+    val verilogFileSeq = os.walk(rootOutPath).filter(f =>
       ".*.v$".r.findAllIn(f.toString()).nonEmpty) diff oldBehaviorMemFileSeq
     logger.warn(s"Scripts location: $scriptsDir")
     scriptsDir
@@ -175,8 +176,7 @@ case class SynthesisHarness[M <: chisel3.Module](
   def genMemIPConfig(instCfg: InstCfg): Unit = {
     os.makeDir.all(instCfg.cfgPath)
     val cfg =
-      s"""
-       |mem_type=single_14
+      s"""mem_type=single_14
        |word_count=${instCfg.depth}
        |word_bits=${instCfg.width}
        |do_spice=1
@@ -191,7 +191,7 @@ case class SynthesisHarness[M <: chisel3.Module](
        |do_lib_nldm=1
        |do_mw=0
        |set_ver_tool=icv
-       |work_dir=${instCfg.cfgPath}/mc_${instCfg.memIPName}
+       |work_dir=${instCfg.genMemIPPath}/mc_${instCfg.memIPName}
        |""".stripMargin
     os.write(instCfg.cfgFile, cfg)
     logger.warn(s"Generated ${instCfg.cfgFile}.")
@@ -222,5 +222,6 @@ case class InstCfg(
                     rootOutPath: Path
                   ){
   val cfgPath: Path = rootOutPath / "memIPConfig"
+  val genMemIPPath: Path = rootOutPath / "memIPs"
   val cfgFile: Path = cfgPath / s"$memIPName.config"
 }
