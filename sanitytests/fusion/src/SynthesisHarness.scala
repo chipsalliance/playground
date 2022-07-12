@@ -17,19 +17,19 @@ case class SynthesisHarness[M <: chisel3.Module](
   synthesisHarness: Class[M],
   configs:     Seq[Class[_ <: Config]],
   targetDir:   Option[Path] = None) extends LazyLogging {
+  val rootOutPath: Path = targetDir.getOrElse(os.temp.dir(deleteOnExit = false))
   /** compile [[synthesisHarness]] with correspond [[configs]] to output.
     * return output [[Path]].
     */
   lazy val output: Path = {
-    val outputDirectory: Path = targetDir.getOrElse(os.temp.dir(deleteOnExit = false))
-    logger.warn(s"start to compile output in $outputDirectory")
+    logger.warn(s"start to compile output in $rootOutPath")
     val annotations: AnnotationSeq = Seq(
       new RocketChipStage,
       new FirrtlStage
     ).foldLeft(
       AnnotationSeq(
         Seq(
-          TargetDirAnnotation(outputDirectory.toString),
+          TargetDirAnnotation(rootOutPath.toString),
           new TopModuleAnnotation(synthesisHarness),
           new ConfigsAnnotation(configs.map(_.getName)),
           InferReadWriteAnnotation,
@@ -43,16 +43,28 @@ case class SynthesisHarness[M <: chisel3.Module](
     ) { case (annos, stage) => stage.transform(annos) }
     logger.warn(s"$synthesisHarness with configs: ${configs.mkString("_")} generated.")
     val duts = annotations.collect {
-      case OutputFileAnnotation(file) => outputDirectory / s"$file.v"
+      case OutputFileAnnotation(file) => rootOutPath / s"$file.v"
     }
     val blackbox =
-      os.read.lines(outputDirectory / firrtl.transforms.BlackBoxSourceHelper.defaultFileListName).map(Path(_))
-    val fusionBuildDir = outputDirectory / "build"
+      os.read.lines(rootOutPath / firrtl.transforms.BlackBoxSourceHelper.defaultFileListName).map(Path(_))
+    /** The behavior memory files, will not be added into the tcl file*/
+    val oldBehaviorMemFileSeq = genAllSynthMem
+    val fusionBuildDir = rootOutPath / "build"
     // TODO: add synthesis script
     val scriptsDir = fusionBuildDir / "scripts"
+    /** Verilog files that will be used for synthesis*/
+    val verilogFileSeq = os.list(rootOutPath).filter(f =>
+      ".*.v$".r.findAllIn(f.toString()).nonEmpty) diff oldBehaviorMemFileSeq
     logger.warn(s"Scripts location: $scriptsDir")
     scriptsDir
   }
+  def genAllSynthMem: Seq[Path] = {
+    val behaviorMemRegex = ".*_ext.v$".r
+    val behaviorMemFileSeq = os.list(rootOutPath).filter(f => behaviorMemRegex.findAllIn(f.toString()).nonEmpty)
+    behaviorMemFileSeq.foreach(beMemFile => genSynthMem(getMemConfig(beMemFile)))
+    behaviorMemFileSeq
+  }
+  /** Get the config of the memory from the behavior RTL Verilog code.*/
   def getMemConfig(memBlackBoxFilename: Path): MemCfg = {
     val regex = raw"// name:(\w+) depth:(\d+) width:(\d+) masked:(\w+) maskGran:(\d+) maskSeg:(\d+)".r
     val firstLine = os.read.lines(memBlackBoxFilename).head
@@ -71,7 +83,9 @@ case class SynthesisHarness[M <: chisel3.Module](
         MemCfg()
     }
   }
-  def genSynthMem(memCfg: MemCfg): String = {
+  /** Generate the memory IP config files for mc memory compiler and the Verilog that call the memory IP.*/
+  def genSynthMem(memCfg: MemCfg): Unit = {
+    val synthMemFile = rootOutPath / s"${memCfg.name}_synth.v"
     // all the possible width in the mem compiler. Any Integer in Range(4, 512).
     val memWidthSeq = Seq(4, 512)
     val memDepthSeq = Seq(16, 32, 64, 128, 256, 512, 1024)
@@ -99,14 +113,20 @@ case class SynthesisHarness[M <: chisel3.Module](
       val memIPName = s"SRAM1RW${curInstDepth}x$curInstBit"
       val inputBus = s"W0_data[$dataEnd:$dataStart]"
       val outputBus = s"rdata_o_$instId"
-      instIPVerilog += s"    wire [${curInstBit-1}:0] $outputBus;\n"
-      instIPVerilog += genMemInstVerilog(InstCfg(
+      val memInstCfg = InstCfg(
         memIPName = memIPName,
         instName = instName,
+        depth = curInstDepth,
+        width = curInstBit,
         addrPort = "R0_addr",
         inputBus = inputBus,
-        outputBus = outputBus
-      ))
+        outputBus = outputBus,
+        rootOutPath = rootOutPath
+      )
+      instIPVerilog += s"    wire [${curInstBit-1}:0] $outputBus;\n"
+      instIPVerilog += genMemInstVerilog(memInstCfg)
+      if (!os.exists(memInstCfg.cfgFile))
+        genMemIPConfig(memInstCfg)
     }
     instIPVerilog += s"    assign R0_data = {${Range(0, memBankNumber).map(id =>
       s"rdata_o_$id").reduce((x, y) => s"$y, $x")}};\n"
@@ -134,8 +154,10 @@ case class SynthesisHarness[M <: chisel3.Module](
          |
          |endmodule
          |""".stripMargin
-    memVerilogString
+    os.write.over(synthMemFile, memVerilogString)
+    logger.warn(s"Generated $synthMemFile.")
   }
+  /** Generate the memory IP instance Verilog code block*/
   def genMemInstVerilog(instCfg: InstCfg): String = {
     s"""    ${instCfg.memIPName} ${instCfg.instName} (
        |        .A  (${instCfg.addrPort}),  // Primary Read/Write Address
@@ -148,6 +170,31 @@ case class SynthesisHarness[M <: chisel3.Module](
        |    );
        |
        |""".stripMargin
+  }
+  /** Generate the .config files of the memory IPs for mc memory compiler */
+  def genMemIPConfig(instCfg: InstCfg): Unit = {
+    os.makeDir.all(instCfg.cfgPath)
+    val cfg =
+      s"""
+       |mem_type=single_14
+       |word_count=${instCfg.depth}
+       |word_bits=${instCfg.width}
+       |do_spice=1
+       |do_cx=1
+       |do_rcx=1
+       |do_layout=0
+       |do_gds=0
+       |do_lvs=0
+       |do_drc=0
+       |do_logic=1
+       |do_lef=1
+       |do_lib_nldm=1
+       |do_mw=0
+       |set_ver_tool=icv
+       |work_dir=${instCfg.cfgPath}/mc_${instCfg.memIPName}
+       |""".stripMargin
+    os.write(instCfg.cfgFile, cfg)
+    logger.warn(s"Generated ${instCfg.cfgFile}.")
   }
 }
 
@@ -167,7 +214,13 @@ case class MemCfg(
 case class InstCfg(
                     memIPName: String,
                     instName: String,
+                    depth: BigInt = 0,
+                    width: Int = 0,
                     addrPort: String,
                     inputBus: String,
-                    outputBus: String
-                  )
+                    outputBus: String,
+                    rootOutPath: Path
+                  ){
+  val cfgPath: Path = rootOutPath / "memIPConfig"
+  val cfgFile: Path = cfgPath / s"$memIPName.config"
+}
