@@ -1,0 +1,147 @@
+From df3280704d35954240acd90eba09d7308eadc7a2 Mon Sep 17 00:00:00 2001
+From: Megan Wachs <megan@sifive.com>
+Date: Tue, 12 Jul 2022 15:07:57 -0700
+Subject: [PATCH 1/3] Add copy constructors for compile options
+
+---
+ .../main/scala/chisel3/CompileOptions.scala   | 50 ++++++++++++++++++-
+ 1 file changed, 49 insertions(+), 1 deletion(-)
+
+diff --git a/core/src/main/scala/chisel3/CompileOptions.scala b/core/src/main/scala/chisel3/CompileOptions.scala
+index d7d303065a..3c0aa748ef 100644
+--- a/core/src/main/scala/chisel3/CompileOptions.scala
++++ b/core/src/main/scala/chisel3/CompileOptions.scala
+@@ -82,7 +82,30 @@ object ExplicitCompileOptions {
+     explicitInvalidate = false,
+     inferModuleReset = false
+   ) {
++    override def migrateInferModuleReset = false
++
+     override def emitStrictConnects = false
++
++    override def copy(
++      connectFieldsMustMatch:    Boolean = false,
++      declaredTypeMustBeUnbound: Boolean = false,
++      dontTryConnectionsSwapped: Boolean = false,
++      dontAssumeDirectionality:  Boolean = false,
++      checkSynthesizable:        Boolean = false,
++      explicitInvalidate:        Boolean = false,
++      inferModuleReset:          Boolean = false
++    ) = new CompileOptionsClass(
++      connectFieldsMustMatch,
++      declaredTypeMustBeUnbound,
++      dontTryConnectionsSwapped,
++      dontAssumeDirectionality,
++      checkSynthesizable,
++      explicitInvalidate,
++      inferModuleReset
++    ) {
++      override def migrateInferModuleReset = false
++      override def emitStrictConnects = false
++    }
+   }
+ 
+   // Collection of "strict" connection compile options, preferred for new code.
+@@ -94,5 +117,30 @@ object ExplicitCompileOptions {
+     checkSynthesizable = true,
+     explicitInvalidate = true,
+     inferModuleReset = true
+-  )
++  ) {
++
++    override def migrateInferModuleReset = false
++    override def emitStrictConnects = true
++
++    override def copy(
++      connectFieldsMustMatch:    Boolean = true,
++      declaredTypeMustBeUnbound: Boolean = true,
++      dontTryConnectionsSwapped: Boolean = true,
++      dontAssumeDirectionality:  Boolean = true,
++      checkSynthesizable:        Boolean = true,
++      explicitInvalidate:        Boolean = true,
++      inferModuleReset:          Boolean = true
++    ) = new CompileOptionsClass(
++      connectFieldsMustMatch,
++      declaredTypeMustBeUnbound,
++      dontTryConnectionsSwapped,
++      dontAssumeDirectionality,
++      checkSynthesizable,
++      explicitInvalidate,
++      inferModuleReset
++    ) {
++      override def migrateInferModuleReset = false
++      override def emitStrictConnects = true
++    }
++  }
+ }
+
+From 57022714f5655233e2810093a7efb813fc6d099e Mon Sep 17 00:00:00 2001
+From: Megan Wachs <megan@sifive.com>
+Date: Tue, 12 Jul 2022 15:16:03 -0700
+Subject: [PATCH 2/3] Add tests for the copy constructors
+
+---
+ .../chiselTests/CompileOptionsTest.scala      | 28 +++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/src/test/scala/chiselTests/CompileOptionsTest.scala b/src/test/scala/chiselTests/CompileOptionsTest.scala
+index 3ec5995463..b39d8ee342 100644
+--- a/src/test/scala/chiselTests/CompileOptionsTest.scala
++++ b/src/test/scala/chiselTests/CompileOptionsTest.scala
+@@ -163,4 +163,32 @@ class CompileOptionsSpec extends ChiselFlatSpec with Utils {
+     }
+   }
+ 
++  "Strict.copy()" should "be equivalent in all CompileOptions traits" in {
++    import chisel3.ExplicitCompileOptions.Strict
++    val copiedCompileOptions = Strict.copy()
++    assert(copiedCompileOptions.connectFieldsMustMatch == Strict.connectFieldsMustMatch)
++    assert(copiedCompileOptions.declaredTypeMustBeUnbound == Strict.declaredTypeMustBeUnbound)
++    assert(copiedCompileOptions.dontTryConnectionsSwapped == Strict.dontTryConnectionsSwapped)
++    assert(copiedCompileOptions.dontAssumeDirectionality == Strict.dontAssumeDirectionality)
++    assert(copiedCompileOptions.checkSynthesizable == Strict.checkSynthesizable)
++    assert(copiedCompileOptions.explicitInvalidate == Strict.explicitInvalidate)
++    assert(copiedCompileOptions.inferModuleReset == Strict.inferModuleReset)
++    assert(copiedCompileOptions.migrateInferModuleReset == Strict.migrateInferModuleReset)
++    assert(copiedCompileOptions.emitStrictConnects == Strict.emitStrictConnects)
++  }
++
++  "NotStrict.copy()" should "be equivalent in all CompileOptions traits" in {
++    import chisel3.ExplicitCompileOptions.NotStrict
++    val copiedCompileOptions = NotStrict.copy()
++    assert(copiedCompileOptions.connectFieldsMustMatch == NotStrict.connectFieldsMustMatch)
++    assert(copiedCompileOptions.declaredTypeMustBeUnbound == NotStrict.declaredTypeMustBeUnbound)
++    assert(copiedCompileOptions.dontTryConnectionsSwapped == NotStrict.dontTryConnectionsSwapped)
++    assert(copiedCompileOptions.dontAssumeDirectionality == NotStrict.dontAssumeDirectionality)
++    assert(copiedCompileOptions.checkSynthesizable == NotStrict.checkSynthesizable)
++    assert(copiedCompileOptions.explicitInvalidate == NotStrict.explicitInvalidate)
++    assert(copiedCompileOptions.inferModuleReset == NotStrict.inferModuleReset)
++    assert(copiedCompileOptions.migrateInferModuleReset == NotStrict.migrateInferModuleReset)
++    assert(copiedCompileOptions.emitStrictConnects == NotStrict.emitStrictConnects)
++  }
++
+ }
+
+From c9e4e14fd7bcdb6a6b9c2c1515549a79975be5a9 Mon Sep 17 00:00:00 2001
+From: Megan Wachs <megan@sifive.com>
+Date: Tue, 12 Jul 2022 15:21:13 -0700
+Subject: [PATCH 3/3] Update core/src/main/scala/chisel3/CompileOptions.scala
+
+---
+ core/src/main/scala/chisel3/CompileOptions.scala | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/core/src/main/scala/chisel3/CompileOptions.scala b/core/src/main/scala/chisel3/CompileOptions.scala
+index 3c0aa748ef..aca00d1ff7 100644
+--- a/core/src/main/scala/chisel3/CompileOptions.scala
++++ b/core/src/main/scala/chisel3/CompileOptions.scala
+@@ -83,9 +83,7 @@ object ExplicitCompileOptions {
+     inferModuleReset = false
+   ) {
+     override def migrateInferModuleReset = false
+-
+     override def emitStrictConnects = false
+-
+     override def copy(
+       connectFieldsMustMatch:    Boolean = false,
+       declaredTypeMustBeUnbound: Boolean = false,
