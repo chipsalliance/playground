@@ -16,7 +16,7 @@ object VerilatorTest extends TestSuite {
   val tests = Tests {
     test("build TestHarness emulator") {
       val testHarness = classOf[freechips.rocketchip.system.TestHarness]
-      val configs = Seq(classOf[TestConfig], classOf[freechips.rocketchip.system.DefaultConfig])
+      val configs = Seq(classOf[TestConfig], classOf[freechips.rocketchip.system.DefaultRV32Config])
       val emulator = TestHarness(testHarness, configs, Some(outputDirectory)).emulator
       test("build hello") {
         os.proc(
