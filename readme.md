@@ -85,6 +85,7 @@ riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/72
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/600  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/601  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/1  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/3  
