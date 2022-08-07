@@ -13,7 +13,7 @@ To use this repo as your Chisel development environment, simply follow the steps
 0. Clone this repo;
 
 ```bash
-git clone git@github.com:sequencer/playground.git
+git clone git@github.com:chipsalliance/playground.git
 ```
 
 0. Install dependencies and setup environments:
@@ -105,7 +105,7 @@ rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6
 So generally, this repo is the fast and cleanest way to start your Chisel project codebase.
 
 ## Always keep update-to-date
-You can use this template and start your own job by appending commits on it. GitHub Action will automatically bump all dependencies, you can merge or rebase `sequencer/master` to your branch.
+You can use this template and start your own job by appending commits on it. GitHub Action will automatically bump all dependencies, you can merge or rebase `chipsalliance/master` to your branch.
 
 ```bash
 cd playground # entry your project directory
