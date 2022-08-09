@@ -8,6 +8,7 @@
 #endif
 #include <fesvr/dtm.h>
 #include "remote_bitbang.h"
+#include "SimDTM.h"
 #include <iostream>
 #include <fcntl.h>
 #include <signal.h>
@@ -31,7 +32,7 @@
 //   variables:
 //     - static const char * verilog_plusargs
 
-extern dtm_t* dtm;
+extern ledtm_t* dtm;
 extern remote_bitbang_t * jtag;
 
 static uint64_t trace_count = 0;
@@ -267,7 +268,7 @@ done_processing:
 #endif
 
   jtag = new remote_bitbang_t(rbb_port);
-  dtm = new dtm_t(htif_argc, htif_argv);
+  dtm = new ledtm_t(htif_argc, htif_argv);
 
   signal(SIGTERM, handle_sigterm);
 

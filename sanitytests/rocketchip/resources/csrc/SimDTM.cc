@@ -3,8 +3,23 @@
 #include <fesvr/dtm.h>
 #include <vpi_user.h>
 #include <svdpi.h>
+#include "SimDTM.h"
 
-dtm_t* dtm;
+ledtm_t::ledtm_t(int argc, char** argv)
+  : dtm_t(argc, argv)
+{
+}
+
+ledtm_t::~ledtm_t()
+{
+}
+
+memif_endianness_t ledtm_t::get_target_endianness() const
+{
+  return memif_endianness_little;
+}
+
+ledtm_t* dtm;
 
 extern "C" int debug_tick
 (
@@ -23,7 +38,7 @@ extern "C" int debug_tick
     s_vpi_vlog_info info;
     if (!vpi_get_vlog_info(&info))
       abort();
-      dtm = new dtm_t(info.argc, info.argv);
+      dtm = new ledtm_t(info.argc, info.argv);
   }
 
   dtm_t::resp resp_bits;
