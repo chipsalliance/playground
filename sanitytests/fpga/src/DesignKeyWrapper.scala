@@ -36,7 +36,8 @@ class DesignKeyWrapper()(implicit p: Parameters) extends LazyModule {
   val fpgaClockSource = p(ClockInputOverlayKey).head.place(ClockInputDesignInput()).overlayOutput.node
   val pll = p(PLLFactoryKey)()
   val resetWrangler = LazyModule(new ResetWrangler).node
-  val coreClock = ClockSinkNode(freqMHz = p(FPGAFrequencyKey))
+  //default FPGAFrequencyKey is 100.0MHz, max clk freq in this version is 80MHz, there is something to do to improve timing frequency
+  val coreClock = ClockSinkNode(freqMHz = (p(FPGAFrequencyKey)/2.0))
   coreClock := resetWrangler := ClockGroup() := pll := fpgaClockSource
   val jtagOut = p(JTAGDebugOverlayKey).headOption.map(_.place(JTAGDebugDesignInput())).get.overlayOutput.jtag
 

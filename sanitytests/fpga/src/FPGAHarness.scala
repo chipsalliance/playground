@@ -67,7 +67,10 @@ case class FPGAHarness[M <: RawModule](
     ) { case (annos, stage) => stage.transform(annos) }
     logger.warn(s"$fpgaHarness with configs: ${configs.mkString("_")} generated.")
     val filelist = outputDirectory / "filelist"
-    os.write(filelist, os.walk(outputDirectory).filter(_.ext == "v").map(_.toString).mkString("\n"))
+    os.write(filelist,
+      f"""${os.walk(outputDirectory).filter(_.ext == "v").map(_.toString).mkString("\n")}
+         |${os.pwd / "dependencies" / "rocket-chip-fpga-shells" / "xilinx" / "common" / "vsrc" / "PowerOnResetFPGAOnly.v"}
+         |""".stripMargin)
     filelist
   }
   lazy val bitstreamScript: Path = {
@@ -78,7 +81,7 @@ case class FPGAHarness[M <: RawModule](
          |#!/usr/bin/env bash
          |cd $outputDirectory
          |vivado -nojournal -mode batch \\
-         |  -source ${os.pwd / "dependencies" / "fpga-shells" / "xilinx" / "common" / "tcl" / "vivado.tcl"} \\
+         |  -source ${os.pwd / "dependencies" / "rocket-chip-fpga-shells" / "xilinx" / "common" / "tcl" / "vivado.tcl"} \\
          |  -tclargs -top-module ${board match {
         case ArtyA7100 => "Arty100TShell"
         case VCU118    => "VCU118Shell"
@@ -106,7 +109,7 @@ case class FPGAHarness[M <: RawModule](
          |    ${outputDirectory / "obj" / "post_synth.dcp"} \\
          |    $tclBoard \\
          |    ${outputDirectory / "debug_obj"} \\
-         |    ${os.pwd / "dependencies" / "fpga-shells" / "xilinx" / "common" / "tcl"} \\
+         |    ${os.pwd / "dependencies" / "rocket-chip-fpga-shells" / "xilinx" / "common" / "tcl"} \\
          |""".stripMargin
     )
     os.perms.set(script, "rwx------")
