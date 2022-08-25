@@ -5,7 +5,7 @@ import freechips.rocketchip.devices.debug.{DebugModuleKey, ExportDebug, JTAG}
 import freechips.rocketchip.devices.tilelink.BootROMLocated
 import freechips.rocketchip.subsystem.RocketTilesKey
 import os._
-import sifive.fpgashells.shell.DesignKey
+import sifive.fpgashells.shell.{DesignKey,FPGAFrequencyKey}
 
 class FPGATestConfig
     extends Config((site, here, up) => {
@@ -46,6 +46,8 @@ class FPGATestConfig
       case DesignKey   => { (p: Parameters) => new DesignKeyWrapper()(p) }
       case ExportDebug => up(ExportDebug, site).copy(protocols = Set(JTAG))
       case DebugModuleKey => up(DebugModuleKey, site).map(_.copy(clockGate = false))
+      // default FPGAFrequencyKey is 100.0MHz, max synthesizable clk freq in this version is 80MHz, there is something to do to improve timing frequency
+      case FPGAFrequencyKey => (50.0)
     })
 
 class WithNoScratchPad extends Config((site, here, up) => {
