@@ -7,21 +7,21 @@ import utest._
 /** software dependencies:
   * clang -> bootrom cross compiling
   * vivado -> FPGA toolchain
-  * after elaboration, run script: "out/ArtyA7100/bitstream.sh"
-  * then bitstream should be located at "xxxShell.bit"
-  * you can open snapshot "out/ArtyA7100/obj/post_synth.dcp", add your own ila configurations.
-  * then run "out/ArtyA7100/rerunFromSynthesis.sh" to regenerated design with ila.
+  * after elaboration, run script: "out/Arty100T/bitstream.sh"
+  * then bitstream should be located at "Arty100TShell.bit"
+  * you can open snapshot "out/Arty100T/obj/post_synth.dcp", add your own ila configurations.
+  * then run "out/Arty100T/rerunFromSynthesis.sh" to regenerated design with ila.
   */
-object ArtyA7100Test extends TestSuite {
+object Arty100TTest extends TestSuite {
 
   val tests = Tests {
     test("arty_a7_100 build script") {
-      val outputDirectory = os.pwd / "out" / "ArtyA7100"
+      val outputDirectory = os.pwd / "out" / "Arty100T"
       os.remove.all(outputDirectory)
       os.makeDir(outputDirectory)
 
       val configs = Seq(
-        classOf[ArtyA7100TestConfig],
+        classOf[Arty100TTestConfig],
         classOf[WithNoScratchPad],
         classOf[freechips.rocketchip.subsystem.With1TinyCore],
         classOf[freechips.rocketchip.subsystem.WithCoherentBusTopology],

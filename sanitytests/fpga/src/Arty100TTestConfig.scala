@@ -7,7 +7,7 @@ import freechips.rocketchip.subsystem.RocketTilesKey
 import os._
 import sifive.fpgashells.shell.{DesignKey,FPGAFrequencyKey}
 
-class ArtyA7100TestConfig
+class Arty100TTestConfig
     extends Config((site, here, up) => {
       case BootROMLocated(x) =>
         up(BootROMLocated(x), site).map(_.copy(contentFileName = {

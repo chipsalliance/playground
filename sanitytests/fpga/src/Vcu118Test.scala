@@ -8,7 +8,7 @@ import utest._
   * clang -> bootrom cross compiling
   * vivado -> FPGA toolchain
   * after elaboration, run script: "out/VCU118/bitstream.sh"
-  * then bitstream should be located at "xxxShell.bit"
+  * then bitstream should be located at "VCU118Shell.bit"
   * you can open snapshot "out/VCU118/obj/post_synth.dcp", add your own ila configurations.
   * then run "out/VCU118/rerunFromSynthesis.sh" to regenerated design with ila.
   */
