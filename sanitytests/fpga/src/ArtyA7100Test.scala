@@ -7,30 +7,21 @@ import utest._
 /** software dependencies:
   * clang -> bootrom cross compiling
   * vivado -> FPGA toolchain
-  * after elaboration, run script: "out/FPGATest/bitstream.sh"
+  * after elaboration, run script: "out/ArtyA7100/bitstream.sh"
   * then bitstream should be located at "xxxShell.bit"
-  * you can open snapshot "out/FPGATest/obj/post_synth.dcp", add your own ila configurations.
-  * then run "out/FPGATest//rerunFromSynthesis.sh" to regenerated design with ila.
+  * you can open snapshot "out/ArtyA7100/obj/post_synth.dcp", add your own ila configurations.
+  * then run "out/ArtyA7100/rerunFromSynthesis.sh" to regenerated design with ila.
   */
-object FPGATest extends TestSuite {
+object ArtyA7100Test extends TestSuite {
 
   val tests = Tests {
-// TODO: Diplomacy is not
-//    test("vcu118 build script") {
-//      val outputDirectory = os.pwd / "out" / "VCU118"
-//      os.remove.all(outputDirectory)
-//      os.makeDir(outputDirectory)
-//      val configs = Seq(classOf[Vcu118TestConfig], classOf[freechips.rocketchip.system.DefaultConfig])
-//      FPGAHarness(configs, Some(outputDirectory), VCU118).rerunFromSynthesisScript
-//      os.write(outputDirectory / "openocd.cfg", os.read(resource("openocd.cfg")))
-//    }
     test("arty_a7_100 build script") {
       val outputDirectory = os.pwd / "out" / "ArtyA7100"
       os.remove.all(outputDirectory)
       os.makeDir(outputDirectory)
 
       val configs = Seq(
-        classOf[Arty100TestConfig],
+        classOf[ArtyA7100TestConfig],
         classOf[WithNoScratchPad],
         classOf[freechips.rocketchip.subsystem.With1TinyCore],
         classOf[freechips.rocketchip.subsystem.WithCoherentBusTopology],
