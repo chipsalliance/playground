@@ -20,7 +20,7 @@ object FPGATest extends TestSuite {
 //      val outputDirectory = os.pwd / "out" / "VCU118"
 //      os.remove.all(outputDirectory)
 //      os.makeDir(outputDirectory)
-//      val configs = Seq(classOf[FPGATestConfig], classOf[freechips.rocketchip.system.DefaultConfig])
+//      val configs = Seq(classOf[Vcu118TestConfig], classOf[freechips.rocketchip.system.DefaultConfig])
 //      FPGAHarness(configs, Some(outputDirectory), VCU118).rerunFromSynthesisScript
 //      os.write(outputDirectory / "openocd.cfg", os.read(resource("openocd.cfg")))
 //    }
@@ -30,7 +30,7 @@ object FPGATest extends TestSuite {
       os.makeDir(outputDirectory)
 
       val configs = Seq(
-        classOf[FPGATestConfig],
+        classOf[Arty100TestConfig],
         classOf[WithNoScratchPad],
         classOf[freechips.rocketchip.subsystem.With1TinyCore],
         classOf[freechips.rocketchip.subsystem.WithCoherentBusTopology],

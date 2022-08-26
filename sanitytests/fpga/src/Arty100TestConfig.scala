@@ -7,7 +7,7 @@ import freechips.rocketchip.subsystem.RocketTilesKey
 import os._
 import sifive.fpgashells.shell.{DesignKey,FPGAFrequencyKey}
 
-class FPGATestConfig
+class Arty100TestConfig
     extends Config((site, here, up) => {
       case BootROMLocated(x) =>
         up(BootROMLocated(x), site).map(_.copy(contentFileName = {
@@ -46,7 +46,7 @@ class FPGATestConfig
       case DesignKey   => { (p: Parameters) => new DesignKeyWrapper()(p) }
       case ExportDebug => up(ExportDebug, site).copy(protocols = Set(JTAG))
       case DebugModuleKey => up(DebugModuleKey, site).map(_.copy(clockGate = false))
-      // default FPGAFrequencyKey is 100.0MHz, max synthesizable clk freq in this version is 80MHz, there is something to do to improve timing frequency
+      // default FPGAFrequencyKey is 100.0MHz, max synthesizable clk freq in this arty version is 80MHz, there is something to do to improve timing frequency
       case FPGAFrequencyKey => (50.0)
     })
 
