@@ -81,6 +81,7 @@ This repository always tracks remote developing branches, it may need some patch
 chipyard https://github.com/ucb-bar/chipyard/pull/1160  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968      
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013      
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2  
 rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/1  
 rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/2  
