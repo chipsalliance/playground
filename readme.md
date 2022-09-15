@@ -80,6 +80,7 @@ This repository always tracks remote developing branches, it may need some patch
 <!-- BEGIN-PATCH -->
 chipyard https://github.com/ucb-bar/chipyard/pull/1160  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
+riscv-tests https://github.com/riscv-software-src/riscv-tests/pull/409
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968      
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013      
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2  
