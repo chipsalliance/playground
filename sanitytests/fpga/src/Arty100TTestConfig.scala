@@ -6,6 +6,9 @@ import freechips.rocketchip.devices.tilelink.BootROMLocated
 import freechips.rocketchip.subsystem.RocketTilesKey
 import os._
 import sifive.fpgashells.shell.{DesignKey,FPGAFrequencyKey}
+import sifive.blocks.devices.spi._
+import sifive.blocks.devices.uart._
+import sifive.blocks.devices.gpio._
 
 class Arty100TTestConfig
     extends Config((site, here, up) => {
@@ -48,6 +51,15 @@ class Arty100TTestConfig
       case DebugModuleKey => up(DebugModuleKey, site).map(_.copy(clockGate = false))
       // default FPGAFrequencyKey is 100.0MHz, max synthesizable clk freq in this arty_a7_100 version is 80MHz, there is something to do to improve timing frequency
       case FPGAFrequencyKey => (50.0)
+      case PeripherySPIFlashKey => List(
+        SPIFlashParams(
+          fAddress = BigInt(0x20000000L),
+          rAddress = BigInt(0x10014000L)))
+      case PeripheryUARTKey => List(
+        UARTParams(address = BigInt(0x10013000L)),
+        UARTParams(address = BigInt(0x10023000L)))
+      case PeripheryGPIOKey => List(
+        GPIOParams(address = BigInt(0x10012000L), width = 32, includeIOF = true))
     })
 
 class WithNoScratchPad extends Config((site, here, up) => {
