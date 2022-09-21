@@ -418,7 +418,6 @@ object sanitytests extends ScalaModule {
         os.proc("make", s"DESTDIR=${x86Dir}", "install").call(spike.compile())
         os.proc("make", s"DESTDIR=${riscv64Dir}", "install").call(compilerrt.compile())
         os.proc("make", s"DESTDIR=${riscv64Dir}", "install").call(musl.compile())
-        os.proc("make", s"DESTDIR=${riscv64Dir}", "install").call(riscvtests.compile())
         os.copy.into(pk.compile(), riscv64Dir)
      }
       T.ctx.dest
@@ -550,47 +549,6 @@ object pk extends Module {
       os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest, env)
     }
     T.ctx.dest / "pk"
-  }
-}
-
-object riscvtests extends Module {
-  override def millSourcePath = os.pwd / "dependencies" / "riscv-tests"
-  // ask make to cache file.
-  def libraryResources = T.persistent {
-    if (!helper.isMac){
-      os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(compile())
-    }
-    PathRef(T.ctx.dest)
-  }
-  def compile = T.persistent {
-    val pkPath = pk.libraryResources().path
-    val muslPath = musl.libraryResources().path
-    if(!helper.isMac) {
-      val env = Map (
-        "CC" -> "clang",
-        "CXX" -> "clang++",
-        "AR" -> "llvm-ar",
-        "RANLIB" -> "llvm-ranlib",
-        "LD" -> "lld",
-        "CFLAGS" -> s"--target=riscv64 -mno-relax -nostdinc -I${pkPath}/usr/include",
-        "LDFLAGS" -> s"-fuse-ld=lld --target=riscv64 -nostdlib -L${muslPath}/usr/lib/riscv64",
-      )
-      os.proc("autoupdate").call(millSourcePath, env)
-      os.proc("autoconf").call(millSourcePath, env)
-      os.proc(millSourcePath / "configure").call(T.ctx.dest, env)
-      os.proc("make", "benchmarks", "-j", Runtime.getRuntime().availableProcessors(),
-        "RISCV_GCC=clang --target=riscv64",
-        s"RISCV_GCC_OPTS=-mno-relax -nostdinc -I${pkPath}/usr/include -DPREALLOCATE=1 -mcmodel=medany -static -std=gnu99 -O2 -ffast-math -fno-common -fno-builtin-printf",
-        s"RISCV_LINK_OPTS=-static -nostartfiles -L${muslPath}/usr/lib/riscv64 -L${pkPath}/usr/lib -lm -Wl,-T,${millSourcePath}/benchmarks/common/test.ld",
-        "RISCV_OBJDUMP=llvm-objdump --arch-name=riscv64 --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data"
-      ).call(T.ctx.dest, env)
-      os.proc("make", "isa", "-j", Runtime.getRuntime().availableProcessors(),
-        "RISCV_GCC=clang --target=riscv64",
-        s"RISCV_GCC_OPTS=-mno-relax -nostdinc -I${pkPath}/usr/include -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -L${pkPath}/usr/lib -L${muslPath}/usr/lib/riscv64 -lm -Wl,-T,${millSourcePath}/benchmarks/common/test.ld",
-        "RISCV_OBJDUMP=llvm-objdump --arch-name=riscv64 --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data"
-      ).call(T.ctx.dest, env)
-    }
-    T.ctx.dest
   }
 }
 

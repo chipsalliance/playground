@@ -45,6 +45,26 @@ object VerilatorTest extends TestSuite {
           ).call(outputDirectory)
         }
       }
+      test("build riscv-tests") {
+        val riscvtestsSrcPath = os.pwd / "dependencies" / "riscv-tests"
+        val riscvtestsBuildPath = outputDirectory / "riscv-tests"
+        os.remove.all(riscvtestsBuildPath)
+        os.makeDir(riscvtestsBuildPath)
+        os.proc("autoupdate").call(riscvtestsSrcPath)
+        os.proc("autoconf").call(riscvtestsSrcPath)
+        os.proc(riscvtestsSrcPath / "configure").call(riscvtestsBuildPath)
+        os.proc("make", "benchmarks", "-j", Runtime.getRuntime().availableProcessors(),
+          "RISCV_GCC=clang --target=riscv64",
+          s"RISCV_GCC_OPTS=-mno-relax -nostdinc -I${resource("riscv64/usr/include")} -DPREALLOCATE=1 -mcmodel=medany -static -std=gnu99 -O2 -ffast-math -fno-common -fno-builtin-printf",
+          s"RISCV_LINK_OPTS=-static -L${resource("riscv64/usr/lib/riscv64")} -L${resource("riscv64/usr/lib")} -lm -Wl,-T,${riscvtestsSrcPath}/benchmarks/common/test.ld",
+          "RISCV_OBJDUMP=llvm-objdump --arch-name=riscv64 --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data"
+        ).call(riscvtestsBuildPath)
+        os.proc("make", "isa", "-j", Runtime.getRuntime().availableProcessors(),
+          "RISCV_GCC=clang --target=riscv64",
+          s"RISCV_GCC_OPTS=-mno-relax -nostdinc -I${resource("riscv64/usr/include")} -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -L${resource("riscv64/usr/lib/riscv64")} -L${resource("riscv64/usr/lib")} -lm -Wl,-T,${riscvtestsSrcPath}/benchmarks/common/test.ld",
+          "RISCV_OBJDUMP=llvm-objdump --arch-name=riscv64 --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data"
+        ).call(riscvtestsBuildPath)
+      }
     }
   }
 }
