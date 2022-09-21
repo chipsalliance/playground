@@ -1,0 +1,22 @@
+From 849d744b6dcd14af3215b149ba713bfd8e19e867 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sun, 18 Sep 2022 10:01:43 +0800
+Subject: [PATCH] fix for chipsalliance/rocket-chip#2978
+
+---
+ generators/chipyard/src/main/scala/System.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/generators/chipyard/src/main/scala/System.scala b/generators/chipyard/src/main/scala/System.scala
+index 31bedae74..827b97c00 100644
+--- a/generators/chipyard/src/main/scala/System.scala
++++ b/generators/chipyard/src/main/scala/System.scala
+@@ -60,7 +60,7 @@ trait CanHaveMasterTLMemPort { this: BaseSubsystem =>
+   private val device = new MemoryDevice
+   private val idBits = memPortParamsOpt.map(_.master.idBits).getOrElse(1)
+ 
+-  val memTLNode = TLManagerNode(memPortParamsOpt.map({ case MemoryPortParams(memPortParams, nMemoryChannels) =>
++  val memTLNode = TLManagerNode(memPortParamsOpt.map({ case MemoryPortParams(memPortParams, nMemoryChannels, _) =>
+     Seq.tabulate(nMemoryChannels) { channel =>
+       val base = AddressSet.misaligned(memPortParams.base, memPortParams.size)
+       val filter = AddressSet(channel * mbus.blockBytes, ~((nMemoryChannels-1) * mbus.blockBytes))

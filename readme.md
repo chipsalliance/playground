@@ -79,14 +79,15 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 chipyard https://github.com/ucb-bar/chipyard/pull/1160  
+chipyard https://github.com/ucb-bar/chipyard/pull/1222  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
-riscv-tests https://github.com/riscv-software-src/riscv-tests/pull/409
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968      
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013      
+firesim https://github.com/firesim/firesim/pull/1214  
+firesim https://github.com/firesim/firesim/pull/1215
+riscv-tests https://github.com/riscv-software-src/riscv-tests/pull/409  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3066  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2  
-rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/1  
-rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/2  
-rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/3  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 <!-- END-PATCH -->
 
