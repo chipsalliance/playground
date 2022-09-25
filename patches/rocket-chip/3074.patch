@@ -1,0 +1,140 @@
+From 0d83a4b3d266b3d4cc163b733c1f9337d1c573b1 Mon Sep 17 00:00:00 2001
+From: Jiuyang Liu <liu@jiuyang.me>
+Date: Sun, 25 Sep 2022 14:35:08 +0800
+Subject: [PATCH] remove chiselName, fix for chipsalliance/chisel3#2694
+
+---
+ src/main/scala/rocket/DCache.scala     | 4 +---
+ src/main/scala/rocket/Frontend.scala   | 2 --
+ src/main/scala/rocket/PTW.scala        | 2 --
+ src/main/scala/rocket/RocketCore.scala | 4 +---
+ src/main/scala/tile/FPU.scala          | 4 +---
+ 5 files changed, 3 insertions(+), 13 deletions(-)
+
+diff --git a/src/main/scala/rocket/DCache.scala b/src/main/scala/rocket/DCache.scala
+index 818cdec20c3..fbab8679549 100644
+--- a/src/main/scala/rocket/DCache.scala
++++ b/src/main/scala/rocket/DCache.scala
+@@ -12,7 +12,6 @@ import freechips.rocketchip.tilelink._
+ import freechips.rocketchip.util._
+ import freechips.rocketchip.util.property
+ import chisel3.{DontCare, WireInit, dontTouch, withClock}
+-import chisel3.experimental.{chiselName, NoChiselNamePrefix}
+ import chisel3.internal.sourceinfo.SourceInfo
+ import TLMessages._
+ 
+@@ -91,7 +90,6 @@ class DCacheTLBPort(implicit p: Parameters) extends CoreBundle()(p) {
+   val s2_kill = Input(Bool())
+ }
+ 
+-@chiselName
+ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   val tlb_port = IO(new DCacheTLBPort)
+ 
+@@ -110,7 +108,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   val gated_clock =
+     if (!cacheParams.clockGate) clock
+     else ClockGate(clock, clock_en_reg, "dcache_clock_gate")
+-  @chiselName class DCacheModuleImpl extends NoChiselNamePrefix { // entering gated-clock domain
++  class DCacheModuleImpl { // entering gated-clock domain
+ 
+   val tlb = Module(new TLB(false, log2Ceil(coreDataBytes), TLBConfig(nTLBSets, nTLBWays, cacheParams.nTLBBasePageSectors, cacheParams.nTLBSuperpages)))
+   val pma_checker = Module(new TLB(false, log2Ceil(coreDataBytes), TLBConfig(nTLBSets, nTLBWays, cacheParams.nTLBBasePageSectors, cacheParams.nTLBSuperpages)) with InlineInstance)
+diff --git a/src/main/scala/rocket/Frontend.scala b/src/main/scala/rocket/Frontend.scala
+index 460fb19d556..3221ec5f2f1 100644
+--- a/src/main/scala/rocket/Frontend.scala
++++ b/src/main/scala/rocket/Frontend.scala
+@@ -7,7 +7,6 @@ import Chisel._
+ import Chisel.ImplicitConversions._
+ import chisel3.{withClock,withReset}
+ import chisel3.internal.sourceinfo.SourceInfo
+-import chisel3.experimental.chiselName
+ import freechips.rocketchip.config._
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.tile._
+@@ -75,7 +74,6 @@ class FrontendBundle(val outer: Frontend) extends CoreBundle()(outer.p) {
+   val errors = new ICacheErrors
+ }
+ 
+-@chiselName
+ class FrontendModule(outer: Frontend) extends LazyModuleImp(outer)
+     with HasRocketCoreParameters
+     with HasL1ICacheParameters {
+diff --git a/src/main/scala/rocket/PTW.scala b/src/main/scala/rocket/PTW.scala
+index a2bfc2695e4..64ea718e76c 100644
+--- a/src/main/scala/rocket/PTW.scala
++++ b/src/main/scala/rocket/PTW.scala
+@@ -7,7 +7,6 @@ import Chisel._
+ import Chisel.ImplicitConversions._
+ import chisel3.withClock
+ import chisel3.internal.sourceinfo.SourceInfo
+-import chisel3.experimental.chiselName
+ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.subsystem.CacheBlockBytes
+ import freechips.rocketchip.tile._
+@@ -216,7 +215,6 @@ class L2TLBEntry(nSets: Int)(implicit p: Parameters) extends CoreBundle()(p)
+   * @see RV-priv spec 8.5 for Two-Stage Address Translation
+   * @todo details in two-stage translation
+   */
+-@chiselName
+ class PTW(n: Int)(implicit edge: TLEdgeOut, p: Parameters) extends CoreModule()(p) {
+   val io = new Bundle {
+     /** to n TLB */
+diff --git a/src/main/scala/rocket/RocketCore.scala b/src/main/scala/rocket/RocketCore.scala
+index 90b8d57588f..d5f069700e1 100644
+--- a/src/main/scala/rocket/RocketCore.scala
++++ b/src/main/scala/rocket/RocketCore.scala
+@@ -6,7 +6,6 @@ package freechips.rocketchip.rocket
+ import Chisel._
+ import Chisel.ImplicitConversions._
+ import chisel3.withClock
+-import chisel3.experimental.{chiselName, NoChiselNamePrefix}
+ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.util._
+@@ -107,7 +106,6 @@ class RocketCustomCSRs(implicit p: Parameters) extends CustomCSRs with HasRocket
+   override def decls = super.decls :+ marchid :+ mvendorid :+ mimpid
+ }
+ 
+-@chiselName
+ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
+     with HasRocketCoreParameters
+     with HasCoreIO {
+@@ -121,7 +119,7 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
+     if (!rocketParams.clockGate) clock
+     else ClockGate(clock, clock_en, "rocket_clock_gate")
+ 
+-  @chiselName class RocketImpl extends NoChiselNamePrefix { // entering gated-clock domain
++  class RocketImpl { // entering gated-clock domain
+ 
+   // performance counters
+   def pipelineIDToWB[T <: Data](x: T): T =
+diff --git a/src/main/scala/tile/FPU.scala b/src/main/scala/tile/FPU.scala
+index 49489339d2a..305756c3675 100644
+--- a/src/main/scala/tile/FPU.scala
++++ b/src/main/scala/tile/FPU.scala
+@@ -8,7 +8,6 @@ import freechips.rocketchip.util.CompileOptions.NotStrictInferReset
+ import Chisel.ImplicitConversions._
+ import chisel3.{DontCare, WireInit, withClock, withReset}
+ import chisel3.internal.sourceinfo.SourceInfo
+-import chisel3.experimental.{chiselName, NoChiselNamePrefix}
+ import freechips.rocketchip.config.Parameters
+ import freechips.rocketchip.rocket._
+ import freechips.rocketchip.rocket.Instructions._
+@@ -724,7 +723,6 @@ class FPUFMAPipe(val latency: Int, val t: FType)
+   io.out := Pipe(fma.io.validout, res, (latency-3) max 0)
+ }
+ 
+-@chiselName
+ class FPU(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
+   val io = new FPUIO
+ 
+@@ -753,7 +751,7 @@ class FPU(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
+   val load_wb_data = RegEnable(io.dmem_resp_data, io.dmem_resp_val)
+   val load_wb_tag = RegEnable(io.dmem_resp_tag, io.dmem_resp_val)
+ 
+-  @chiselName class FPUImpl extends NoChiselNamePrefix { // entering gated-clock domain
++  class FPUImpl { // entering gated-clock domain
+ 
+   val req_valid = ex_reg_valid || io.cp_req.valid
+   val ex_cp_valid = io.cp_req.fire()
