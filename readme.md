@@ -83,9 +83,11 @@ chipyard https://github.com/ucb-bar/chipyard/pull/1222
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
 firesim https://github.com/firesim/firesim/pull/1214  
 firesim https://github.com/firesim/firesim/pull/1215  
+riscv-boom https://github.com/riscv-boom/riscv-boom/pull/616  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3066  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3074  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
 <!-- END-PATCH -->
