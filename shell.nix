@@ -8,7 +8,8 @@ with import (fetchTarball {
       clang = clang_14;
       lld = lld_14;
       jdk = if stdenv.isDarwin then jdk11_headless else graalvm11-ce;
-      python = python3Full;
+      python = python39Full;
+      pythonPexpect = python39Packages.pexpect;
     };
   };
 };
@@ -53,20 +54,21 @@ in pkgs.callPackage (
   {
     mkShellNoCC,
     jdk,
-    python,
+    python, pythonPexpect,
     gnumake, git, mill, wget, parallel, dtc, protobuf, antlr4,
     llvmPackages, clang, lld, verilator, cmake, ninja, rcs,
-    autoconf, automake
+    autoconf, automake, openocd
   }:
 
   mkShellNoCC {
     name = "sequencer-playground";
     depsBuildBuild = [
       jdk gnumake git mill wget parallel dtc protobuf antlr4
-      verilator cmake ninja rcs autoconf automake
+      verilator cmake ninja rcs autoconf automake openocd
       llvmPackages.llvm lld
-      python
+      python pythonPexpect
       cc
+      pkgs.pkgsCross.riscv64-embedded.buildPackages.gdb
     ];
   }
 ) {}

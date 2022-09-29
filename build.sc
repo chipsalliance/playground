@@ -439,7 +439,8 @@ object sanitytests extends ScalaModule {
       if (!helper.isMac) {
         val x86Dir = T.ctx.dest
         os.proc("make", s"DESTDIR=${x86Dir}", "install").call(spike.compile())
-     }
+      }
+      os.proc("tar", "xf", riscvTests.download()).call(T.ctx.dest)
       T.ctx.dest
     }
     override def resources: Sources = T.sources {
@@ -471,6 +472,13 @@ object spike extends Module {
       os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
     }
     T.ctx.dest
+  }
+}
+
+object riscvTests extends Module {
+  def download = T.persistent {
+    os.proc("wget", "-q", "https://github.com/ZenithalHourlyRate/riscv-tests-release/releases/latest/download/riscv-tests.tgz").call(T.ctx.dest)
+    T.ctx.dest / "riscv-tests.tgz"
   }
 }
 
