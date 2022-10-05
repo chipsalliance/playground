@@ -1,0 +1,22 @@
+From aa7e0595163bb89a68b73cb0aab6f7b544fc73b7 Mon Sep 17 00:00:00 2001
+From: singularity <chency_singularity@163.com>
+Date: Wed, 5 Oct 2022 23:38:08 +0800
+Subject: [PATCH] fix: S-interpolator for assert, assume and printf
+
+---
+ src/main/scala/DMA.scala | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/main/scala/DMA.scala b/src/main/scala/DMA.scala
+index a2d6f44..d2a859a 100644
+--- a/src/main/scala/DMA.scala
++++ b/src/main/scala/DMA.scala
+@@ -143,7 +143,7 @@ class StreamReaderCore(nXacts: Int, outFlits: Int, maxBytes: Int)
+       sendpart := req.partial
+       state := s_read
+ 
+-      assert(req.length > 0.U, s"request length must be >0")
++      assert(req.length > 0.U, "request length must be >0")
+     }
+ 
+     when (tl.a.fire) {
