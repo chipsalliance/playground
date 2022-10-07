@@ -169,6 +169,18 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
   }
 }
 
+object constellation extends CommonModule with SbtModule {
+  // TODO: FIX
+  override def scalacOptions = T {
+    super.scalacOptions() ++ Agg("-Xsource:2.11")
+  }
+
+  override def millSourcePath = os.pwd / "dependencies" / "constellation"
+
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
+}
+
+
 object testchipip extends CommonModule with SbtModule {
   // TODO: FIX
   override def scalacOptions = T {
@@ -373,7 +385,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
   }
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator, constellation)
 
   object tracegen extends CommonModule with SbtModule {
     // TODO: FIX

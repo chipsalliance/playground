@@ -91,3 +91,6 @@
 [submodule "dependencies/riscv-pk"]
 	path = dependencies/riscv-pk
 	url = git@github.com:riscv-software-src/riscv-pk.git
+[submodule "dependencies/constellation"]
+	path = dependencies/constellation
+	url = git@github.com:ucb-bar/constellation.git
