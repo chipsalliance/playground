@@ -81,6 +81,7 @@ This repository always tracks remote developing branches, it may need some patch
 chipyard https://github.com/ucb-bar/chipyard/pull/1160  
 chipyard https://github.com/ucb-bar/chipyard/pull/1222  
 chipyard https://github.com/ucb-bar/chipyard/pull/1242  
+constellation https://github.com/ucb-bar/constellation/pull/28  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
 firesim https://github.com/firesim/firesim/pull/1214  
 firesim https://github.com/firesim/firesim/pull/1215  
