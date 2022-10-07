@@ -80,16 +80,22 @@ This repository always tracks remote developing branches, it may need some patch
 <!-- BEGIN-PATCH -->
 chipyard https://github.com/ucb-bar/chipyard/pull/1160  
 chipyard https://github.com/ucb-bar/chipyard/pull/1222  
+chipyard https://github.com/ucb-bar/chipyard/pull/1242  
 dsptools https://github.com/ucb-bar/dsptools/pull/240  
 firesim https://github.com/firesim/firesim/pull/1214  
 firesim https://github.com/firesim/firesim/pull/1215  
+firesim https://github.com/firesim/firesim/pull/1250  
+icenet https://github.com/firesim/icenet/pull/35  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/616  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3066  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3074  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3103  
+rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6  
+testchipip https://github.com/ucb-bar/testchipip/pull/149  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
