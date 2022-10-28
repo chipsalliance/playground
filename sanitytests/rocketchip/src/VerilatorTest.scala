@@ -22,25 +22,20 @@ object VerilatorTest extends TestSuite {
         os.proc(
           "clang",
           "-o", "hello",
+          s"${sanitytests.utils.resource("entry.S")}",
           s"${sanitytests.utils.resource("csrc/hello.c")}",
           "--target=riscv64",
+          "-mcmodel=medany",
           "-mno-relax",
           "-nostdinc",
-          s"-I${sanitytests.utils.resource("riscv64/usr/include")}",
           "-fuse-ld=lld",
+          s"-T${sanitytests.utils.resource("hello.ld")}",
           "-nostdlib",
-          s"${sanitytests.utils.resource("riscv64/usr/lib/crt1.o")}",
-          s"${sanitytests.utils.resource("riscv64/usr/lib/crti.o")}",
-          s"${sanitytests.utils.resource("riscv64/usr/lib/riscv64/libclang_rt.builtins-riscv64.a")}",
-          s"${sanitytests.utils.resource("riscv64/usr/lib/libc.a")}",
-          s"${sanitytests.utils.resource("riscv64/usr/lib/crtn.o")}",
           "-static",
         ).call(outputDirectory)
-        os.proc("llvm-strip", "hello").call(outputDirectory)
         test("Hello World!") {
           os.proc(
             s"$emulator",
-            s"${sanitytests.utils.resource("riscv64/pk")}",
             "hello",
           ).call(outputDirectory)
         }
