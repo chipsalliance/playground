@@ -79,10 +79,12 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 chipyard https://github.com/ucb-bar/chipyard/pull/1242.diff  
+chipyard https://github.com/ucb-bar/chipyard/pull/1264.diff  
 constellation https://github.com/ucb-bar/constellation/pull/28.diff  
 dsptools https://github.com/ucb-bar/dsptools/pull/240.diff  
 firesim https://github.com/firesim/firesim/pull/1214.diff  
 firesim https://github.com/firesim/firesim/pull/1250.diff  
+hwacha https://github.com/ucb-bar/hwacha/pull/39.diff  
 icenet https://github.com/firesim/icenet/pull/35.diff  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/616.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968.diff  
