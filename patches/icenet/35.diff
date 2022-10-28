@@ -1,0 +1,13 @@
+diff --git a/src/main/scala/DMA.scala b/src/main/scala/DMA.scala
+index a2d6f44..d2a859a 100644
+--- a/src/main/scala/DMA.scala
++++ b/src/main/scala/DMA.scala
+@@ -143,7 +143,7 @@ class StreamReaderCore(nXacts: Int, outFlits: Int, maxBytes: Int)
+       sendpart := req.partial
+       state := s_read
+ 
+-      assert(req.length > 0.U, s"request length must be >0")
++      assert(req.length > 0.U, "request length must be >0")
+     }
+ 
+     when (tl.a.fire) {

@@ -14,7 +14,7 @@ bump:
 
 update-patches:
 	rm -rf patches
-	sed '/BEGIN-PATCH/,/END-PATCH/!d;//d' readme.md | awk '{print("mkdir -p patches/" $$1 " && wget " $$2 ".patch -P patches/" $$1 )}' | parallel
+	sed '/BEGIN-PATCH/,/END-PATCH/!d;//d' readme.md | awk '{print("mkdir -p patches/" $$1 " && wget " $$2 " -P patches/" $$1 )}' | parallel
 	git add patches
 
 bsp:

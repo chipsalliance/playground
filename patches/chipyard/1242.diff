@@ -1,0 +1,12 @@
+diff --git a/generators/tracegen/src/main/scala/Tile.scala b/generators/tracegen/src/main/scala/Tile.scala
+index 93d3c2c9f..d83b5b978 100644
+--- a/generators/tracegen/src/main/scala/Tile.scala
++++ b/generators/tracegen/src/main/scala/Tile.scala
+@@ -251,6 +251,6 @@ class BoomTraceGenTileModuleImp(outer: BoomTraceGenTile)
+   status.timeout.bits := 0.U
+   status.error.valid := false.B
+ 
+-  assert(!tracegen.io.timeout, s"TraceGen tile ${outer.tileParams.hartId}: request timed out")
++  assert(!tracegen.io.timeout, cf"TraceGen tile ${outer.tileParams.hartId.toString}: request timed out")
+ 
+ }

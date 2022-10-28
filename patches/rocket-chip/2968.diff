@@ -1,13 +1,3 @@
-From b43b5a73c76fcccaefd05895e6750425060cbe04 Mon Sep 17 00:00:00 2001
-From: Jiuyang Liu <liu@jiuyang.me>
-Date: Sun, 24 Apr 2022 05:29:52 +0800
-Subject: [PATCH] bump json-jackson to 4.0.5
-
----
- build.sbt | 2 +-
- common.sc | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
-
 diff --git a/build.sbt b/build.sbt
 index 2313f634fd9..85c7a8b2fd8 100644
 --- a/build.sbt

@@ -1,12 +1,3 @@
-From f7e70bb6f4082b296d89144a89465dd85679b2eb Mon Sep 17 00:00:00 2001
-From: Jiuyang Liu <liu@jiuyang.me>
-Date: Sat, 14 May 2022 02:42:11 +0800
-Subject: [PATCH] fix for chipsalliance/rocket-chip#2496
-
----
- src/main/scala/devices/pwm/PWM.scala | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/src/main/scala/devices/pwm/PWM.scala b/src/main/scala/devices/pwm/PWM.scala
 index ca0621d..ca3cf4d 100644
 --- a/src/main/scala/devices/pwm/PWM.scala

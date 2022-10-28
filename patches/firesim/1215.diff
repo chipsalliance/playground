@@ -1,12 +1,3 @@
-From abef869b722e9bfbe971a00a5a00d6d6a939f26f Mon Sep 17 00:00:00 2001
-From: Jiuyang Liu <liu@jiuyang.me>
-Date: Sun, 18 Sep 2022 10:00:39 +0800
-Subject: [PATCH] fix for chipsalliance/rocket-chip#2978
-
----
- sim/src/main/scala/fasedtests/AXI4Fuzzer.scala | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/sim/src/main/scala/fasedtests/AXI4Fuzzer.scala b/sim/src/main/scala/fasedtests/AXI4Fuzzer.scala
 index 57c7f4ac4..b3c633a2c 100644
 --- a/sim/src/main/scala/fasedtests/AXI4Fuzzer.scala

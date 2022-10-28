@@ -1,0 +1,276 @@
+diff --git a/sim/midas/src/main/scala/junctions/nasti.scala b/sim/midas/src/main/scala/junctions/nasti.scala
+index 6b121aafa..38e49e6ba 100644
+--- a/sim/midas/src/main/scala/junctions/nasti.scala
++++ b/sim/midas/src/main/scala/junctions/nasti.scala
+@@ -3,6 +3,7 @@
+ package junctions
+ 
+ import Chisel._
++import chisel3.PrintableHelper
+ import scala.math.{min, max}
+ import scala.collection.mutable.ArraySeq
+ import freechips.rocketchip.amba.axi4._
+@@ -525,9 +526,9 @@ class NastiRouter(nSlaves: Int, routeSel: UInt => UInt)(implicit p: Parameters)
+     ar_queue.io.deq(i).tag := all_slaves(i).r.bits.id
+ 
+     assert(!aw_queue.io.deq(i).valid || aw_queue.io.deq(i).matches,
+-      s"aw_queue $i tried to dequeue untracked transaction")
++      cf"aw_queue ${i.toString} tried to dequeue untracked transaction")
+     assert(!ar_queue.io.deq(i).valid || ar_queue.io.deq(i).matches,
+-      s"ar_queue $i tried to dequeue untracked transaction")
++      cf"ar_queue ${i.toString} tried to dequeue untracked transaction")
+   }
+ 
+   io.master.b <> b_arb.io.out
+diff --git a/sim/midas/src/main/scala/midas/core/Channel.scala b/sim/midas/src/main/scala/midas/core/Channel.scala
+index e6f53cb10..dd740b258 100644
+--- a/sim/midas/src/main/scala/midas/core/Channel.scala
++++ b/sim/midas/src/main/scala/midas/core/Channel.scala
+@@ -57,9 +57,9 @@ object AssertTokenIrrevocable {
+     val bitsPrev  = RegNext(bits)
+     val firePrev  = RegNext(valid && ready)
+     assert(!validPrev || firePrev || valid,
+-      s"${prefix}valid de-asserted without handshake, violating irrevocability")
++      cf"${prefix}valid de-asserted without handshake, violating irrevocability")
+     assert(!validPrev || firePrev || bitsPrev.asUInt === bits.asUInt,
+-      s"${prefix}bits changed without handshake, violating irrevocability")
++      cf"${prefix}bits changed without handshake, violating irrevocability")
+   }
+ 
+   def apply(rv: ReadyValidIO[_ <: Data], suggestedName: Option[String] = None): Unit =
+diff --git a/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala b/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala
+index 6da67daf1..2bebb915f 100644
+--- a/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala
++++ b/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala
+@@ -73,9 +73,9 @@ case class OChannelDesc[T <: Data](
+     refOutputs.io.enq.bits := reference
+ 
+     assert(comparisonFunc(refOutputs.io.deq.bits, modelChannel),
+-      s"${name} Channel: Output token traces did not match")
++      cf"${name} Channel: Output token traces did not match")
+     assert(!hValidPrev || hFirePrev || modelChannel.valid,
+-      s"${name} Channel: hValid de-asserted without handshake, violating output token irrevocability")
++      cf"${name} Channel: hValid de-asserted without handshake, violating output token irrevocability")
+ 
+     val modelChannelDone = modelIdx === testLength.U
+     when (modelChannel.fire) { modelIdx := modelIdx + 1.U }
+diff --git a/sim/midas/src/main/scala/midas/models/dram/Util.scala b/sim/midas/src/main/scala/midas/models/dram/Util.scala
+index 2353bc103..da4b0b91d 100644
+--- a/sim/midas/src/main/scala/midas/models/dram/Util.scala
++++ b/sim/midas/src/main/scala/midas/models/dram/Util.scala
+@@ -748,9 +748,9 @@ class MemoryModelMonitor(cfg: BaseConfig)(implicit p: Parameters) extends Module
+   val axi4 = IO(Input(new NastiIO))
+ 
+   assert(!axi4.ar.fire || axi4.ar.bits.len < cfg.maxReadLength.U,
+-    s"Read burst length exceeds memory-model maximum of ${cfg.maxReadLength}")
++    cf"Read burst length exceeds memory-model maximum of ${cfg.maxReadLength.toString}")
+   assert(!axi4.aw.fire || axi4.aw.bits.len < cfg.maxWriteLength.U,
+-    s"Write burst length exceeds memory-model maximum of ${cfg.maxReadLength}")
++    cf"Write burst length exceeds memory-model maximum of ${cfg.maxReadLength.toString}")
+ }
+ 
+ /**
+diff --git a/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala b/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala
+index bb47af285..05b6a4027 100644
+--- a/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala
++++ b/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala
+@@ -28,10 +28,10 @@ class AXI4AddressTranslation(offset: BigInt, bridgeAddressSets: Seq[AddressSet],
+       // has less than < 2 GiB of host DRAM), hence %.
+       out.aw.bits.addr := in.aw.bits.addr + (maxHostAddr + (offset % maxHostAddr)).U
+       out.ar.bits.addr := in.ar.bits.addr + (maxHostAddr + (offset % maxHostAddr)).U
+-      assert(~in.aw.valid || in.aw.bits.addr <= virtualBound.U, s"AW request address in memory region ${regionName} exceeds region bound.")
+-      assert(~in.ar.valid || in.ar.bits.addr <= virtualBound.U, s"AR request address in memory region ${regionName} exceeds region bound.")
+-      assert(~in.aw.valid || in.aw.bits.addr >= virtualBase.U,  s"AW request address in memory region ${regionName} is less than region base.")
+-      assert(~in.ar.valid || in.ar.bits.addr >= virtualBase.U,  s"AR request address in memory region ${regionName} is less than region base.")
++      assert(~in.aw.valid || in.aw.bits.addr <= virtualBound.U, cf"AW request address in memory region ${regionName} exceeds region bound.")
++      assert(~in.ar.valid || in.ar.bits.addr <= virtualBound.U, cf"AR request address in memory region ${regionName} exceeds region bound.")
++      assert(~in.aw.valid || in.aw.bits.addr >= virtualBase.U,  cf"AW request address in memory region ${regionName} is less than region base.")
++      assert(~in.ar.valid || in.ar.bits.addr >= virtualBase.U,  cf"AR request address in memory region ${regionName} is less than region base.")
+     }
+   }
+ }
+diff --git a/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala b/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala
+index 3839f449d..9899bea3c 100644
+--- a/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala
++++ b/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala
+@@ -13,7 +13,8 @@ object AXI4Printf {
+     val cyclecount = RegInit(0.U(64.W))
+     cyclecount := cyclecount + 1.U
+     when (io.aw.fire) {
+-      printf(s"[${name},awfire,%x] addr %x, len %x, size %x, burst %x, lock %x, cache %x, prot %x, qos %x, id %x, user %x\n",
++      val printStr = s"[${name},awfire,%x] addr %x, len %x, size %x, burst %x, lock %x, cache %x, prot %x, qos %x, id %x, user %x\n"
++      printf(printStr,
+         cyclecount,
+         io.aw.bits.addr,
+         io.aw.bits.len,
+@@ -29,7 +30,8 @@ object AXI4Printf {
+     }
+ 
+     when (io.w.fire) {
+-      printf(s"[${name},wfire,%x] data %x, last %x, strb %x\n",
++      val printStr = s"[${name},wfire,%x] data %x, last %x, strb %x\n"
++      printf(printStr,
+         cyclecount,
+         io.w.bits.data,
+         io.w.bits.last,
+@@ -38,7 +40,8 @@ object AXI4Printf {
+     }
+ 
+     when (io.b.fire) {
+-      printf(s"[${name},bfire,%x] resp %x, id %x, user %x\n",
++      val printStr = s"[${name},bfire,%x] resp %x, id %x, user %x\n"
++      printf(printStr,
+         cyclecount,
+         io.b.bits.resp,
+         io.b.bits.id,
+@@ -47,7 +50,8 @@ object AXI4Printf {
+     }
+ 
+     when (io.ar.fire) {
+-      printf(s"[${name},arfire,%x] addr %x, len %x, size %x, burst %x, lock %x, cache %x, prot %x, qos %x, id %x, user %x\n",
++      val printStr = s"[${name},arfire,%x] addr %x, len %x, size %x, burst %x, lock %x, cache %x, prot %x, qos %x, id %x, user %x\n"
++      printf(printStr,
+         cyclecount,
+         io.ar.bits.addr,
+         io.ar.bits.len,
+@@ -63,7 +67,8 @@ object AXI4Printf {
+     }
+ 
+     when (io.r.fire) {
+-      printf(s"[${name},rfire,%x] resp %x, data %x, last %x, id %x, user %x\n",
++      val printStr = s"[${name},rfire,%x] resp %x, data %x, last %x, id %x, user %x\n"
++      printf(printStr,
+         cyclecount,
+         io.r.bits.resp,
+         io.r.bits.data,
+diff --git a/sim/midas/src/main/scala/midas/widgets/Lib.scala b/sim/midas/src/main/scala/midas/widgets/Lib.scala
+index 1f15e5255..496e1eb71 100644
+--- a/sim/midas/src/main/scala/midas/widgets/Lib.scala
++++ b/sim/midas/src/main/scala/midas/widgets/Lib.scala
+@@ -298,13 +298,13 @@ class MCRIO(numCRs: Int)(implicit p: Parameters) extends NastiBundle()(p) {
+         reg.node := write(index).bits
+       }
+     } else {
+-      assert(write(index).valid =/= true.B, s"Register ${reg.name} is read only")
++      assert(write(index).valid =/= true.B, cf"Register ${reg.name} is read only")
+     }
+ 
+     if (reg.permissions.readable) {
+       read(index).bits := reg.node
+     } else {
+-      assert(read(index).ready === false.B, "Register ${reg.name} is write only")
++      assert(read(index).ready === false.B, cf"Register ${reg.name} is write only")
+     }
+ 
+     read(index).valid := true.B
+diff --git a/sim/src/main/scala/midasexamples/AssertTorture.scala b/sim/src/main/scala/midasexamples/AssertTorture.scala
+index 3b81dcce9..d3c64337a 100644
+--- a/sim/src/main/scala/midasexamples/AssertTorture.scala
++++ b/sim/src/main/scala/midasexamples/AssertTorture.scala
+@@ -58,7 +58,7 @@ class AssertTortureModule(
+     withClockAndReset(clocks(clockIdx), resets(clockIdx)) {
+       val message = s"${clockPrefix(clockIdx)}A${assertIdx}"
+       val condition = counters(clockIdx) =/= assertIdx.U
+-      when(!condition) { printf(s"${printfPrefix}${message}\n") }
++      when(!condition) { printf(cf"${printfPrefix}${message}\n") }
+       assert(condition, message)
+     }
+     indexes.updated(clockIdx, assertIdx + 1)
+diff --git a/sim/src/main/scala/midasexamples/AutoCounterValidator.scala b/sim/src/main/scala/midasexamples/AutoCounterValidator.scala
+index 922818971..a4994a095 100644
+--- a/sim/src/main/scala/midasexamples/AutoCounterValidator.scala
++++ b/sim/src/main/scala/midasexamples/AutoCounterValidator.scala
+@@ -124,8 +124,10 @@ class AutoCounterValidator(
+ 
+   // Creates a printf with the validation prefix so it can be extracted from
+   // the simulators stdout.
+-  private def prefixed_printf(fmtString: String, args: Bits*) =
+-    printf(s"${printfPrefix}${fmtString}\n", args:_*)
++  private def prefixed_printf(fmtString: String, args: Bits*) = {
++    val printStr = s"${printfPrefix}${fmtString}\n"
++    printf(printStr, args:_*)
++  }
+ 
+   // Emits a csv header row to match the expected output of the driver. Note:
+   // columns may be swizzled.
+diff --git a/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala b/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala
+index be4b1fafe..53489d505 100644
+--- a/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala
++++ b/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala
+@@ -38,12 +38,12 @@ abstract class GlobalResetConditionTester(elaborator: (Bool) => Unit) extends Ra
+ }
+ 
+ class AssertGlobalResetCondition(implicit p: Parameters) extends GlobalResetConditionTester(
+-  (inReset: Bool) => { assert(!inReset, s"This should not fire\n") }
++  (inReset: Bool) => { assert(!inReset, "This should not fire\n") }
+ )
+ 
+ class PrintfGlobalResetCondition(implicit p: Parameters) extends GlobalResetConditionTester(
+   (inReset: Bool) => {
+-    when(inReset) { SynthesizePrintf(printf(s"This should not print. %b\n", inReset)) }
++    when(inReset) { SynthesizePrintf(printf("This should not print. %b\n", inReset)) }
+ })
+ 
+ class AutoCounterGlobalResetCondition(implicit p: Parameters) extends GlobalResetConditionTester(
+diff --git a/sim/src/main/scala/midasexamples/PrintfModule.scala b/sim/src/main/scala/midasexamples/PrintfModule.scala
+index 141c4b176..b2caaf573 100644
+--- a/sim/src/main/scala/midasexamples/PrintfModule.scala
++++ b/sim/src/main/scala/midasexamples/PrintfModule.scala
+@@ -30,17 +30,20 @@ class PrintfModuleDUT(printfPrefix: String = "SYNTHESIZED_PRINT ") extends Modul
+   // Printf format strings must be prefixed with "SYNTHESIZED_PRINT CYCLE: %d"
+   // so they can be pulled out of RTL simulators log and sorted within a cycle
+   // As the printf order will be different betwen RTL simulator and synthesized stream
+-  SynthesizePrintf(printf(s"${printfPrefix}CYCLE: %d\n", cycle))
++  private val printStr0 = s"${printfPrefix}CYCLE: %d\n"
++  SynthesizePrintf(printf(printStr0, cycle))
+ 
+   val wideArgument = VecInit(Seq.fill(33)(WireInit(cycle))).asUInt
+-  SynthesizePrintf(printf(s"${printfPrefix}CYCLE: %d wideArgument: %x\n", cycle, wideArgument)) // argument width > DMA width
++  private val printStr1 = s"${printfPrefix}CYCLE: %d wideArgument: %x\n"
++  SynthesizePrintf(printf(printStr1, cycle, wideArgument)) // argument width > DMA width
+ 
+   val childInst = Module(new PrintfModuleChild(printfPrefix))
+   childInst.c := io.a
+   childInst.cycle := cycle
+ 
+   val ch = Mux(cycle(7,0) > 32.U && cycle(7,0) < 127.U, cycle(7,0), 32.U(8.W))
+-  SynthesizePrintf(printf(s"${printfPrefix}CYCLE: %d Char: %c\n", cycle, ch))
++  private val printStr2 = s"${printfPrefix}CYCLE: %d Char: %c\n"
++  SynthesizePrintf(printf(printStr2, cycle, ch))
+ }
+ 
+ class PrintfModuleChild(printfPrefix: String) extends MultiIOModule {
+@@ -48,7 +51,8 @@ class PrintfModuleChild(printfPrefix: String) extends MultiIOModule {
+   val cycle = IO(Input(UInt(16.W)))
+ 
+   val lfsr = LFSR(16, c)
+-  SynthesizePrintf(printf(s"${printfPrefix}CYCLE: %d LFSR: %x\n", cycle, lfsr))
++  private val printStr = s"${printfPrefix}CYCLE: %d LFSR: %x\n"
++  SynthesizePrintf(printf(printStr, cycle, lfsr))
+ 
+   //when (lsfr(0)) {
+   //  SynthesizePrintf(printf(p"SYNTHESIZED_PRINT CYCLE: ${cycle} LFSR is odd"))
+diff --git a/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala b/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala
+index 8dd2960c3..d31ac6f66 100644
+--- a/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala
++++ b/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala
+@@ -37,7 +37,8 @@ class TriggerPredicatedPrintfDUT(printfPrefix: String = "SYNTHESIZED_PRINT ")
+     val sinkEnable = Wire(Bool())
+     TriggerSink(sinkEnable)
+     when (sinkEnable) {
+-      SynthesizePrintf(printf(s"${printfPrefix}CYCLE: %d LFSR: %x\n", cycle, lfsr))
++      val printStr = s"${printfPrefix}CYCLE: %d LFSR: %x\n"
++      SynthesizePrintf(printf(printStr, cycle, lfsr))
+     }
+   }
+ 
+@@ -56,7 +57,8 @@ class TriggerPredicatedPrintfDUT(printfPrefix: String = "SYNTHESIZED_PRINT ")
+     *   when (sinkEnable) { <...> }
+     */
+   TriggerSink.whenEnabled(noSourceDefault = false.B) {
+-    SynthesizePrintf(printf(s"${printfPrefix}CYCLE: %d\n", cycle))
++    val printStr = s"${printfPrefix}CYCLE: %d\n"
++    SynthesizePrintf(printf(printStr, cycle))
+   }
+   // DOC include end: TriggerSink.whenEnabled Usage
+ 

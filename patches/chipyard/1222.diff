@@ -1,12 +1,3 @@
-From 849d744b6dcd14af3215b149ba713bfd8e19e867 Mon Sep 17 00:00:00 2001
-From: Jiuyang Liu <liu@jiuyang.me>
-Date: Sun, 18 Sep 2022 10:01:43 +0800
-Subject: [PATCH] fix for chipsalliance/rocket-chip#2978
-
----
- generators/chipyard/src/main/scala/System.scala | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/generators/chipyard/src/main/scala/System.scala b/generators/chipyard/src/main/scala/System.scala
 index 31bedae74..827b97c00 100644
 --- a/generators/chipyard/src/main/scala/System.scala

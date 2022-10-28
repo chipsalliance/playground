@@ -1,12 +1,3 @@
-From 721d59fb3c0f708dc10cdb2241512adf5289c448 Mon Sep 17 00:00:00 2001
-From: Jiuyang Liu <liu@jiuyang.me>
-Date: Sun, 18 Sep 2022 09:59:09 +0800
-Subject: [PATCH] fix for chipsalliance/chisel3#2723
-
----
- sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
 diff --git a/sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala b/sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala
 index 20d2247f7..f13fd1f4b 100644
 --- a/sim/midas/src/main/scala/midas/FPGAQoRShimGenerator.scala

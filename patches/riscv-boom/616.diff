@@ -1,14 +1,3 @@
-From 9eb8b08eb18b4b3b5c1e702bc994c15c8d7e4693 Mon Sep 17 00:00:00 2001
-From: Jiuyang Liu <liu@jiuyang.me>
-Date: Sun, 25 Sep 2022 14:22:31 +0800
-Subject: [PATCH] remove chiselName, fix for chipsalliance/chisel3#2694
-
----
- src/main/scala/exu/execution-units/functional-unit.scala | 2 --
- src/main/scala/exu/rob.scala                             | 2 --
- src/main/scala/ifu/icache.scala                          | 2 --
- 3 files changed, 6 deletions(-)
-
 diff --git a/src/main/scala/exu/execution-units/functional-unit.scala b/src/main/scala/exu/execution-units/functional-unit.scala
 index 366b2771d..25cd50fc4 100644
 --- a/src/main/scala/exu/execution-units/functional-unit.scala

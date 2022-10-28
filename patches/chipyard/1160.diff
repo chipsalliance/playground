@@ -1,13 +1,3 @@
-From cec97c6cbb28a7293f93352281811a1da196a0e1 Mon Sep 17 00:00:00 2001
-From: Jiuyang Liu <liu@jiuyang.me>
-Date: Sun, 24 Apr 2022 14:50:15 +0800
-Subject: [PATCH] remove objectmodule
-
----
- generators/chipyard/src/main/scala/Subsystem.scala            | 4 ++--
- generators/chipyard/src/main/scala/example/TutorialTile.scala | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
-
 diff --git a/generators/chipyard/src/main/scala/Subsystem.scala b/generators/chipyard/src/main/scala/Subsystem.scala
 index 93d7c237b..bfa99416c 100644
 --- a/generators/chipyard/src/main/scala/Subsystem.scala
