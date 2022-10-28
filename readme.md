@@ -78,20 +78,16 @@ then open by your favorite IDE, which supports [BSP](https://build-server-protoc
 Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
-chipyard https://github.com/ucb-bar/chipyard/pull/1160.diff  
-chipyard https://github.com/ucb-bar/chipyard/pull/1222.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1242.diff  
 constellation https://github.com/ucb-bar/constellation/pull/28.diff  
 dsptools https://github.com/ucb-bar/dsptools/pull/240.diff  
 firesim https://github.com/firesim/firesim/pull/1214.diff  
-firesim https://github.com/firesim/firesim/pull/1215.diff  
 firesim https://github.com/firesim/firesim/pull/1250.diff  
 icenet https://github.com/firesim/icenet/pull/35.diff  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/616.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3066.diff  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3074.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3103.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2.diff  
