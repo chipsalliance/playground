@@ -94,3 +94,6 @@
 [submodule "dependencies/constellation"]
 	path = dependencies/constellation
 	url = git@github.com:ucb-bar/constellation.git
+[submodule "dependencies/mempress"]
+	path = dependencies/mempress
+	url = git@github.com:ucb-bar/mempress.git

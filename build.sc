@@ -180,6 +180,18 @@ object constellation extends CommonModule with SbtModule {
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
 
+object mempress extends CommonModule with SbtModule {
+  // TODO: FIX
+  override def scalacOptions = T {
+    super.scalacOptions() ++ Agg("-Xsource:2.11")
+  }
+
+  override def millSourcePath = os.pwd / "dependencies" / "mempress"
+
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, firesim)
+}
+
+
 
 object testchipip extends CommonModule with SbtModule {
   // TODO: FIX
@@ -385,7 +397,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
   }
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator, constellation)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator, constellation, mempress)
 
   object tracegen extends CommonModule with SbtModule {
     // TODO: FIX
