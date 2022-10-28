@@ -438,11 +438,7 @@ object sanitytests extends ScalaModule {
     def libraryResources = T.sources {
       if (!helper.isMac) {
         val x86Dir = T.ctx.dest
-        val riscv64Dir = T.ctx.dest / "riscv64"
         os.proc("make", s"DESTDIR=${x86Dir}", "install").call(spike.compile())
-        os.proc("make", s"DESTDIR=${riscv64Dir}", "install").call(compilerrt.compile())
-        os.proc("make", s"DESTDIR=${riscv64Dir}", "install").call(musl.compile())
-        os.copy.into(pk.compile(), riscv64Dir)
      }
       T.ctx.dest
     }
@@ -475,104 +471,6 @@ object spike extends Module {
       os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
     }
     T.ctx.dest
-  }
-}
-
-object compilerrt extends Module {
-  override def millSourcePath = os.pwd / "dependencies" / "llvm-project" / "compiler-rt"
-  // ask make to cache file.
-  def compile = T.persistent {
-    if (!helper.isMac) {
-      os.proc("cmake", "-S", millSourcePath,
-        "-DCOMPILER_RT_BUILD_LIBFUZZER=OFF",
-        "-DCOMPILER_RT_BUILD_SANITIZERS=OFF",
-        "-DCOMPILER_RT_BUILD_PROFILE=OFF",
-        "-DCOMPILER_RT_BUILD_MEMPROF=OFF",
-        "-DCOMPILER_RT_BUILD_ORC=OFF",
-        "-DCOMPILER_RT_BUILD_BUILTINS=ON",
-        "-DCOMPILER_RT_BAREMETAL_BUILD=ON",
-        "-DCOMPILER_RT_INCLUDE_TESTS=OFF",
-        "-DCOMPILER_RT_HAS_FPIC_FLAG=OFF",
-        "-DCOMPILER_RT_DEFAULT_TARGET_ONLY=On",
-        "-DCOMPILER_RT_OS_DIR=riscv64",
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DCMAKE_SYSTEM_NAME=Generic",
-        "-DCMAKE_SYSTEM_PROCESSOR=riscv64",
-        "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY",
-        "-DCMAKE_SIZEOF_VOID_P=8",
-        "-DCMAKE_ASM_COMPILER_TARGET=riscv64-none-elf",
-        "-DCMAKE_C_COMPILER_TARGET=riscv64-none-elf",
-        "-DCMAKE_C_COMPILER_WORKS=ON",
-        "-DCMAKE_CXX_COMPILER_WORKS=ON",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
-        "-DCMAKE_C_FLAGS=-nodefaultlibs -fno-exceptions -mno-relax -Wno-macro-redefined -fPIC",
-        "-DCMAKE_INSTALL_PREFIX=/usr",
-        "-Wno-dev",
-      ).call(T.ctx.dest)
-      os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
-    }
-    T.ctx.dest
-  }
-}
-
-object musl extends Module {
-  override def millSourcePath = os.pwd / "dependencies" / "musl"
-  // ask make to cache file.
-  def libraryResources = T.persistent {
-    if (!helper.isMac){
-      os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(compilerrt.compile())
-    }
-    PathRef(T.ctx.dest)
-  }
-  def compile = T.persistent {
-    if (!helper.isMac){
-      val p = libraryResources().path
-      os.proc(millSourcePath / "configure", "--target=riscv64-none-elf", "--prefix=/usr").call(
-        T.ctx.dest,
-        Map (
-          "CC" -> "clang",
-          "CXX" -> "clang++",
-          "AR" -> "llvm-ar",
-          "RANLIB" -> "llvm-ranlib",
-          "LD" -> "lld",
-          "LIBCC" -> "-lclang_rt.builtins-riscv64",
-          "CFLAGS" -> "--target=riscv64 -mno-relax -nostdinc",
-          "LDFLAGS" -> s"-fuse-ld=lld --target=riscv64 -nostdlib -L${p}/usr/lib/riscv64",
-        )
-      )
-      os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
-    }
-    T.ctx.dest
-  }
-}
-
-object pk extends Module {
-  override def millSourcePath = os.pwd / "dependencies" / "riscv-pk"
-  // ask make to cache file.
-  def libraryResources = T.persistent {
-    if (!helper.isMac){
-      os.proc("make", s"DESTDIR=${T.ctx.dest}", "install").call(musl.compile())
-    }
-    PathRef(T.ctx.dest)
-  }
-  def compile = T.persistent {
-    if(!helper.isMac) {
-      val p = libraryResources().path
-      val env = Map (
-        "CC" -> "clang",
-        "CXX" -> "clang++",
-        "AR" -> "llvm-ar",
-        "RANLIB" -> "llvm-ranlib",
-        "LD" -> "lld",
-        "CFLAGS" -> s"--target=riscv64 -mno-relax -nostdinc -I${p}/usr/include",
-        "LDFLAGS" -> "-fuse-ld=lld --target=riscv64 -nostdlib",
-      )
-      os.proc("autoreconf", "-fi").call(millSourcePath)
-      os.proc(millSourcePath / "configure", "--host=riscv64-none-elf").call(T.ctx.dest, env)
-      os.proc("make", "-j", Runtime.getRuntime().availableProcessors(), "pk").call(T.ctx.dest, env)
-    }
-    T.ctx.dest / "pk"
   }
 }
 
