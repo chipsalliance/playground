@@ -96,6 +96,7 @@ rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusi
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2.diff  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6.diff  
 testchipip https://github.com/ucb-bar/testchipip/pull/149.diff  
+rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/4.diff
 <!-- END-PATCH -->
 
 ## Why not Chipyard
