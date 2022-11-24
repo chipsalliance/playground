@@ -16,7 +16,7 @@ import $file.dependencies.`rocket-chip`.common
 
 // Global Scala Version
 object ivys {
-  val sv = "2.12.15"
+  val sv = "2.13.10"
   val upickle = ivy"com.lihaoyi::upickle:1.3.15"
   val oslib = ivy"com.lihaoyi::os-lib:0.7.8"
   val pprint = ivy"com.lihaoyi::pprint:0.6.6"
@@ -41,14 +41,10 @@ trait CommonModule extends ScalaModule {
   ) }
 
   override def scalacOptions = T {
-    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements")
+    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel3.plugin.jar().path}")
   }
 
   override def moduleDeps: Seq[ScalaModule] = Seq(mychisel3)
-
-  override def compileIvyDeps = Agg(ivys.macroParadise)
-
-  override def scalacPluginIvyDeps = Agg(ivys.macroParadise)
 }
 
 
@@ -88,7 +84,7 @@ object mycde extends dependencies.cde.build.cde(ivys.sv) with PublishModule {
 object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
   // TODO: FIX
   override def scalacOptions = T {
-    Seq("-Xsource:2.11", s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements")
+    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}")
   }
 
   override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
@@ -107,9 +103,8 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 }
 
 object inclusivecache extends CommonModule {
-  // TODO: FIX
   override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
+    super.scalacOptions()
   }
 
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-inclusive-cache" / 'design / 'craft / "inclusivecache"
@@ -118,11 +113,6 @@ object inclusivecache extends CommonModule {
 }
 
 object blocks extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
-
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-blocks"
 
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
@@ -161,7 +151,7 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
   ) }
 
   override def scalacOptions = T {
-    Seq("-Xsource:2.11", s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements")
+    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}")
   }
 }
 
