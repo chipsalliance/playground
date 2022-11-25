@@ -91,6 +91,7 @@ riscv-boom https://github.com/riscv-boom/riscv-boom/pull/616.diff
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3103.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3178.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2.diff  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6.diff  
