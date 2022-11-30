@@ -10,6 +10,7 @@ with import (fetchTarball {
       jdk = if stdenv.isDarwin then jdk11_headless else graalvm11-ce;
       python = python39Full;
       pythonPexpect = python39Packages.pexpect;
+      pythonPip = python39Packages.bootstrapped-pip;
     };
   };
 };
@@ -66,9 +67,19 @@ in pkgs.callPackage (
       jdk gnumake git mill wget parallel dtc protobuf antlr4
       verilator cmake ninja rcs autoconf automake openocd
       llvmPackages.llvm lld
-      python pythonPexpect
+      python pythonPexpect pythonPip
       cc
       pkgs.pkgsCross.riscv64-embedded.buildPackages.gdb
+      pkgs.pkgsCross.riscv64-embedded.buildPackages.gcc
     ];
+    shellHook = ''
+      # Tells pip to put packages into $PIP_PREFIX instead of the usual locations.
+      # See https://pip.pypa.io/en/stable/user_guide/#environment-variables.
+      export PIP_PREFIX=$(pwd)/venv/pip_packages
+      export PYTHONPATH="$PIP_PREFIX/${pkgs.python39.sitePackages}:$PYTHONPATH"
+      export PATH="$PIP_PREFIX/bin:$PATH"
+      unset SOURCE_DATE_EPOCH
+      pip3 install importlib-metadata typing-extensions riscof
+    '';
   }
 ) {}

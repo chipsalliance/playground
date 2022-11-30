@@ -193,5 +193,42 @@ object VerilatorTest extends TestSuite {
         //}
       }
     }
+    test("rocket-chip arch tests") {
+      val testHarness = classOf[freechips.rocketchip.system.TestHarness]
+      val testOutputDirectory: os.Path = outputDirectory / "arch-test"
+      os.remove.all(testOutputDirectory)
+      os.makeDir.all(testOutputDirectory)
+      val configs = Seq(classOf[TestConfig], classOf[freechips.rocketchip.system.DefaultConfig])
+      val emulator = TestHarness(testHarness, configs, Some(testOutputDirectory)).emulator
+
+      // arch-test part
+      val archTestConfig = testOutputDirectory / "config.ini"
+      os.write(archTestConfig,
+        s"""[RISCOF]
+           |ReferencePlugin=spike
+           |ReferencePluginPath=spike
+           |DUTPlugin=emulator
+           |DUTPluginPath=emulator
+           |
+           |[spike]
+           |pluginpath=spike
+           |ispec=spike/spike_isa.yaml
+           |pspec=spike/spike_platform.yaml
+           |target_run=1
+           |jobs=36
+           |PATH=${(os.pwd / "out" / "spike" / "compile.dest").toString}
+           |
+           |[emulator]
+           |pluginpath=emulator
+           |ispec=emulator/emulator_isa.yaml
+           |pspec=emulator/emulator_platform.yaml
+           |target_run=1
+           |jobs=36
+           |PATH=${(testOutputDirectory / "build").toString}
+           |""".stripMargin
+        )
+      os.proc("riscof", "--verbose", "info", "arch-test", "--clone").call(os.pwd / "arch-test")
+      os.proc("riscof", "run", s"--config=${archTestConfig.toString}", "--suite=riscv-arch-test/riscv-test-suite/", "--env=riscv-arch-test/riscv-test-suite/env").call(os.pwd / "arch-test")
+    }
   }
 }
