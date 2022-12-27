@@ -29,7 +29,7 @@ class DesignKeyWrapper()(implicit p: Parameters) extends LazyModule {
     systemJtag.version := p(JtagDTMKey).idcodeVersion.U(4.W)
     Debug.connectDebugClockAndReset(subsystem.module.debug, childClock)
     subsystem.module.resetctrl.foreach { rc =>
-      rc.hartIsInReset.foreach { _ := childReset.asBool() }
+      rc.hartIsInReset.foreach { _ := childReset.asBool }
     }
   }
   // generate and connect clock tree.
