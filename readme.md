@@ -78,23 +78,35 @@ then open by your favorite IDE, which supports [BSP](https://build-server-protoc
 Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
+barstools https://github.com/ucb-bar/barstools/pull/124.diff  
 berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/67.diff  
+berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/70.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1242.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1264.diff  
 constellation https://github.com/ucb-bar/constellation/pull/28.diff  
+dsptools https://github.com/ucb-bar/dsptools/pull/243.diff  
 dsptools https://github.com/ucb-bar/dsptools/pull/240.diff  
-firesim https://github.com/firesim/firesim/pull/1214.diff  
+FFTGenerator https://github.com/ucb-bar/FFTGenerator/pull/3.diff  
 firesim https://github.com/firesim/firesim/pull/1250.diff  
+firesim https://github.com/firesim/firesim/pull/1349.diff  
+gemmini https://github.com/ucb-bar/gemmini/pull/269.diff  
 hwacha https://github.com/ucb-bar/hwacha/pull/39.diff  
+hwacha https://github.com/ucb-bar/hwacha/pull/41.diff  
 icenet https://github.com/firesim/icenet/pull/35.diff  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/616.diff  
+riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/73.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3103.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3178.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3188.diff  
+rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/8.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
+rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/7.diff  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2.diff  
+rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/8.diff  
 rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6.diff  
+rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/9.diff  
 testchipip https://github.com/ucb-bar/testchipip/pull/149.diff  
 <!-- END-PATCH -->
 
