@@ -49,9 +49,6 @@
 [submodule "barstools"]
 	path = dependencies/barstools
 	url = git@github.com:ucb-bar/barstools.git
-[submodule "dsptools"]
-	path = dependencies/dsptools
-	url = git@github.com:ucb-bar/dsptools.git
 [submodule "gemmini"]
 	path = dependencies/gemmini
 	url = git@github.com:ucb-bar/gemmini.git
@@ -73,9 +70,6 @@
 [submodule "dependencies/riscv-isa-sim"]
 	path = dependencies/riscv-isa-sim
 	url = git@github.com:riscv/riscv-isa-sim.git
-[submodule "dependencies/rocket-dsp-utils"]
-	path = dependencies/rocket-dsp-utils
-	url = git@github.com:ucb-bar/rocket-dsp-utils.git
 [submodule "dependencies/ibex-wrapper"]
 	path = dependencies/ibex-wrapper
 	url = git@github.com:ucb-bar/ibex-wrapper.git
