@@ -73,9 +73,6 @@
 [submodule "dependencies/ibex-wrapper"]
 	path = dependencies/ibex-wrapper
 	url = git@github.com:ucb-bar/ibex-wrapper.git
-[submodule "dependencies/FFTGenerator"]
-	path = dependencies/FFTGenerator
-	url = git@github.com:ucb-bar/FFTGenerator.git
 [submodule "dependencies/llvm-project"]
 	path = dependencies/llvm-project
 	url = git@github.com:llvm/llvm-project.git

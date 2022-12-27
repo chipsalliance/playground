@@ -84,9 +84,6 @@ berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/70.diff
 chipyard https://github.com/ucb-bar/chipyard/pull/1242.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1264.diff  
 constellation https://github.com/ucb-bar/constellation/pull/28.diff  
-dsptools https://github.com/ucb-bar/dsptools/pull/243.diff  
-dsptools https://github.com/ucb-bar/dsptools/pull/240.diff  
-FFTGenerator https://github.com/ucb-bar/FFTGenerator/pull/3.diff  
 firesim https://github.com/firesim/firesim/pull/1250.diff  
 firesim https://github.com/firesim/firesim/pull/1349.diff  
 gemmini https://github.com/ucb-bar/gemmini/pull/269.diff  
@@ -105,8 +102,6 @@ rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusi
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/7.diff  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2.diff  
 rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/8.diff  
-rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/6.diff  
-rocket-dsp-utils https://github.com/ucb-bar/rocket-dsp-utils/pull/9.diff  
 testchipip https://github.com/ucb-bar/testchipip/pull/149.diff  
 <!-- END-PATCH -->
 
