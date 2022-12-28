@@ -85,6 +85,7 @@ chipyard https://github.com/ucb-bar/chipyard/pull/1242.diff
 chipyard https://github.com/ucb-bar/chipyard/pull/1264.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1296.diff  
 constellation https://github.com/ucb-bar/constellation/pull/28.diff  
+constellation https://github.com/ucb-bar/constellation/pull/33.diff  
 firesim https://github.com/firesim/firesim/pull/1250.diff  
 firesim https://github.com/firesim/firesim/pull/1349.diff  
 gemmini https://github.com/ucb-bar/gemmini/pull/269.diff  
