@@ -90,6 +90,7 @@ constellation https://github.com/ucb-bar/constellation/pull/33.diff
 firesim https://github.com/firesim/firesim/pull/1250.diff  
 firesim https://github.com/firesim/firesim/pull/1349.diff  
 firesim https://github.com/firesim/firesim/pull/1375.diff  
+gemmini https://github.com/ucb-bar/gemmini/pull/269.diff  
 gemmini https://github.com/ucb-bar/gemmini/pull/273.diff  
 hwacha https://github.com/ucb-bar/hwacha/pull/42.diff  
 icenet https://github.com/firesim/icenet/pull/35.diff  
