@@ -98,7 +98,9 @@ rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968.diff
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3103.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3178.diff  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3188.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3198.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3200.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3204.diff  
 rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/8.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/7.diff  
