@@ -76,7 +76,7 @@ case class TestHarness[M <: RawModule](
          |add_executable(emulator $csrcs)
          |set(CMAKE_C_COMPILER "clang")
          |set(CMAKE_CXX_COMPILER "clang++")
-         |set(CMAKE_CXX_FLAGS "$${CMAKE_CXX_FLAGS} -DVERILATOR -DTEST_HARNESS=VTestHarness -std=c++11 -include ${resource("csrc/verilator.h")} -include ${outputDirectory / "TestHarness.plusArgs"} -include VTestHarness.h")
+         |set(CMAKE_CXX_FLAGS "$${CMAKE_CXX_FLAGS} -DVERILATOR -DTEST_HARNESS=VTestHarness -std=c++17 -include ${resource("csrc/verilator.h")} -include ${outputDirectory / "TestHarness.plusArgs"} -include VTestHarness.h")
          |set(THREADS_PREFER_PTHREAD_FLAG ON)
          |find_package(Threads)
          |target_link_libraries(emulator PRIVATE $${CMAKE_THREAD_LIBS_INIT})
