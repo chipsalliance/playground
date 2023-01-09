@@ -14,9 +14,9 @@ ledtm_t::~ledtm_t()
 {
 }
 
-memif_endianness_t ledtm_t::get_target_endianness() const
+endianness_t ledtm_t::get_target_endianness() const
 {
-  return memif_endianness_little;
+  return endianness_little;
 }
 
 ledtm_t* dtm;
