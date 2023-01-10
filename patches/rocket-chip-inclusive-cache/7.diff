@@ -1,0 +1,120 @@
+diff --git a/design/craft/inclusivecache/src/Directory.scala b/design/craft/inclusivecache/src/Directory.scala
+index 613c553..81196f3 100644
+--- a/design/craft/inclusivecache/src/Directory.scala
++++ b/design/craft/inclusivecache/src/Directory.scala
+@@ -128,7 +128,7 @@ class Directory(params: InclusiveCacheParameters) extends Module
+   val hits = Cat(ways.zipWithIndex.map { case (w, i) =>
+     w.tag === tag && w.state =/= INVALID && (!setQuash || UInt(i) =/= bypass.way)
+   }.reverse)
+-  val hit = hits.orR()
++  val hit = hits.orR
+ 
+   io.result.valid := ren2
+   io.result.bits := Mux(hit, Mux1H(hits, ways), Mux(setQuash && (tagMatch || wayMatch), bypass.data, Mux1H(victimWayOH, ways)))
+diff --git a/design/craft/inclusivecache/src/ListBuffer.scala b/design/craft/inclusivecache/src/ListBuffer.scala
+index d707f5d..26239f9 100644
+--- a/design/craft/inclusivecache/src/ListBuffer.scala
++++ b/design/craft/inclusivecache/src/ListBuffer.scala
+@@ -60,7 +60,7 @@ class ListBuffer[T <: Data](params: ListBufferParameters[T]) extends Module
+   val push_tail = tail.read(io.push.bits.index)
+   val push_valid = valid(io.push.bits.index)
+ 
+-  io.push.ready := !used.andR()
++  io.push.ready := !used.andR
+   when (io.push.fire()) {
+     valid_set := UIntToOH(io.push.bits.index, params.queues)
+     used_set := freeOH
+diff --git a/design/craft/inclusivecache/src/Scheduler.scala b/design/craft/inclusivecache/src/Scheduler.scala
+index bd13d37..9efce19 100644
+--- a/design/craft/inclusivecache/src/Scheduler.scala
++++ b/design/craft/inclusivecache/src/Scheduler.scala
+@@ -123,7 +123,7 @@ class Scheduler(params: InclusiveCacheParameters) extends Module
+   val scheduleSet = Mux1H(mshr_selectOH, mshrs.map(_.io.status.bits.set))
+ 
+   // When an MSHR wins the schedule, it has lowest priority next time
+-  when (mshr_request.orR()) { robin_filter := ~rightOR(mshr_selectOH) }
++  when (mshr_request.orR) { robin_filter := ~rightOR(mshr_selectOH) }
+ 
+   // Fill in which MSHR sends the request
+   schedule.a.bits.source := mshr_select
+@@ -159,7 +159,7 @@ class Scheduler(params: InclusiveCacheParameters) extends Module
+ 
+   // If no MSHR has been assigned to this set, we need to allocate one
+   val setMatches = Cat(mshrs.map { m => m.io.status.valid && m.io.status.bits.set === request.bits.set }.reverse)
+-  val alloc = !setMatches.orR() // NOTE: no matches also means no BC or C pre-emption on this set
++  val alloc = !setMatches.orR // NOTE: no matches also means no BC or C pre-emption on this set
+   // If a same-set MSHR says that requests of this type must be blocked (for bounded time), do it
+   val blockB = Mux1H(setMatches, mshrs.map(_.io.status.bits.blockB)) && request.bits.prio(1)
+   val blockC = Mux1H(setMatches, mshrs.map(_.io.status.bits.blockC)) && request.bits.prio(2)
+@@ -171,7 +171,7 @@ class Scheduler(params: InclusiveCacheParameters) extends Module
+   val prioFilter = Cat(request.bits.prio(2), !request.bits.prio(0), ~UInt(0, width = params.mshrs-2))
+   val lowerMatches = setMatches & prioFilter
+   // If we match an MSHR <= our priority that neither blocks nor nests us, queue to it.
+-  val queue = lowerMatches.orR() && !nestB && !nestC && !blockB && !blockC
++  val queue = lowerMatches.orR && !nestB && !nestC && !blockB && !blockC
+ 
+   if (!params.lastLevel) {
+     params.ccover(request.valid && blockB, "SCHEDULER_BLOCKB", "Interlock B request while resolving set conflict")
+@@ -193,10 +193,10 @@ class Scheduler(params: InclusiveCacheParameters) extends Module
+   // If this goes to the scheduled MSHR, it may need to be bypassed
+   // Alternatively, the MSHR may be refilled from a request queued in the ListBuffer
+   val selected_requests = Cat(mshr_selectOH, mshr_selectOH, mshr_selectOH) & requests.io.valid
+-  val a_pop = selected_requests((0 + 1) * params.mshrs - 1, 0 * params.mshrs).orR()
+-  val b_pop = selected_requests((1 + 1) * params.mshrs - 1, 1 * params.mshrs).orR()
+-  val c_pop = selected_requests((2 + 1) * params.mshrs - 1, 2 * params.mshrs).orR()
+-  val bypassMatches = (mshr_selectOH & lowerMatches1).orR() &&
++  val a_pop = selected_requests((0 + 1) * params.mshrs - 1, 0 * params.mshrs).orR
++  val b_pop = selected_requests((1 + 1) * params.mshrs - 1, 1 * params.mshrs).orR
++  val c_pop = selected_requests((2 + 1) * params.mshrs - 1, 2 * params.mshrs).orR
++  val bypassMatches = (mshr_selectOH & lowerMatches1).orR &&
+                       Mux(c_pop || request.bits.prio(2), !c_pop, Mux(b_pop || request.bits.prio(1), !b_pop, !a_pop))
+   val may_pop = a_pop || b_pop || c_pop
+   val bypass = request.valid && queue && bypassMatches
+@@ -239,7 +239,7 @@ class Scheduler(params: InclusiveCacheParameters) extends Module
+ 
+   // Is there an MSHR free for this request?
+   val mshr_validOH = Cat(mshrs.map(_.io.status.valid).reverse)
+-  val mshr_free = (~mshr_validOH & prioFilter).orR()
++  val mshr_free = (~mshr_validOH & prioFilter).orR
+ 
+   // Fanout the request to the appropriate handler (if any)
+   val bypassQueue = schedule.reload && bypassMatches
+diff --git a/design/craft/inclusivecache/src/SinkA.scala b/design/craft/inclusivecache/src/SinkA.scala
+index 217994c..9712f2c 100644
+--- a/design/craft/inclusivecache/src/SinkA.scala
++++ b/design/craft/inclusivecache/src/SinkA.scala
+@@ -54,7 +54,7 @@ class SinkA(params: InclusiveCacheParameters) extends Module
+   val lists_clr = Wire(init = UInt(0, width = params.putLists))
+   lists := (lists | lists_set) & ~lists_clr
+ 
+-  val free = !lists.andR()
++  val free = !lists.andR
+   val freeOH = ~(leftOR(~lists) << 1) & ~lists
+   val freeIdx = OHToUInt(freeOH)
+ 
+diff --git a/design/craft/inclusivecache/src/SinkC.scala b/design/craft/inclusivecache/src/SinkC.scala
+index 4e7d179..7bc0acb 100644
+--- a/design/craft/inclusivecache/src/SinkC.scala
++++ b/design/craft/inclusivecache/src/SinkC.scala
+@@ -113,7 +113,7 @@ class SinkC(params: InclusiveCacheParameters) extends Module
+     val lists_clr = Wire(init = UInt(0, width = params.relLists))
+     lists := (lists | lists_set) & ~lists_clr
+ 
+-    val free = !lists.andR()
++    val free = !lists.andR
+     val freeOH = ~(leftOR(~lists) << 1) & ~lists
+     val freeIdx = OHToUInt(freeOH)
+ 
+diff --git a/design/craft/inclusivecache/src/SourceB.scala b/design/craft/inclusivecache/src/SourceB.scala
+index 66e285c..8384597 100644
+--- a/design/craft/inclusivecache/src/SourceB.scala
++++ b/design/craft/inclusivecache/src/SourceB.scala
+@@ -46,7 +46,7 @@ class SourceB(params: InclusiveCacheParameters) extends Module
+     val remain_clr = Wire(init = UInt(0, width=params.clientBits))
+     remain := (remain | remain_set) & ~remain_clr
+ 
+-    val busy = remain.orR()
++    val busy = remain.orR
+     val todo = Mux(busy, remain, io.req.bits.clients)
+     val next = ~(leftOR(todo) << 1) & todo
+ 

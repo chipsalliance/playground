@@ -1,0 +1,338 @@
+diff --git a/src/main/scala/common/util.scala b/src/main/scala/common/util.scala
+index 3ba7b90..3be6dfb 100644
+--- a/src/main/scala/common/util.scala
++++ b/src/main/scala/common/util.scala
+@@ -73,7 +73,7 @@ object PerformShiftRegister
+ {
+    def apply(reg_val: Bits, new_bit: Bool): Bits =
+    {
+-      reg_val := Cat(reg_val(reg_val.getWidth-1, 0).asUInt(), new_bit.asUInt()).asUInt()
++      reg_val := Cat(reg_val(reg_val.getWidth-1, 0).asUInt, new_bit.asUInt).asUInt
+       reg_val
+    }
+ }
+@@ -184,7 +184,7 @@ object Str
+   def apply(x: SInt): Bits = apply(x, 10)
+   def apply(x: SInt, radix: Int): Bits = {
+     val neg = x < 0.S
+-    val abs = Mux(neg, -x, x).asUInt()
++    val abs = Mux(neg, -x, x).asUInt
+     if (radix != 10) {
+       Cat(Mux(neg, Str('-'), Str(' ')), Str(abs, radix))
+     } else {
+diff --git a/src/main/scala/rv32_1stage/dpath.scala b/src/main/scala/rv32_1stage/dpath.scala
+index 63b8e5d..b9ba688 100644
+--- a/src/main/scala/rv32_1stage/dpath.scala
++++ b/src/main/scala/rv32_1stage/dpath.scala
+@@ -155,40 +155,40 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+                (io.ctl.op1_sel === OP1_RS1) -> rs1_data,
+                (io.ctl.op1_sel === OP1_IMU) -> imm_u_sext,
+                (io.ctl.op1_sel === OP1_IMZ) -> imm_z
+-               )).asUInt()
++               )).asUInt
+ 
+    val alu_op2 = MuxCase(0.U, Array(
+                (io.ctl.op2_sel === OP2_RS2) -> rs2_data,
+                (io.ctl.op2_sel === OP2_PC)  -> pc_reg,
+                (io.ctl.op2_sel === OP2_IMI) -> imm_i_sext,
+                (io.ctl.op2_sel === OP2_IMS) -> imm_s_sext
+-               )).asUInt()
++               )).asUInt
+ 
+ 
+ 
+    // ALU
+    val alu_out   = Wire(UInt(conf.xprlen.W))
+ 
+-   val alu_shamt = alu_op2(4,0).asUInt()
++   val alu_shamt = alu_op2(4,0).asUInt
+ 
+    alu_out := MuxCase(0.U, Array(
+-                  (io.ctl.alu_fun === ALU_ADD)  -> (alu_op1 + alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SUB)  -> (alu_op1 - alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_AND)  -> (alu_op1 & alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_OR)   -> (alu_op1 | alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_XOR)  -> (alu_op1 ^ alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SLT)  -> (alu_op1.asSInt() < alu_op2.asSInt()).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SLTU) -> (alu_op1 < alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SLL)  -> ((alu_op1 << alu_shamt)(conf.xprlen-1, 0)).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SRA)  -> (alu_op1.asSInt() >> alu_shamt).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SRL)  -> (alu_op1 >> alu_shamt).asUInt(),
++                  (io.ctl.alu_fun === ALU_ADD)  -> (alu_op1 + alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_SUB)  -> (alu_op1 - alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_AND)  -> (alu_op1 & alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_OR)   -> (alu_op1 | alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_XOR)  -> (alu_op1 ^ alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_SLT)  -> (alu_op1.asSInt < alu_op2.asSInt).asUInt,
++                  (io.ctl.alu_fun === ALU_SLTU) -> (alu_op1 < alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_SLL)  -> ((alu_op1 << alu_shamt)(conf.xprlen-1, 0)).asUInt,
++                  (io.ctl.alu_fun === ALU_SRA)  -> (alu_op1.asSInt >> alu_shamt).asUInt,
++                  (io.ctl.alu_fun === ALU_SRL)  -> (alu_op1 >> alu_shamt).asUInt,
+                   (io.ctl.alu_fun === ALU_COPY1)-> alu_op1
+                   ))
+ 
+    // Branch/Jump Target Calculation
+    br_target       := pc_reg + imm_b_sext
+    jmp_target      := pc_reg + imm_j_sext
+-   jump_reg_target := (rs1_data.asUInt() + imm_i_sext.asUInt()) & ~1.U(conf.xprlen.W)
++   jump_reg_target := (rs1_data.asUInt + imm_i_sext.asUInt) & ~1.U(conf.xprlen.W)
+ 
+    // Control Status Registers
+    val csr = Module(new CSRFile(perfEventSets=CSREvents.events))
+@@ -240,13 +240,13 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // datapath to controlpath outputs
+    io.dat.inst   := inst
+    io.dat.br_eq  := (rs1_data === rs2_data)
+-   io.dat.br_lt  := (rs1_data.asSInt() < rs2_data.asSInt())
+-   io.dat.br_ltu := (rs1_data.asUInt() < rs2_data.asUInt())
++   io.dat.br_lt  := (rs1_data.asSInt < rs2_data.asSInt)
++   io.dat.br_ltu := (rs1_data.asUInt < rs2_data.asUInt)
+ 
+ 
+    // datapath to data memory outputs
+    io.dmem.req.bits.addr := alu_out
+-   io.dmem.req.bits.data := rs2_data.asUInt()
++   io.dmem.req.bits.data := rs2_data.asUInt
+ 
+    io.dat.mem_address_low := alu_out(2, 0)
+    tval_data_ma := alu_out
+diff --git a/src/main/scala/rv32_2stage/dpath.scala b/src/main/scala/rv32_2stage/dpath.scala
+index 756ec22..9e2c938 100644
+--- a/src/main/scala/rv32_2stage/dpath.scala
++++ b/src/main/scala/rv32_2stage/dpath.scala
+@@ -178,39 +178,39 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+                (io.ctl.op1_sel === OP1_RS1) -> exe_rs1_data,
+                (io.ctl.op1_sel === OP1_IMU) -> imm_u_sext,
+                (io.ctl.op1_sel === OP1_IMZ) -> imm_z
+-               )).asUInt()
++               )).asUInt
+ 
+    val exe_alu_op2 = MuxCase(0.U, Array(
+                (io.ctl.op2_sel === OP2_RS2) -> exe_rs2_data,
+                (io.ctl.op2_sel === OP2_PC)  -> exe_reg_pc,
+                (io.ctl.op2_sel === OP2_IMI) -> imm_i_sext,
+                (io.ctl.op2_sel === OP2_IMS) -> imm_s_sext
+-               )).asUInt()
++               )).asUInt
+ 
+ 
+    // ALU
+    val exe_alu_out   = Wire(UInt(conf.xprlen.W))
+ 
+-   val alu_shamt = exe_alu_op2(4,0).asUInt()
++   val alu_shamt = exe_alu_op2(4,0).asUInt
+ 
+    exe_alu_out := MuxCase(0.U, Array(
+-                  (io.ctl.alu_fun === ALU_ADD)  -> (exe_alu_op1 + exe_alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SUB)  -> (exe_alu_op1 - exe_alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_AND)  -> (exe_alu_op1 & exe_alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_OR)   -> (exe_alu_op1 | exe_alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_XOR)  -> (exe_alu_op1 ^ exe_alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SLT)  -> (exe_alu_op1.asSInt() < exe_alu_op2.asSInt()).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SLTU) -> (exe_alu_op1 < exe_alu_op2).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SLL)  -> ((exe_alu_op1 << alu_shamt)(conf.xprlen-1, 0)).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SRA)  -> (exe_alu_op1.asSInt() >> alu_shamt).asUInt(),
+-                  (io.ctl.alu_fun === ALU_SRL)  -> (exe_alu_op1 >> alu_shamt).asUInt(),
++                  (io.ctl.alu_fun === ALU_ADD)  -> (exe_alu_op1 + exe_alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_SUB)  -> (exe_alu_op1 - exe_alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_AND)  -> (exe_alu_op1 & exe_alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_OR)   -> (exe_alu_op1 | exe_alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_XOR)  -> (exe_alu_op1 ^ exe_alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_SLT)  -> (exe_alu_op1.asSInt < exe_alu_op2.asSInt).asUInt,
++                  (io.ctl.alu_fun === ALU_SLTU) -> (exe_alu_op1 < exe_alu_op2).asUInt,
++                  (io.ctl.alu_fun === ALU_SLL)  -> ((exe_alu_op1 << alu_shamt)(conf.xprlen-1, 0)).asUInt,
++                  (io.ctl.alu_fun === ALU_SRA)  -> (exe_alu_op1.asSInt >> alu_shamt).asUInt,
++                  (io.ctl.alu_fun === ALU_SRL)  -> (exe_alu_op1 >> alu_shamt).asUInt,
+                   (io.ctl.alu_fun === ALU_COPY1)-> exe_alu_op1
+                   ))
+ 
+    // Branch/Jump Target Calculation
+    exe_br_target       := exe_reg_pc + imm_b_sext
+    exe_jmp_target      := exe_reg_pc + imm_j_sext
+-   exe_jump_reg_target := (exe_rs1_data.asUInt() + imm_i_sext.asUInt()) & ~1.U(conf.xprlen.W)
++   exe_jump_reg_target := (exe_rs1_data.asUInt + imm_i_sext.asUInt) & ~1.U(conf.xprlen.W)
+ 
+    // Instruction misalignment detection
+    // In control path, instruction misalignment exception is always raised in the next cycle once the misaligned instruction reaches
+@@ -276,8 +276,8 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // datapath to controlpath outputs
+    io.dat.inst   := exe_reg_inst
+    io.dat.br_eq  := (exe_rs1_data === exe_rs2_data)
+-   io.dat.br_lt  := (exe_rs1_data.asSInt() < exe_rs2_data.asSInt())
+-   io.dat.br_ltu := (exe_rs1_data.asUInt() < exe_rs2_data.asUInt())
++   io.dat.br_lt  := (exe_rs1_data.asSInt < exe_rs2_data.asSInt)
++   io.dat.br_ltu := (exe_rs1_data.asUInt < exe_rs2_data.asUInt)
+ 
+    // Data misalignment detection
+    // For example, if type is 3 (word), the mask is ~(0b111 << (3 - 1)) = ~0b100 = 0b011.
+@@ -289,7 +289,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+ 
+    // datapath to data memory outputs
+    io.dmem.req.bits.addr := exe_alu_out
+-   io.dmem.req.bits.data := exe_rs2_data.asUInt()
++   io.dmem.req.bits.data := exe_rs2_data.asUInt
+ 
+ 
+    // Printout
+diff --git a/src/main/scala/rv32_3stage/alu.scala b/src/main/scala/rv32_3stage/alu.scala
+index 7e11443..d721c9a 100644
+--- a/src/main/scala/rv32_3stage/alu.scala
++++ b/src/main/scala/rv32_3stage/alu.scala
+@@ -55,10 +55,10 @@ class ALU(implicit val conf: SodorCoreParams) extends Module
+ 
+   require(conf.xprlen == 32)
+   // SLL, SRL, SRA
+-  val shamt = io.in2(4,0).asUInt()
++  val shamt = io.in2(4,0).asUInt
+   val shin_r = io.in1(31,0)
+   val shin = Mux(io.fn === ALU_SRL  || io.fn === ALU_SRA, shin_r, Reverse(shin_r))
+-  val shout_r = (Cat(isSub(io.fn) & shin(msb), shin).asSInt() >> shamt)(msb,0)
++  val shout_r = (Cat(isSub(io.fn) & shin(msb), shin).asSInt >> shamt)(msb,0)
+   val shout_l = Reverse(shout_r)
+ 
+   val bitwise_logic =
+@@ -74,6 +74,6 @@ class ALU(implicit val conf: SodorCoreParams) extends Module
+     Mux(io.fn === ALU_SLL,                       shout_l,
+         bitwise_logic))))
+ 
+-  io.out := out_xpr_length(31,0).asUInt()
++  io.out := out_xpr_length(31,0).asUInt
+   io.adder_out := sum
+ }
+diff --git a/src/main/scala/rv32_3stage/dpath.scala b/src/main/scala/rv32_3stage/dpath.scala
+index 678ab42..669457d 100644
+--- a/src/main/scala/rv32_3stage/dpath.scala
++++ b/src/main/scala/rv32_3stage/dpath.scala
+@@ -178,12 +178,12 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    // Operand Muxes
+    val exe_alu_op1 = Mux(io.ctl.op1_sel === OP1_IMZ, imm_z,
+                      Mux(io.ctl.op1_sel === OP1_IMU, imm_u,
+-                                                     exe_rs1_data)).asUInt()
++                                                     exe_rs1_data)).asUInt
+ 
+    val exe_alu_op2 = Mux(io.ctl.op2_sel === OP2_IMI, imm_i_sext,
+                      Mux(io.ctl.op2_sel === OP2_PC,  exe_pc,
+                      Mux(io.ctl.op2_sel === OP2_IMS, imm_s_sext,
+-                                                     exe_rs2_data))).asUInt()
++                                                     exe_rs2_data))).asUInt
+ 
+ 
+    // ALU
+@@ -203,8 +203,8 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+ 
+    // datapath to controlpath outputs
+    io.dat.br_eq  := (exe_rs1_data === exe_rs2_data)
+-   io.dat.br_lt  := (exe_rs1_data.asSInt() < exe_rs2_data.asSInt())
+-   io.dat.br_ltu := (exe_rs1_data.asUInt() < exe_rs2_data.asUInt())
++   io.dat.br_lt  := (exe_rs1_data.asSInt < exe_rs2_data.asSInt)
++   io.dat.br_ltu := (exe_rs1_data.asUInt < exe_rs2_data.asUInt)
+ 
+    // Data misalignment detection
+    // For example, if type is 3 (word), the mask is ~(0b111 << (3 - 1)) = ~0b100 = 0b011.
+diff --git a/src/main/scala/rv32_5stage/dpath.scala b/src/main/scala/rv32_5stage/dpath.scala
+index ace3cd8..13746f9 100644
+--- a/src/main/scala/rv32_5stage/dpath.scala
++++ b/src/main/scala/rv32_5stage/dpath.scala
+@@ -253,7 +253,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+                (io.ctl.op2_sel === OP2_SBTYPE) -> imm_sbtype_sext,
+                (io.ctl.op2_sel === OP2_UTYPE)  -> imm_utype_sext,
+                (io.ctl.op2_sel === OP2_UJTYPE) -> imm_ujtype_sext
+-               )).asUInt()
++               )).asUInt
+ 
+ 
+ 
+@@ -354,25 +354,25 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    //**********************************
+    // Execute Stage
+ 
+-   val exe_alu_op1 = exe_reg_op1_data.asUInt()
+-   val exe_alu_op2 = exe_reg_op2_data.asUInt()
++   val exe_alu_op1 = exe_reg_op1_data.asUInt
++   val exe_alu_op2 = exe_reg_op2_data.asUInt
+ 
+    // ALU
+-   val alu_shamt     = exe_alu_op2(4,0).asUInt()
++   val alu_shamt     = exe_alu_op2(4,0).asUInt
+    val exe_adder_out = (exe_alu_op1 + exe_alu_op2)(conf.xprlen-1,0)
+ 
+    //only for debug purposes right now until debug() works
+-   exe_alu_out := MuxCase(exe_reg_inst.asUInt(), Array(
++   exe_alu_out := MuxCase(exe_reg_inst.asUInt, Array(
+                   (exe_reg_ctrl_alu_fun === ALU_ADD)  -> exe_adder_out,
+-                  (exe_reg_ctrl_alu_fun === ALU_SUB)  -> (exe_alu_op1 - exe_alu_op2).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_AND)  -> (exe_alu_op1 & exe_alu_op2).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_OR)   -> (exe_alu_op1 | exe_alu_op2).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_XOR)  -> (exe_alu_op1 ^ exe_alu_op2).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_SLT)  -> (exe_alu_op1.asSInt() < exe_alu_op2.asSInt()).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_SLTU) -> (exe_alu_op1 < exe_alu_op2).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_SLL)  -> ((exe_alu_op1 << alu_shamt)(conf.xprlen-1, 0)).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_SRA)  -> (exe_alu_op1.asSInt() >> alu_shamt).asUInt(),
+-                  (exe_reg_ctrl_alu_fun === ALU_SRL)  -> (exe_alu_op1 >> alu_shamt).asUInt(),
++                  (exe_reg_ctrl_alu_fun === ALU_SUB)  -> (exe_alu_op1 - exe_alu_op2).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_AND)  -> (exe_alu_op1 & exe_alu_op2).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_OR)   -> (exe_alu_op1 | exe_alu_op2).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_XOR)  -> (exe_alu_op1 ^ exe_alu_op2).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_SLT)  -> (exe_alu_op1.asSInt < exe_alu_op2.asSInt).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_SLTU) -> (exe_alu_op1 < exe_alu_op2).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_SLL)  -> ((exe_alu_op1 << alu_shamt)(conf.xprlen-1, 0)).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_SRA)  -> (exe_alu_op1.asSInt >> alu_shamt).asUInt,
++                  (exe_reg_ctrl_alu_fun === ALU_SRL)  -> (exe_alu_op1 >> alu_shamt).asUInt,
+                   (exe_reg_ctrl_alu_fun === ALU_COPY_1)-> exe_alu_op1,
+                   (exe_reg_ctrl_alu_fun === ALU_COPY_2)-> exe_alu_op2
+                   ))
+@@ -502,15 +502,15 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    io.dat.dec_valid  := dec_reg_valid
+    io.dat.dec_inst   := dec_reg_inst
+    io.dat.exe_br_eq  := (exe_reg_op1_data === exe_reg_rs2_data)
+-   io.dat.exe_br_lt  := (exe_reg_op1_data.asSInt() < exe_reg_rs2_data.asSInt())
+-   io.dat.exe_br_ltu := (exe_reg_op1_data.asUInt() < exe_reg_rs2_data.asUInt())
++   io.dat.exe_br_lt  := (exe_reg_op1_data.asSInt < exe_reg_rs2_data.asSInt)
++   io.dat.exe_br_ltu := (exe_reg_op1_data.asUInt < exe_reg_rs2_data.asUInt)
+    io.dat.exe_br_type:= exe_reg_ctrl_br_type
+ 
+    io.dat.mem_ctrl_dmem_val := mem_reg_ctrl_mem_val
+ 
+    // datapath to data memory outputs
+    io.dmem.req.valid     := mem_reg_ctrl_mem_val && !io.dat.mem_data_misaligned
+-   io.dmem.req.bits.addr := mem_reg_alu_out.asUInt()
++   io.dmem.req.bits.addr := mem_reg_alu_out.asUInt
+    io.dmem.req.bits.fcn  := mem_reg_ctrl_mem_fcn
+    io.dmem.req.bits.typ  := mem_reg_ctrl_mem_typ
+    io.dmem.req.bits.data := mem_reg_rs2_data
+diff --git a/src/main/scala/rv32_ucode/dpath.scala b/src/main/scala/rv32_ucode/dpath.scala
+index 75e2f7f..b904bb9 100644
+--- a/src/main/scala/rv32_ucode/dpath.scala
++++ b/src/main/scala/rv32_ucode/dpath.scala
+@@ -209,7 +209,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    csr.io.counters.foreach(_.inc := false.B)
+ 
+    // ALU
+-   val alu_shamt = reg_b(4,0).asUInt()
++   val alu_shamt = reg_b(4,0).asUInt
+ 
+    alu := MuxCase(0.U, Array[(Bool, UInt)](
+               (io.ctl.alu_op === ALU_COPY_A)  ->  reg_a,
+@@ -222,11 +222,11 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+               (io.ctl.alu_op === ALU_SUB)     ->  (reg_a  -  reg_b),
+               (io.ctl.alu_op === ALU_SLL)     -> ((reg_a << alu_shamt)(conf.xprlen-1,0)),
+               (io.ctl.alu_op === ALU_SRL)     ->  (reg_a >> alu_shamt),
+-              (io.ctl.alu_op === ALU_SRA)     ->  (reg_a.asSInt() >> alu_shamt).asUInt(),
++              (io.ctl.alu_op === ALU_SRA)     ->  (reg_a.asSInt >> alu_shamt).asUInt,
+               (io.ctl.alu_op === ALU_AND)     ->  (reg_a & reg_b),
+               (io.ctl.alu_op === ALU_OR)      ->  (reg_a | reg_b),
+               (io.ctl.alu_op === ALU_XOR)     ->  (reg_a ^ reg_b),
+-              (io.ctl.alu_op === ALU_SLT)     ->  (reg_a.asSInt() < reg_b.asSInt()).asUInt(),
++              (io.ctl.alu_op === ALU_SLT)     ->  (reg_a.asSInt < reg_b.asSInt).asUInt,
+               (io.ctl.alu_op === ALU_SLTU)    ->  (reg_a < reg_b),
+               (io.ctl.alu_op === ALU_MASK_12) ->  (reg_a & ~((1<<12)-1).asUInt(conf.xprlen.W)),
+               (io.ctl.alu_op === ALU_EVEC)    ->  exception_target
+@@ -236,7 +236,7 @@ class DatPath(implicit val p: Parameters, val conf: SodorCoreParams) extends Mod
+    io.dat.alu_zero := (alu === 0.U)
+ 
+    // Output Signals to the Memory
+-   io.mem.req.bits.addr := reg_ma.asUInt()
++   io.mem.req.bits.addr := reg_ma.asUInt
+    io.mem.req.bits.data := bus
+ 
+    // Data misalignment detection

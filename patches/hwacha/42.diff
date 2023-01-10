@@ -1,0 +1,375 @@
+diff --git a/build.sbt b/build.sbt
+index fa75695..6a8ef18 100644
+--- a/build.sbt
++++ b/build.sbt
+@@ -4,4 +4,4 @@ version := "1.2"
+ 
+ name := "hwacha"
+ 
+-scalaVersion := "2.12.10"
++scalaVersion := "2.13.10"
+diff --git a/src/main/scala/TopLevelConfigs.scala b/src/main/scala/TopLevelConfigs.scala
+index 63b8e88..413edcc 100644
+--- a/src/main/scala/TopLevelConfigs.scala
++++ b/src/main/scala/TopLevelConfigs.scala
+@@ -18,14 +18,17 @@ class WithNLanes(n: Int) extends Config((site, here, up) => {
+ })
+ 
+ class With32BtbEntires extends Config((site, here, up) => {
+-  case RocketTilesKey => up(RocketTilesKey, site) map { r =>
+-    r.copy(btb = r.btb.map(_.copy(nEntries = 32)))
++  case TilesLocated(InSubsystem) => up(TilesLocated(InSubsystem), site) map {
++    case tp: RocketTileAttachParams => tp.copy(tileParams = tp.tileParams.copy(
++      btb = tp.tileParams.btb.map(_.copy(nEntries = 32))))
+   }
+ })
+ 
+ class Process28nmConfig extends Config((site, here, up) => {
+-  case RocketTilesKey => up(RocketTilesKey, site) map { r =>
+-    r.copy(core = r.core.copy(fpu = r.core.fpu.map(_.copy(sfmaLatency = 3, dfmaLatency = 4))))
++  case TilesLocated(InSubsystem) => up(TilesLocated(InSubsystem), site) map {
++    case tp: RocketTileAttachParams => tp.copy(tileParams = tp.tileParams.copy(
++      core = tp.tileParams.core.copy(
++        fpu = tp.tileParams.core.fpu.map(_.copy(sfmaLatency = 3, dfmaLatency = 4)))))
+   }
+ })
+ 
+diff --git a/src/main/scala/dcc-mem.scala b/src/main/scala/dcc-mem.scala
+index bbf51c4..1a17efd 100644
+--- a/src/main/scala/dcc-mem.scala
++++ b/src/main/scala/dcc-mem.scala
+@@ -128,7 +128,7 @@ class VPU(implicit p: Parameters) extends VXUModule()(p) with BankLogic {
+   opq.suggestName("opqInst")
+   opq.io.enq <> io.op
+ 
+-  val bpqs = (io.bpqs zipWithIndex) map { case (enq, i) =>
++  val bpqs = (io.bpqs.zipWithIndex) map { case (enq, i) =>
+     val bpq = Module(new Queue(new BPQEntry, nBPQ))
+     bpq.suggestName("bpqInst")
+     val placntr = Module(new LookAheadCounter(nBPQ, nBPQ))
+@@ -152,7 +152,7 @@ class VPU(implicit p: Parameters) extends VXUModule()(p) with BankLogic {
+   val vlen_next = op.vlen - strip
+ 
+   val deq_bpqs = strip_to_bmask(strip)
+-  val mask_bpqs_valid = (bpqs_deq zipWithIndex) map { case (bpq, i) =>
++  val mask_bpqs_valid = (bpqs_deq.zipWithIndex) map { case (bpq, i) =>
+     !deq_bpqs(i) || bpq.valid }
+   val enq_lpred = op.active.enq_vlu()
+   val enq_spred = op.active.enq_vsu()
+@@ -187,13 +187,13 @@ class VPU(implicit p: Parameters) extends VXUModule()(p) with BankLogic {
+     }
+   }
+ 
+-  (bpqs_deq zipWithIndex) map { case (bpq, i) =>
++  (bpqs_deq.zipWithIndex) map { case (bpq, i) =>
+     bpq.ready := fire(mask_bpqs_valid(i), deq_bpqs(i)) }
+   io.pred.valid := fire(io.pred.ready)
+   io.lpred.valid := fire(mask_lpred_ready, enq_lpred)
+   io.spred.valid := fire(mask_spred_ready, enq_spred)
+ 
+-  val pred = Vec((bpqs_deq zipWithIndex) map { case (bpq, i) =>
++  val pred = Vec((bpqs_deq.zipWithIndex) map { case (bpq, i) =>
+     dgate(deq_bpqs(i), bpq.bits.pred(nSlices-1,0)) }).asUInt
+   io.pred.bits.pred := pred
+   io.lpred.bits := pred
+diff --git a/src/main/scala/expander.scala b/src/main/scala/expander.scala
+index bd71690..0f85c84 100644
+--- a/src/main/scala/expander.scala
++++ b/src/main/scala/expander.scala
+@@ -185,7 +185,7 @@ class Expander(implicit p: Parameters) extends VXUModule()(p) {
+     }
+ 
+     def mark_sram_reads = {
+-      (Seq(preg_vs1, preg_vs2, preg_vs3) zipWithIndex) foreach {
++      (Seq(preg_vs1, preg_vs2, preg_vs3).zipWithIndex) foreach {
+         case (fn, idx) => {
+           val read_idx = rport_idx(idx)
+           when (rport_valid(idx)) {
+@@ -415,7 +415,7 @@ class Expander(implicit p: Parameters) extends VXUModule()(p) {
+     }
+ 
+     def mark_lop_sreg(sreg: Vec[Bool], nregs: Int) = {
+-      (Seq(preg_vs1, preg_vs2, preg_vs3) zipWithIndex) map { case (fn, i) =>
++      (Seq(preg_vs1, preg_vs2, preg_vs3).zipWithIndex) map { case (fn, i) =>
+         if (nregs > i) {
+           val rinfo = fn(seq_exp.reg)
+           sreg(i) := rinfo.valid && rinfo.is_scalar()
+@@ -441,7 +441,7 @@ class Expander(implicit p: Parameters) extends VXUModule()(p) {
+       (lop: VFVULaneOp) => { lop.fn := seq_exp.fn.vfvu(); mark_lop_sreg(lop.sreg, 1) })
+ 
+     def mark_vipu = {
+-      (Seq(preg_vs1, preg_vs2, preg_vs3) zipWithIndex) foreach { case (fn, idx) =>
++      (Seq(preg_vs1, preg_vs2, preg_vs3).zipWithIndex) foreach { case (fn, idx) =>
+         check_assert("pred read" + idx, tick_pred_read(idx), UInt(0))
+         assert(fn(seq_vipu.reg).valid, "pred op with no predicate")
+         val e = tick_pred_read(idx).s(0)
+diff --git a/src/main/scala/hwacha.scala b/src/main/scala/hwacha.scala
+index f9ad5e3..e7ff671 100644
+--- a/src/main/scala/hwacha.scala
++++ b/src/main/scala/hwacha.scala
+@@ -250,7 +250,7 @@ class HwachaImp(outer: Hwacha)(implicit p: Parameters) extends LazyRoCCModuleImp
+ 
+   mseq.io.op.valid := fire_vxu(mseq.io.op.ready)
+   mseq.io.op.bits <> scalar.io.vxu.bits
+-  (mseq.io.master.clear zipWithIndex) map { case (c, r) =>
++  (mseq.io.master.clear.zipWithIndex) map { case (c, r) =>
+     c := vus.map(_.io.mseq.clear(r)).reduce(_&&_)
+   }
+   scalar.io.pending.mseq <> mseq.io.pending
+@@ -273,7 +273,7 @@ class HwachaImp(outer: Hwacha)(implicit p: Parameters) extends LazyRoCCModuleImp
+   (vus zip mou.io.check.vus) map { case (vu, mocheck) => vu.io.mocheck <> mocheck }
+   (scalar.io.pending.mrt.vus zip vus) map { case (pending, vu) => pending <> vu.io.pending }
+ 
+-  (vus zipWithIndex) map { case (vu, i) =>
++  (vus.zipWithIndex) map { case (vu, i) =>
+     vu.io.id := UInt(i)
+ 
+     vu.io.cfg <> rocc.io.cfg
+diff --git a/src/main/scala/lane.scala b/src/main/scala/lane.scala
+index 322ce5c..d8f6ccc 100644
+--- a/src/main/scala/lane.scala
++++ b/src/main/scala/lane.scala
+@@ -307,7 +307,7 @@ class Lane(implicit p: Parameters) extends VXUModule()(p) with Packing with Rate
+   banksrw.map { b =>
+     b.wpred.pred := Vec(vfcus.map(_.bits.cmp)).asUInt
+     b.wpred.mask := vfcu_vals
+-    (b.wdata zipWithIndex) map { case (bwdata, i) =>
++    (b.wdata.zipWithIndex) map { case (bwdata, i) =>
+       bwdata.data := wdata(i)
+       bwdata.pred := wdata_pred(i)
+     }
+diff --git a/src/main/scala/scalar-fpu.scala b/src/main/scala/scalar-fpu.scala
+index c4d54c4..04deeba 100644
+--- a/src/main/scala/scalar-fpu.scala
++++ b/src/main/scala/scalar-fpu.scala
+@@ -1,26 +1,27 @@
+ package hwacha 
+ 
+-import Chisel._
++import chisel3._
++import chisel3.util._
+ import freechips.rocketchip.config._
+ import freechips.rocketchip.tile.FPConstants._
+ import freechips.rocketchip.tile.{FPResult, FPUCtrlSigs, HasFPUParameters}
+ import freechips.rocketchip.util._
+ 
+ class ScalarFPU(implicit p: Parameters) extends HwachaModule()(p) with HasFPUParameters {
+-  val io = new Bundle {
+-    val req = Decoupled(new freechips.rocketchip.tile.FPInput()).flip
++  val io = IO(new Bundle {
++    val req = Flipped(Decoupled(new freechips.rocketchip.tile.FPInput()))
+     val resp = Decoupled(new FPResult())
+-  }
++  })
+   //buffer for simple back-pressure model
+-  val resp_reg = Reg(Bits())
+-  val resp_reg_val = Reg(init=Bool(false))
++  val resp_reg = Reg(UInt())
++  val resp_reg_val = RegInit(false.B)
+ 
+   io.req.ready := !resp_reg_val
+ 
+   val ex_ctrl = Wire(new FPUCtrlSigs)
+   ex_ctrl <> io.req.bits
+   val wb_ctrl = RegEnable(ex_ctrl, io.req.valid)
+-  val wb_reg_valid = Reg(next=io.req.valid, init=Bool(false))
++  val wb_reg_valid = RegNext(io.req.valid, init=false.B)
+ 
+   val req = new freechips.rocketchip.tile.FPInput
+   req := io.req.bits
+@@ -68,18 +69,18 @@ class ScalarFPU(implicit p: Parameters) extends HwachaModule()(p) with HasFPUPar
+   )
+   def latencyMask(c: FPUCtrlSigs, offset: Int) = {
+     require(pipes.forall(_.lat >= offset))
+-    pipes.map(p => Mux(p.cond(c), UInt(1 << p.lat-offset), UInt(0))).reduce(_|_)
++    pipes.map(p => Mux(p.cond(c), (1.U << (1 << p.lat-offset)), 0.U)).reduce(_|_)
+   }
+-  def pipeid(c: FPUCtrlSigs) = pipes.zipWithIndex.map(p => Mux(p._1.cond(c), UInt(p._2), UInt(0))).reduce(_|_)
++  def pipeid(c: FPUCtrlSigs) = pipes.zipWithIndex.map(p => Mux(p._1.cond(c), p._2.U, 0.U)).reduce(_|_)
+   val maxLatency = pipes.map(_.lat).max
+   val wbLatencyMask = latencyMask(wb_ctrl, 2)
+ 
+   class WBInfo extends Bundle {
+     val single = Bool()
+-    val pipeid = UInt(width = log2Ceil(pipes.size))
++    val pipeid = UInt(log2Ceil(pipes.size).W)
+   }
+ 
+-  val wen = Reg(init=Bits(0, maxLatency-1))
++  val wen = RegInit(0.U((maxLatency-1).W))
+   val wbInfo = Reg(Vec(maxLatency-1, new WBInfo))
+   val wb_wen = wb_reg_valid && (wb_ctrl.fma || wb_ctrl.fastpipe || wb_ctrl.fromint)
+   val write_port_busy = RegEnable(wb_wen && (wbLatencyMask & latencyMask(ex_ctrl, 1)).orR || (wen & latencyMask(ex_ctrl, 0)).orR, io.req.valid)
+@@ -88,9 +89,9 @@ class ScalarFPU(implicit p: Parameters) extends HwachaModule()(p) with HasFPUPar
+   for (i <- 0 until maxLatency-2) {
+     when (wen(i+1)) { wbInfo(i) := wbInfo(i+1) }
+   }
+-  wen := wen >> UInt(1)
++  wen := wen >> 1.U
+   when (wb_wen) {
+-    wen := wen >> UInt(1) | wbLatencyMask
++    wen := wen >> 1.U | wbLatencyMask
+     for (i <- 0 until maxLatency-1) {
+       when (!write_port_busy && wbLatencyMask(i)) {
+         wbInfo(i).single := wb_ctrl.typeTagOut === S
+@@ -104,15 +105,15 @@ class ScalarFPU(implicit p: Parameters) extends HwachaModule()(p) with HasFPUPar
+   val wexc = (pipes.map(_.res.exc): Seq[UInt])(wsrc)
+   val resp_data = Mux(!fpiu.io.out.valid, wdata, fpiu.io.out.bits.toint) 
+   io.resp.bits.data := resp_data
+-  when (wen(0) || fpiu.io.out.valid ) { 
++  when (wen(0) || fpiu.io.out.valid ) {
+     when(!io.resp.ready){
+       resp_reg := resp_data
+-      resp_reg_val := Bool(true)
++      resp_reg_val := true.B
+     }
+   }
+   when(io.resp.ready && resp_reg_val){
+     io.resp.bits.data := resp_reg
+-    resp_reg_val := Bool(false)
++    resp_reg_val := false.B
+   }
+   io.resp.valid := wen(0) || fpiu.io.out.valid || resp_reg_val
+ }
+diff --git a/src/main/scala/scalar-unit.scala b/src/main/scala/scalar-unit.scala
+index ff1b01c..de29e2b 100644
+--- a/src/main/scala/scalar-unit.scala
++++ b/src/main/scala/scalar-unit.scala
+@@ -20,7 +20,7 @@ class ScalarUnit(resetSignal: Bool = null)(implicit p: Parameters) extends Hwach
+     val cfg = new HwachaConfigIO().flip
+ 
+     val cmdq = new CMDQIO().flip
+-    val imem = new FrontendIO(p(HwachaIcacheKey))
++    val imem = new hwacha.FrontendIO(p(HwachaIcacheKey))
+     val vxu = Decoupled(new IssueOpML)
+     val vmu = Decoupled(new VMUOpML)
+     val fpu = new Bundle {
+@@ -163,7 +163,7 @@ class ScalarUnit(resetSignal: Bool = null)(implicit p: Parameters) extends Hwach
+   val pending_cbranch = Reg(init=Bool(false))
+ 
+   val ex_reg_valid = Reg(Bool())
+-  val ex_reg_ctrl = Reg(new IntCtrlSigs)
++  val ex_reg_ctrl = Reg(new hwacha.IntCtrlSigs)
+   val ex_reg_pc = Reg(UInt())
+   val ex_reg_inst = Reg(Bits())
+   val ex_reg_bypass = Reg(Vec(3, Bool()))
+@@ -171,7 +171,7 @@ class ScalarUnit(resetSignal: Bool = null)(implicit p: Parameters) extends Hwach
+   val ex_reg_ars = Reg(Vec(2, Bits()))
+ 
+   val wb_reg_valid = Reg(Bool())
+-  val wb_reg_ctrl = Reg(new IntCtrlSigs)
++  val wb_reg_ctrl = Reg(new hwacha.IntCtrlSigs)
+   val wb_reg_pc = Reg(UInt())
+   val wb_reg_inst = Reg(Bits())
+   val wb_reg_wdata = Reg(Bits())
+@@ -201,7 +201,7 @@ class ScalarUnit(resetSignal: Bool = null)(implicit p: Parameters) extends Hwach
+   val id_pc = io.imem.resp.bits.pc
+   val id_inst = io.imem.resp.bits.data; require(io.imem.resp.bits.data.getWidth == HwachaElementInstBytes*8)
+   val decode_table = ScalarDecode.table ++ VectorMemoryDecode.table ++ VectorArithmeticDecode.table
+-  val id_ctrl = Wire(new IntCtrlSigs()).decode(id_inst, decode_table)
++  val id_ctrl = Wire(new hwacha.IntCtrlSigs()).decode(id_inst, decode_table)
+   when (!killd && id_ctrl.decode_stop) {
+     vf_active := Bool(false)
+   }
+diff --git a/src/main/scala/sequencer-lane.scala b/src/main/scala/sequencer-lane.scala
+index 4a01b6c..5f3bf24 100644
+--- a/src/main/scala/sequencer-lane.scala
++++ b/src/main/scala/sequencer-lane.scala
+@@ -146,7 +146,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+     val wpred_mat_vd = wpred_mat(reg_vd, pregid_vd)
+ 
+     def wport_lookup(row: Vec[Bool], level: UInt) =
+-      Vec((row zipWithIndex) map { case (r, i) => r && UInt(i) > level })
++      Vec((row.zipWithIndex) map { case (r, i) => r && UInt(i) > level })
+ 
+     val raw =
+       (0 until nSeq).map { r =>
+@@ -210,7 +210,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+   val shazard = new {
+     def use_mask_lop[T <: LaneOp](lops: Vec[ValidIO[T]], fn: ValidIO[T]=>Bool) = {
+       val mask =
+-        (lops zipWithIndex) map { case (lop, i) =>
++        (lops.zipWithIndex) map { case (lop, i) =>
+           dgate(fn(lop), Wire(UInt(width = lops.size+nBanks-1), init = strip_to_bmask(lop.bits.strip) << UInt(i)))
+         } reduce(_|_)
+       mask >> UInt(1) // shift right by one because we are looking one cycle in the future
+@@ -382,7 +382,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+       val first = ff((i: Int) => afn(me(i).active))
+       val strip = stripfn(first)
+ 
+-      val valids = Vec((first zipWithIndex) map { case (f, i) => f && nohazards(i) })
++      val valids = Vec((first.zipWithIndex) map { case (f, i) => f && nohazards(i) })
+       val ready = la.available
+       def fires(n: Int) = valids(n) && ready
+       val fire = valids.reduce(_ || _) && ready
+@@ -402,7 +402,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+       val fn = mread(first, (me: MasterSeqEntry) => me.fn)
+       val mcmd = DecodedMemCommand(fn.vmu().cmd)
+ 
+-      val valids = Vec((first zipWithIndex) map { case (f, i) => f && nohazards(i) })
++      val valids = Vec((first.zipWithIndex) map { case (f, i) => f && nohazards(i) })
+       val readys = Vec((0 until nSeq) map { case i =>
+         io.vmu.pala.available &&
+         (!mcmd.read || io.mocheck(i).load && io.lreq.available) &&
+@@ -429,7 +429,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+       val first = ff((i: Int) => me(i).active.vlu)
+       val strip = stripfn(first)
+ 
+-      val valids = Vec((first zipWithIndex) map { case (f, i) => f && nohazards(i) })
++      val valids = Vec((first.zipWithIndex) map { case (f, i) => f && nohazards(i) })
+       val ready = io.lla.available
+       def fires(n: Int) = valids(n) && ready
+       val fire = valids.reduce(_ || _) && ready
+@@ -489,7 +489,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+       }
+ 
+       def debug = {
+-        (io.debug.consider zipWithIndex) foreach { case (io, i) => io := consider(i) }
++        (io.debug.consider.zipWithIndex) foreach { case (io, i) => io := consider(i) }
+         (io.debug.first_sched zip first_sched) foreach { case (io, c) => io := c }
+         (io.debug.second_sched zip second_sched) foreach { case (io, c) => io := c }
+       }
+@@ -533,7 +533,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+         out
+       }
+ 
+-      val valids = Vec((first zipWithIndex) map { case (f, i) => f && nohazards(i) })
++      val valids = Vec((first.zipWithIndex) map { case (f, i) => f && nohazards(i) })
+       val ready = io.pla.available && (!sel || exp.fire_vgu)
+       def fires(n: Int) = valids(n) && ready
+       val fire = valids.reduce(_ || _) && ready
+@@ -594,7 +594,7 @@ class LaneSequencer(implicit p: Parameters) extends VXUModule()(p)
+       def logic = {
+         io.dpla.cnt := cnt
+         io.dpla.reserve := exp.fire_vqu
+-        (io.dqla zipWithIndex) map { case (la, i) =>
++        (io.dqla.zipWithIndex) map { case (la, i) =>
+           la.cnt := cnt
+           la.reserve := exp.fire_vqu_latch(i)
+         }
+diff --git a/src/main/scala/vfu-rfirst.scala b/src/main/scala/vfu-rfirst.scala
+index 83230cf..ea0721d 100644
+--- a/src/main/scala/vfu-rfirst.scala
++++ b/src/main/scala/vfu-rfirst.scala
+@@ -70,7 +70,7 @@ class RFirstMaster(implicit p: Parameters) extends VXUModule()(p) {
+   }
+ 
+   io.result.valid := fire(io.result.ready)
+-  (io.lane zipWithIndex) map { case (lane, i) =>
++  (io.lane.zipWithIndex) map { case (lane, i) =>
+     lane.ready := fire(mask_lane_valid(i), deq_lane(i)) }
+ 
+   opq.io.deq.ready := Bool(false)
+diff --git a/src/main/scala/vfu-rpred.scala b/src/main/scala/vfu-rpred.scala
+index 593e12c..9e5882d 100644
+--- a/src/main/scala/vfu-rpred.scala
++++ b/src/main/scala/vfu-rpred.scala
+@@ -63,7 +63,7 @@ class RPredMaster(implicit p: Parameters) extends VXUModule()(p) {
+   }
+ 
+   io.result.valid := fire(io.result.ready)
+-  (io.lane zipWithIndex) map { case (lane, i) =>
++  (io.lane.zipWithIndex) map { case (lane, i) =>
+     lane.ready := fire(mask_lane_valid(i), deq_lane(i)) }
+ 
+   opq.io.deq.ready := Bool(false)

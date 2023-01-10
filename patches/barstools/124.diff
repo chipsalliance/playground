@@ -1,0 +1,22 @@
+diff --git a/src/main/scala/barstools/iocell/chisel/IOCell.scala b/src/main/scala/barstools/iocell/chisel/IOCell.scala
+index 6d44493..ba99b8c 100644
+--- a/src/main/scala/barstools/iocell/chisel/IOCell.scala
++++ b/src/main/scala/barstools/iocell/chisel/IOCell.scala
+@@ -114,7 +114,7 @@ case class GenericIOCellParams() extends IOCellTypeParams {
+ 
+ object IOCell {
+ 
+-  /** From within a RawModule or MultiIOModule context, generate new module IOs from a given
++  /** From within a RawModule or Module context, generate new module IOs from a given
+     * signal and return the new IO and a Seq containing all generated IO cells.
+     * @param coreSignal The signal onto which to add IO cells
+     * @param name An optional name or name prefix to use for naming IO cells
+@@ -141,7 +141,7 @@ object IOCell {
+     * @param name An optional name or name prefix to use for naming IO cells
+     * @return A Seq of all generated IO cell instances
+     */
+-  val toSyncReset:  (Reset) => Bool = _.asBool()
++  val toSyncReset:  (Reset) => Bool = _.asBool
+   val toAsyncReset: (Reset) => AsyncReset = _.asAsyncReset
+   def generateFromSignal[T <: Data, R <: Reset](
+     coreSignal:        T,

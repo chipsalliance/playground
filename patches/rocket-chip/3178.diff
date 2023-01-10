@@ -1,5 +1,5 @@
 diff --git a/src/main/scala/util/Annotations.scala b/src/main/scala/util/Annotations.scala
-index c64d3f8891..5bce7335cd 100644
+index c64d3f8891f..5bce7335cd3 100644
 --- a/src/main/scala/util/Annotations.scala
 +++ b/src/main/scala/util/Annotations.scala
 @@ -45,7 +45,7 @@ case class ParamsAnnotation(target: Named, paramsClassName: String, params: Map[
@@ -12,7 +12,7 @@ index c64d3f8891..5bce7335cd 100644
  }
  
 diff --git a/src/main/scala/util/Location.scala b/src/main/scala/util/Location.scala
-index 5234eb0ccf..27d4ddb1b7 100644
+index 5234eb0ccfa..27d4ddb1b7f 100644
 --- a/src/main/scala/util/Location.scala
 +++ b/src/main/scala/util/Location.scala
 @@ -19,6 +19,8 @@ object Location {

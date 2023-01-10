@@ -1,25 +1,25 @@
 diff --git a/build.sbt b/build.sbt
-index 2313f634fd9..85c7a8b2fd8 100644
+index 7749871a2be..ed7b40300af 100644
 --- a/build.sbt
 +++ b/build.sbt
 @@ -15,7 +15,7 @@ lazy val commonSettings = Seq(
    traceLevel   := 15,
-   scalacOptions ++= Seq("-deprecation","-unchecked","-Xsource:2.11"),
+   scalacOptions ++= Seq("-deprecation","-unchecked"),
    libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value),
--  libraryDependencies ++= Seq("org.json4s" %% "json4s-jackson" % "3.6.1"),
+-  libraryDependencies ++= Seq("org.json4s" %% "json4s-jackson" % "3.6.6"),
 +  libraryDependencies ++= Seq("org.json4s" %% "json4s-jackson" % "4.0.5"),
    libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "3.2.0" % "test"),
-   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
    resolvers ++= Seq(
+     Resolver.sonatypeRepo("snapshots"),
 diff --git a/common.sc b/common.sc
-index 4187dd183a0..52092e7e86e 100644
+index ed7b967184e..72ee299a4e8 100644
 --- a/common.sc
 +++ b/common.sc
 @@ -84,7 +84,7 @@ trait CommonRocketChip extends SbtModule with PublishModule {
    override def ivyDeps = T {
      Agg(
        ivy"${scalaOrganization()}:scala-reflect:${scalaVersion()}",
--      ivy"org.json4s::json4s-jackson:3.6.1",
+-      ivy"org.json4s::json4s-jackson:3.6.6",
 +      ivy"org.json4s::json4s-jackson:4.0.5",
        ivy"org.scalatest::scalatest:3.2.0"
      ) ++ chisel3IvyDeps
