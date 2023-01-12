@@ -1,8 +1,8 @@
 diff --git a/src/main/scala/amba/axi4/Deinterleaver.scala b/src/main/scala/amba/axi4/Deinterleaver.scala
-index 7f560492dcd..384ba7ae7b3 100644
+index eebce524818..6408c9d0622 100644
 --- a/src/main/scala/amba/axi4/Deinterleaver.scala
 +++ b/src/main/scala/amba/axi4/Deinterleaver.scala
-@@ -72,7 +72,7 @@ class AXI4Deinterleaver(maxReadBytes: Int, buffer: BufferParams = BufferParams.d
+@@ -73,7 +73,7 @@ class AXI4Deinterleaver(maxReadBytes: Int, buffer: BufferParams = BufferParams.d
              // correct type.
              val q = Wire(new QueueIO(out.r.bits.cloneType, beats))
              q.suggestName(s"queue_wire_${i}")
@@ -12,10 +12,10 @@ index 7f560492dcd..384ba7ae7b3 100644
              q
            }
 diff --git a/src/main/scala/devices/debug/Debug.scala b/src/main/scala/devices/debug/Debug.scala
-index ef93c3fad11..e2841ddbed6 100755
+index 6fd370e44f0..8cc8a6998eb 100755
 --- a/src/main/scala/devices/debug/Debug.scala
 +++ b/src/main/scala/devices/debug/Debug.scala
-@@ -1503,7 +1503,7 @@ class TLDebugModuleInner(device: Device, getNComponents: () => Int, beatBytes: I
+@@ -1506,7 +1506,7 @@ class TLDebugModuleInner(device: Device, getNComponents: () => Int, beatBytes: I
  
      val flags = WireInit(VecInit(Seq.fill(1 << selectedHartReg.getWidth) {0.U.asTypeOf(new flagBundle())} ))
      assert ((hartSelFuncs.hartSelToHartId(selectedHartReg) < flags.size.U),
@@ -79,7 +79,7 @@ index 5a48857acd5..0c88f46cb04 100644
 +  assert(!tracegen.io.timeout, cf"TraceGen tile ${outer.tileParams.hartId.toString}: request timed out")
  }
 diff --git a/src/main/scala/rocket/Events.scala b/src/main/scala/rocket/Events.scala
-index 4e577cdf509..090066f7ea0 100644
+index a3504ff497b..eb7f20fbe3e 100644
 --- a/src/main/scala/rocket/Events.scala
 +++ b/src/main/scala/rocket/Events.scala
 @@ -17,7 +17,7 @@ class EventSet(val gate: (UInt, UInt) => Bool, val events: Seq[(String, () => Bo
@@ -114,10 +114,10 @@ index bf7c238dbce..e6840122b8e 100644
    }
  
 diff --git a/src/main/scala/tilelink/PatternPusher.scala b/src/main/scala/tilelink/PatternPusher.scala
-index b30661323f9..741f4fc91f4 100644
+index c596ed684c3..7610c1bc60f 100644
 --- a/src/main/scala/tilelink/PatternPusher.scala
 +++ b/src/main/scala/tilelink/PatternPusher.scala
-@@ -71,7 +71,8 @@ class TLPatternPusher(name: String, pattern: Seq[Pattern])(implicit p: Parameter
+@@ -72,7 +72,8 @@ class TLPatternPusher(name: String, pattern: Seq[Pattern])(implicit p: Parameter
      }
  
      val (plegal, pbits) = pattern.map(_.bits(edgeOut)).unzip
@@ -128,10 +128,10 @@ index b30661323f9..741f4fc91f4 100644
      a.valid := io.run && ready && !end && !flight
      a.bits  := Vec(pbits)(step)
 diff --git a/src/main/scala/unittest/UnitTest.scala b/src/main/scala/unittest/UnitTest.scala
-index 1efdc6f3b64..46af6d62e75 100644
+index 41b970108da..93f0e5af969 100644
 --- a/src/main/scala/unittest/UnitTest.scala
 +++ b/src/main/scala/unittest/UnitTest.scala
-@@ -28,10 +28,10 @@ trait UnitTestModule extends MultiIOModule with HasUnitTestIO {
+@@ -28,10 +28,10 @@ trait UnitTestModule extends Module with HasUnitTestIO {
  abstract class UnitTest(val timeout: Int = 4096) extends Module with UnitTestLegacyModule {
    val testName = this.getClass.getSimpleName
  
