@@ -278,31 +278,13 @@ object barstools extends CommonModule with SbtModule { bt =>
   override def moduleDeps = super.moduleDeps ++ Seq(macros, iocell, tapeout)
 }
 
-object dsptools extends CommonModule with SbtModule { dt =>
-  override def millSourcePath = os.pwd / "dependencies" / "dsptools"
-
-  override def ivyDeps = Agg(
-    ivys.spire,
-    ivys.breeze
-  )
-}
-
-object rocketdsputils extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
-  override def millSourcePath = os.pwd / "dependencies" / "rocket-dsp-utils"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools)
-}
-
 object FFTGenerator extends CommonModule with SbtModule {
   // TODO: FIX
   override def scalacOptions = T {
     super.scalacOptions() ++ Agg("-Xsource:2.11")
   }
   override def millSourcePath = os.pwd / "dependencies" / "FFTGenerator"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools, rocketdsputils)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
 
 object gemmini extends CommonModule with SbtModule {
@@ -393,7 +375,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
   }
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator, constellation, mempress)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator, constellation, mempress)
 
   object tracegen extends CommonModule with SbtModule {
     // TODO: FIX
