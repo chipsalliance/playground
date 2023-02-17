@@ -79,17 +79,12 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 barstools https://github.com/ucb-bar/barstools/pull/124.diff  
-berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/67.diff  
-berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/70.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1242.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1264.diff  
 chipyard https://github.com/ucb-bar/chipyard/pull/1296.diff  
-chipyard https://github.com/ucb-bar/chipyard/pull/1308.diff  
-constellation https://github.com/ucb-bar/constellation/pull/28.diff  
 constellation https://github.com/ucb-bar/constellation/pull/33.diff  
 firesim https://github.com/firesim/firesim/pull/1250.diff  
 firesim https://github.com/firesim/firesim/pull/1349.diff  
-firesim https://github.com/firesim/firesim/pull/1375.diff  
 gemmini https://github.com/ucb-bar/gemmini/pull/269.diff  
 gemmini https://github.com/ucb-bar/gemmini/pull/273.diff  
 hwacha https://github.com/ucb-bar/hwacha/pull/42.diff  
@@ -101,7 +96,6 @@ rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013.diff
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3103.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3178.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3200.diff  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3204.diff  
 rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/8.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/7.diff  

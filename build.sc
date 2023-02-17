@@ -16,20 +16,19 @@ import $file.dependencies.`rocket-chip`.common
 
 // Global Scala Version
 object ivys {
-  val sv = "2.12.15"
+  val sv = "2.13.10"
   val upickle = ivy"com.lihaoyi::upickle:1.3.15"
   val oslib = ivy"com.lihaoyi::os-lib:0.7.8"
   val pprint = ivy"com.lihaoyi::pprint:0.6.6"
   val utest = ivy"com.lihaoyi::utest:0.7.10"
-  val macroParadise = ivy"org.scalamacros:::paradise:2.1.1"
   val jline = ivy"org.scala-lang.modules:scala-jline:2.12.1"
   val scalatest = ivy"org.scalatest::scalatest:3.2.2"
   val scalatestplus = ivy"org.scalatestplus::scalacheck-1-14:3.1.1.1"
   val scalacheck = ivy"org.scalacheck::scalacheck:1.14.3"
   val scopt = ivy"com.github.scopt::scopt:3.7.1"
-  val playjson =ivy"com.typesafe.play::play-json:2.6.10"
-  val spire = ivy"org.typelevel::spire:0.16.2"
+  val playjson =ivy"com.typesafe.play::play-json:2.9.4"
   val breeze = ivy"org.scalanlp::breeze:1.1"
+  val parallel = ivy"org.scala-lang.modules:scala-parallel-collections_3:1.0.4"
 }
 
 // For modules not support mill yet, need to have a ScalaModule depend on our own repositories.
@@ -41,14 +40,10 @@ trait CommonModule extends ScalaModule {
   ) }
 
   override def scalacOptions = T {
-    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements")
+    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements", "-Ymacro-annotations")
   }
 
   override def moduleDeps: Seq[ScalaModule] = Seq(mychisel3)
-
-  override def compileIvyDeps = Agg(ivys.macroParadise)
-
-  override def scalacPluginIvyDeps = Agg(ivys.macroParadise)
 }
 
 
@@ -73,6 +68,10 @@ object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) 
   def treadleModule: Option[PublishModule] = Some(mytreadle)
 
   def chiseltestModule: Option[PublishModule] = Some(mychiseltest)
+
+  override def scalacOptions = T {
+    super.scalacOptions() ++ Agg("-Ymacro-annotations")
+  }
 }
 
 object mytreadle extends dependencies.treadle.build.treadleCrossModule(ivys.sv) {
@@ -86,9 +85,9 @@ object mycde extends dependencies.cde.build.cde(ivys.sv) with PublishModule {
 }
 
 object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
-  // TODO: FIX
+
   override def scalacOptions = T {
-    Seq("-Xsource:2.11", s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements")
+    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements")
   }
 
   override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
@@ -107,10 +106,6 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 }
 
 object inclusivecache extends CommonModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-inclusive-cache" / 'design / 'craft / "inclusivecache"
 
@@ -118,10 +113,6 @@ object inclusivecache extends CommonModule {
 }
 
 object blocks extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-blocks"
 
@@ -129,10 +120,6 @@ object blocks extends CommonModule with SbtModule {
 }
 
 object shells extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-fpga-shells"
 
@@ -156,20 +143,19 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
 
   def chisel3Module: Option[PublishModule] = Some(mychisel3)
 
+  override def ivyDeps = super.ivyDeps() ++ Agg(
+    ivys.parallel
+  )
   override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
     mychisel3.plugin.jar()
   ) }
 
   override def scalacOptions = T {
-    Seq("-Xsource:2.11", s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements")
+    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}", "-P:chiselplugin:genBundleElements", "-Ymacro-annotations")
   }
 }
 
 object constellation extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "constellation"
 
@@ -177,10 +163,6 @@ object constellation extends CommonModule with SbtModule {
 }
 
 object mempress extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "mempress"
 
@@ -190,10 +172,6 @@ object mempress extends CommonModule with SbtModule {
 
 
 object testchipip extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "testchipip"
 
@@ -201,10 +179,6 @@ object testchipip extends CommonModule with SbtModule {
 }
 
 object icenet extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "icenet"
 
@@ -224,18 +198,10 @@ object mdf extends CommonModule with SbtModule {
 }
 
 object firesim extends CommonModule with SbtModule { fs =>
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "firesim" / "sim"
 
   object midas extends CommonModule with SbtModule {
-    // TODO: FIX
-    override def scalacOptions = T {
-      super.scalacOptions() ++ Agg("-Xsource:2.11")
-    }
 
     override def millSourcePath = fs.millSourcePath / "midas"
 
@@ -278,38 +244,7 @@ object barstools extends CommonModule with SbtModule { bt =>
   override def moduleDeps = super.moduleDeps ++ Seq(macros, iocell, tapeout)
 }
 
-object dsptools extends CommonModule with SbtModule { dt =>
-  override def millSourcePath = os.pwd / "dependencies" / "dsptools"
-
-  override def ivyDeps = Agg(
-    ivys.spire,
-    ivys.breeze
-  )
-}
-
-object rocketdsputils extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
-  override def millSourcePath = os.pwd / "dependencies" / "rocket-dsp-utils"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools)
-}
-
-object FFTGenerator extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
-  override def millSourcePath = os.pwd / "dependencies" / "FFTGenerator"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, dsptools, rocketdsputils)
-}
-
 object gemmini extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "gemmini"
 
@@ -320,10 +255,6 @@ object gemmini extends CommonModule with SbtModule {
 }
 
 object nvdla extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "nvdla-wrapper"
 
@@ -331,10 +262,6 @@ object nvdla extends CommonModule with SbtModule {
 }
 
 object cva6 extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "cva6-wrapper"
 
@@ -342,10 +269,6 @@ object cva6 extends CommonModule with SbtModule {
 }
 
 object hwacha extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "hwacha"
 
@@ -353,10 +276,6 @@ object hwacha extends CommonModule with SbtModule {
 }
 
 object sodor extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "riscv-sodor"
 
@@ -364,10 +283,6 @@ object sodor extends CommonModule with SbtModule {
 }
 
 object sha3 extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "sha3"
 
@@ -375,10 +290,6 @@ object sha3 extends CommonModule with SbtModule {
 }
 
 object ibex extends CommonModule with SbtModule {
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
 
   override def millSourcePath = os.pwd / "dependencies" / "ibex-wrapper"
 
@@ -387,37 +298,22 @@ object ibex extends CommonModule with SbtModule {
 
 // I know it's quite strange, however UCB messly managed their dependency...
 object chipyard extends CommonModule with SbtModule { cy =>
-  // TODO: FIX
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Xsource:2.11")
-  }
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, dsptools, rocketdsputils, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, FFTGenerator, constellation, mempress)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, constellation, mempress)
 
   object tracegen extends CommonModule with SbtModule {
-    // TODO: FIX
-    override def scalacOptions = T {
-      super.scalacOptions() ++ Agg("-Xsource:2.11")
-    }
     override def millSourcePath = basePath / "generators" / "tracegen"
     override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, boom)
   }
 
   object fpga extends CommonModule with SbtModule {
-    // TODO: FIX
-    override def scalacOptions = T {
-      super.scalacOptions() ++ Agg("-Xsource:2.11")
-    }
+
     override def millSourcePath = basePath / "fpga"
     override def moduleDeps = super.moduleDeps ++ Seq(shells, chipyard)
   }
 
   object utilities extends CommonModule with SbtModule {
-    // TODO: FIX
-    override def scalacOptions = T {
-      super.scalacOptions() ++ Agg("-Xsource:2.11")
-    }
     override def millSourcePath = basePath / "generators" / "utilities"
     override def moduleDeps = super.moduleDeps ++ Seq(chipyard)
   }
@@ -561,7 +457,7 @@ object pk extends Module {
 // Dummy
 
 object playground extends CommonModule {
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, rocketdsputils, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities, mychiseltest)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities, mychiseltest)
 
   // add some scala ivy module you like here.
   override def ivyDeps = Agg(
