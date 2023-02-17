@@ -19,6 +19,7 @@
 [submodule "rocket-chip"]
 	path = dependencies/rocket-chip
 	url = git@github.com:chipsalliance/rocket-chip.git
+	branch = dev
 [submodule "rocket-chip-blocks"]
 	path = dependencies/rocket-chip-blocks
 	url = git@github.com:chipsalliance/rocket-chip-blocks.git
@@ -88,3 +89,5 @@
 [submodule "dependencies/mempress"]
 	path = dependencies/mempress
 	url = git@github.com:ucb-bar/mempress.git
+[submodule "dependencies/rocket-chip"]
+	branch = dev
