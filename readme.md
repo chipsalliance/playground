@@ -91,11 +91,8 @@ hwacha https://github.com/ucb-bar/hwacha/pull/42.diff
 icenet https://github.com/firesim/icenet/pull/35.diff  
 riscv-boom https://github.com/riscv-boom/riscv-boom/pull/616.diff  
 riscv-sodor https://github.com/ucb-bar/riscv-sodor/pull/73.diff  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/2968.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013.diff  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3103.diff  
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3178.diff  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3200.diff  
 rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/8.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/7.diff  
