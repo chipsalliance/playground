@@ -40,7 +40,7 @@ trait CommonModule extends ScalaModule {
   ) }
 
   override def scalacOptions = T {
-    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Ymacro-annotations")
+    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Ymacro-annotations", "-Werror")
   }
 
   override def moduleDeps: Seq[ScalaModule] = Seq(mychisel3)
@@ -87,7 +87,7 @@ object mycde extends dependencies.cde.build.cde(ivys.sv) with PublishModule {
 object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 
   override def scalacOptions = T {
-    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}")
+    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Werror")
   }
 
   override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
@@ -151,7 +151,7 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
   ) }
 
   override def scalacOptions = T {
-    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Ymacro-annotations")
+    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Ymacro-annotations", "-Werror")
   }
 }
 
