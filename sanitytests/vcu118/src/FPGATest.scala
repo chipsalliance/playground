@@ -1,7 +1,6 @@
 package sanitytests.vcu118
 
 import utest._
-
 /** software dependencies:
   * clang -> bootrom cross compiling
   * vivado -> FPGA toolchain
@@ -18,7 +17,7 @@ object FPGATest extends TestSuite {
     test("fpga build script") {
       val configs = Seq(classOf[FPGATestConfig], classOf[freechips.rocketchip.system.DefaultConfig])
       TestHarness(configs, Some(outputDirectory)).rerunFromSynthesisScript
-      os.write(outputDirectory / "openocd.cfg", os.read(resource("openocd.cfg")))
+      os.write(outputDirectory / "openocd.cfg", os.read(sanitytests.utils.resource("openocd.cfg")))
     }
   }
 }

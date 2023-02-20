@@ -22,25 +22,25 @@ object VerilatorTest extends TestSuite {
         os.proc(
           "clang",
           "-o", "hello",
-          s"${resource("csrc/hello.c")}",
+          s"${sanitytests.utils.resource("csrc/hello.c")}",
           "--target=riscv64",
           "-mno-relax",
           "-nostdinc",
-          s"-I${resource("riscv64/usr/include")}",
+          s"-I${sanitytests.utils.resource("riscv64/usr/include")}",
           "-fuse-ld=lld",
           "-nostdlib",
-          s"${resource("riscv64/usr/lib/crt1.o")}",
-          s"${resource("riscv64/usr/lib/crti.o")}",
-          s"${resource("riscv64/usr/lib/riscv64/libclang_rt.builtins-riscv64.a")}",
-          s"${resource("riscv64/usr/lib/libc.a")}",
-          s"${resource("riscv64/usr/lib/crtn.o")}",
+          s"${sanitytests.utils.resource("riscv64/usr/lib/crt1.o")}",
+          s"${sanitytests.utils.resource("riscv64/usr/lib/crti.o")}",
+          s"${sanitytests.utils.resource("riscv64/usr/lib/riscv64/libclang_rt.builtins-riscv64.a")}",
+          s"${sanitytests.utils.resource("riscv64/usr/lib/libc.a")}",
+          s"${sanitytests.utils.resource("riscv64/usr/lib/crtn.o")}",
           "-static",
         ).call(outputDirectory)
         os.proc("llvm-strip", "hello").call(outputDirectory)
         test("Hello World!") {
           os.proc(
             s"$emulator",
-            s"${resource("riscv64/pk")}",
+            s"${sanitytests.utils.resource("riscv64/pk")}",
             "hello",
           ).call(outputDirectory)
         }

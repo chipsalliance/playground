@@ -22,8 +22,8 @@ class TestConfig
             "-static",
             "-nostdlib",
             "-Wl,--no-gc-sections",
-            "-fuse-ld=lld", s"-T${resource("linker.ld")}",
-            s"${resource("bootrom.S")}",
+            "-fuse-ld=lld", s"-T${sanitytests.utils.resource("linker.ld")}",
+            s"${sanitytests.utils.resource("bootrom.S")}",
             "-o", elf
           ).call()
           proc(
