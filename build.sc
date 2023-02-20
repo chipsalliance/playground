@@ -155,6 +155,7 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
   }
 }
 
+/*
 object constellation extends CommonModule with SbtModule {
 
   override def millSourcePath = os.pwd / "dependencies" / "constellation"
@@ -296,7 +297,6 @@ object ibex extends CommonModule with SbtModule {
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
 
-// I know it's quite strange, however UCB messly managed their dependency...
 object chipyard extends CommonModule with SbtModule { cy =>
   def basePath = os.pwd / "dependencies" / "chipyard"
   override def millSourcePath = basePath / "generators" / "chipyard"
@@ -318,6 +318,7 @@ object chipyard extends CommonModule with SbtModule { cy =>
     override def moduleDeps = super.moduleDeps ++ Seq(chipyard)
   }
 }
+*/
 
 // CI Tests
 object sanitytests extends ScalaModule {
@@ -457,7 +458,7 @@ object pk extends Module {
 // Dummy
 
 object playground extends CommonModule {
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells, firesim, boom, chipyard, chipyard.fpga, chipyard.utilities, mychiseltest)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells, mychiseltest)
 
   // add some scala ivy module you like here.
   override def ivyDeps = Agg(
