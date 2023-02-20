@@ -29,51 +29,9 @@
 [submodule "rocket-chip-fpga-shells"]
 	path = dependencies/rocket-chip-fpga-shells
 	url = git@github.com:chipsalliance/rocket-chip-fpga-shells.git
-[submodule "firesim"]
-	path = dependencies/firesim
-	url = git@github.com:firesim/firesim.git
-[submodule "plsi-mdf"]
-	path = dependencies/plsi-mdf
-	url = git@github.com:ucb-bar/plsi-mdf.git
-[submodule "testchipip"]
-	path = dependencies/testchipip
-	url = git@github.com:ucb-bar/testchipip.git
-[submodule "icenet"]
-	path = dependencies/icenet
-	url = git@github.com:firesim/icenet.git
-[submodule "riscv-boom"]
-	path = dependencies/riscv-boom
-	url = git@github.com:riscv-boom/riscv-boom.git
-[submodule "chipyard"]
-	path = dependencies/chipyard
-	url = git@github.com:ucb-bar/chipyard.git
-[submodule "barstools"]
-	path = dependencies/barstools
-	url = git@github.com:ucb-bar/barstools.git
-[submodule "gemmini"]
-	path = dependencies/gemmini
-	url = git@github.com:ucb-bar/gemmini.git
-[submodule "nvdla-wrapper"]
-	path = dependencies/nvdla-wrapper
-	url = git@github.com:ucb-bar/nvdla-wrapper.git
-[submodule "hwacha"]
-	path = dependencies/hwacha
-	url = git@github.com:ucb-bar/hwacha.git
-[submodule "cva6-wrapper"]
-	path = dependencies/cva6-wrapper
-	url = git@github.com:ucb-bar/cva6-wrapper.git
-[submodule "riscv-sodor"]
-	path = dependencies/riscv-sodor
-	url = git@github.com:ucb-bar/riscv-sodor.git
-[submodule "sha3"]
-	path = dependencies/sha3
-	url = git@github.com:ucb-bar/sha3.git
 [submodule "dependencies/riscv-isa-sim"]
 	path = dependencies/riscv-isa-sim
 	url = git@github.com:riscv/riscv-isa-sim.git
-[submodule "dependencies/ibex-wrapper"]
-	path = dependencies/ibex-wrapper
-	url = git@github.com:ucb-bar/ibex-wrapper.git
 [submodule "dependencies/llvm-project"]
 	path = dependencies/llvm-project
 	url = git@github.com:llvm/llvm-project.git
@@ -83,11 +41,5 @@
 [submodule "dependencies/riscv-pk"]
 	path = dependencies/riscv-pk
 	url = git@github.com:riscv-software-src/riscv-pk.git
-[submodule "dependencies/constellation"]
-	path = dependencies/constellation
-	url = git@github.com:ucb-bar/constellation.git
-[submodule "dependencies/mempress"]
-	path = dependencies/mempress
-	url = git@github.com:ucb-bar/mempress.git
 [submodule "dependencies/rocket-chip"]
 	branch = dev
