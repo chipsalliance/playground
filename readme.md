@@ -79,6 +79,10 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3013.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3262.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3263.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3264.diff  
+rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3265.diff  
 rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/8.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/7.diff  
