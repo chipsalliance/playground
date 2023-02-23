@@ -10,7 +10,7 @@ import $file.dependencies.chisel3.build
 import $file.dependencies.firrtl.build
 import $file.dependencies.treadle.build
 import $file.dependencies.`chisel-testers2`.build
-import $file.dependencies.cde.build
+import $file.dependencies.cde.common
 import $file.dependencies.`berkeley-hardfloat`.build
 import $file.dependencies.`rocket-chip`.common
 
@@ -80,8 +80,18 @@ object mytreadle extends dependencies.treadle.build.treadleCrossModule(ivys.sv) 
   def firrtlModule: Option[PublishModule] = Some(myfirrtl)
 }
 
-object mycde extends dependencies.cde.build.cde(ivys.sv) with PublishModule {
+object mycde extends dependencies.cde.common.CDEModule with PublishModule {
   override def millSourcePath = os.pwd /  "dependencies" / "cde" / "cde"
+
+  override def scalaVersion = ivys.sv
+
+  override def pomSettings = T {
+    myrocketchip.pomSettings()
+  }
+
+  override def publishVersion = T {
+    myrocketchip.publishVersion()
+  }
 }
 
 object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
@@ -102,7 +112,7 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 
   def hardfloatModule: PublishModule = myhardfloat
 
-  def configModule: PublishModule = mycde
+  def cdeModule: PublishModule = mycde
 }
 
 object inclusivecache extends CommonModule {
