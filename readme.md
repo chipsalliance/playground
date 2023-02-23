@@ -86,8 +86,6 @@ rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3265.diff
 rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/8.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/5.diff  
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/7.diff  
-rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/2.diff  
-rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/8.diff  
 <!-- END-PATCH -->
 
 ## Why not Chipyard
