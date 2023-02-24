@@ -1,6 +1,6 @@
 package sanitytests.rocketchip
 
-import chipsalliance.rocketchip.config.Config
+import org.chipsalliance.cde.config.Config
 import freechips.rocketchip.devices.tilelink.BootROMLocated
 import freechips.rocketchip.util.ClockGateModelFile
 import os._
