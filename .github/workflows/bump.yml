@@ -2,6 +2,7 @@ on:
   schedule:
     - cron: '10 0 * * *'
   push:
+  pull_request:
 jobs:
   archlinux:
     if: github.repository == 'chipsalliance/playground'
