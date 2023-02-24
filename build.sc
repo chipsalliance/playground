@@ -102,7 +102,7 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 
   def hardfloatModule: PublishModule = myhardfloat
 
-  def configModule: PublishModule = mycde
+  def cdeModule: PublishModule = mycde
 }
 
 object inclusivecache extends CommonModule {
