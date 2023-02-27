@@ -1,6 +1,6 @@
 package sanitytests.vcu118
 
-import chipsalliance.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.devices.debug.{HasPeripheryDebug, HasPeripheryDebugModuleImp}
 import freechips.rocketchip.devices.tilelink.{BootROM, BootROMLocated}
 import freechips.rocketchip.subsystem.{CBUS, ExtMem, RocketSubsystem, RocketSubsystemModuleImp}

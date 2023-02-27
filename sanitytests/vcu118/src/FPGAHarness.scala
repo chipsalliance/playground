@@ -1,5 +1,5 @@
 package sanitytests.vcu118
-import chipsalliance.rocketchip.config.Config
+import org.chipsalliance.cde.config.Config
 import chisel3.RawModule
 import firrtl.AnnotationSeq
 import firrtl.options.TargetDirAnnotation

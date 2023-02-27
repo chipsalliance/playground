@@ -1,6 +1,6 @@
 package sanitytests.vcu118
 
-import chipsalliance.rocketchip.config.{Config, Parameters}
+import org.chipsalliance.cde.config.{Config, Parameters}
 import freechips.rocketchip.devices.debug.{DebugModuleKey, ExportDebug, JTAG}
 import freechips.rocketchip.devices.tilelink.BootROMLocated
 import os._

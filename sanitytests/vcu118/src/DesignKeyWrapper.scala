@@ -1,6 +1,6 @@
 package sanitytests.vcu118
 
-import chipsalliance.rocketchip.config.Parameters
+import org.chipsalliance.cde.config.Parameters
 import chisel3._
 import freechips.rocketchip.devices.debug.{Debug, JtagDTMKey}
 import freechips.rocketchip.diplomacy.{LazyModule, LazyRawModuleImp}
