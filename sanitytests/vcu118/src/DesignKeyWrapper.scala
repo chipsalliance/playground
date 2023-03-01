@@ -15,9 +15,9 @@ class DesignKeyWrapper()(implicit p: Parameters) extends LazyModule {
     // connect clock and reset
     val clockBundle = coreClock.in.head._1
     childClock := clockBundle.clock
-    childReset := clockBundle.reset | subsystem.module.debug.map(_.ndreset).getOrElse(false.B)
+    childReset := clockBundle.reset | subsystem.debug.map(_.ndreset).getOrElse(false.B)
     // connect jtag
-    val systemJtag = subsystem.module.debug.get.systemjtag.get
+    val systemJtag = subsystem.debug.get.systemjtag.get
     systemJtag.jtag.TCK := jtagOut.TCK
     systemJtag.jtag.TMS := jtagOut.TMS
     systemJtag.jtag.TDI := jtagOut.TDI
@@ -27,8 +27,8 @@ class DesignKeyWrapper()(implicit p: Parameters) extends LazyModule {
     systemJtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
     systemJtag.part_number := p(JtagDTMKey).idcodePartNum.U(16.W)
     systemJtag.version := p(JtagDTMKey).idcodeVersion.U(4.W)
-    Debug.connectDebugClockAndReset(subsystem.module.debug, childClock)
-    subsystem.module.resetctrl.foreach { rc =>
+    Debug.connectDebugClockAndReset(subsystem.debug, childClock)
+    subsystem.resetctrl.foreach { rc =>
       rc.hartIsInReset.foreach { _ := childReset.asBool }
     }
   }

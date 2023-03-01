@@ -1,7 +1,7 @@
 package sanitytests.vcu118
 
 import org.chipsalliance.cde.config.Parameters
-import freechips.rocketchip.devices.debug.{HasPeripheryDebug, HasPeripheryDebugModuleImp}
+import freechips.rocketchip.devices.debug.{HasPeripheryDebug}
 import freechips.rocketchip.devices.tilelink.{BootROM, BootROMLocated}
 import freechips.rocketchip.subsystem.{CBUS, ExtMem, RocketSubsystem, RocketSubsystemModuleImp}
 import sifive.fpgashells.clocks._
@@ -22,4 +22,3 @@ class RocketFPGASubsystem(resetWrangler: ClockAdapterNode, pll: PLLNode)(implici
 
 class RocketFPGASubSystemImp(val out: RocketFPGASubsystem)
     extends RocketSubsystemModuleImp(out)
-    with HasPeripheryDebugModuleImp
