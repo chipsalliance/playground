@@ -1,15 +1,7 @@
 [submodule "chisel3"]
-	path = dependencies/chisel3
+	path = dependencies/chisel
 	url = git@github.com:chipsalliance/chisel3.git
-[submodule "firrtl"]
-	path = dependencies/firrtl
-	url = git@github.com:chipsalliance/firrtl.git
-[submodule "treadle"]
-	path = dependencies/treadle
-	url = git@github.com:chipsalliance/treadle.git
-[submodule "chisel-testers2"]
-	path = dependencies/chisel-testers2
-	url = git@github.com:ucb-bar/chisel-testers2.git
+	branch = main
 [submodule "cde"]
 	path = dependencies/cde
 	url = git@github.com:chipsalliance/cde.git
