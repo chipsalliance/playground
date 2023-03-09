@@ -3,13 +3,12 @@ import mill._
 import mill.define.Sources
 import mill.modules.Util
 import scalalib._
+// Hack
+import publish._
 // support BSP
 import mill.bsp._
 // input build.sc from each repositories.
-import $file.dependencies.chisel3.build
-import $file.dependencies.firrtl.build
-import $file.dependencies.treadle.build
-import $file.dependencies.`chisel-testers2`.build
+import $file.dependencies.chisel.build
 import $file.dependencies.cde.build
 import $file.dependencies.`berkeley-hardfloat`.build
 import $file.dependencies.`rocket-chip`.common
@@ -36,48 +35,18 @@ trait CommonModule extends ScalaModule {
   override def scalaVersion = ivys.sv
 
   override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
-    mychisel3.plugin.jar()
+    mychisel.pluginModule.jar()
   ) }
 
   override def scalacOptions = T {
-    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Ymacro-annotations")
+    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel.pluginModule.jar().path}", "-Ymacro-annotations")
   }
 
-  override def moduleDeps: Seq[ScalaModule] = Seq(mychisel3)
+  override def moduleDeps: Seq[ScalaModule] = Seq(mychisel)
 }
 
-
-// Chips Alliance
-
-object myfirrtl extends dependencies.firrtl.build.firrtlCrossModule(ivys.sv) {
-  override def millSourcePath = os.pwd / "dependencies" / "firrtl"
-  override def ivyDeps = super.ivyDeps() ++ Agg(
-    ivys.pprint
-  )
-  override val checkSystemAntlr4Version = false
-  override val checkSystemProtocVersion = false
-  override val protocVersion = os.proc("protoc", "--version").call().out.text.dropRight(1).split(' ').last
-  override val antlr4Version = os.proc("antlr4").call().out.text.split('\n').head.split(' ').last
-}
-
-object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) {
-  override def millSourcePath = os.pwd / "dependencies" / "chisel3"
-
-  def firrtlModule: Option[PublishModule] = Some(myfirrtl)
-
-  def treadleModule: Option[PublishModule] = Some(mytreadle)
-
-  def chiseltestModule: Option[PublishModule] = Some(mychiseltest)
-
-  override def scalacOptions = T {
-    super.scalacOptions() ++ Agg("-Ymacro-annotations")
-  }
-}
-
-object mytreadle extends dependencies.treadle.build.treadleCrossModule(ivys.sv) {
-  override def millSourcePath = os.pwd /  "dependencies" / "treadle"
-
-  def firrtlModule: Option[PublishModule] = Some(myfirrtl)
+object mychisel extends dependencies.chisel.build.Chisel(ivys.sv) {
+  override def millSourcePath = os.pwd / "dependencies" / "chisel"
 }
 
 object mycde extends dependencies.cde.build.cde(ivys.sv) with PublishModule {
@@ -86,19 +55,19 @@ object mycde extends dependencies.cde.build.cde(ivys.sv) with PublishModule {
 
 object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 
-  override def scalacOptions = T {
-    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}")
-  }
-
   override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
-    mychisel3.plugin.jar()
+    mychisel.pluginModule.jar()
   ) }
+
+  override def scalacOptions = T {
+    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel.pluginModule.jar().path}", "-Ymacro-annotations")
+  }
 
   override def millSourcePath = os.pwd /  "dependencies" / "rocket-chip"
 
   override def scalaVersion = ivys.sv
 
-  def chisel3Module: Option[PublishModule] = Some(mychisel3)
+  def chisel3Module: Option[PublishModule] = Some(mychisel)
 
   def hardfloatModule: PublishModule = myhardfloat
 
@@ -127,198 +96,24 @@ object shells extends CommonModule with SbtModule {
 }
 
 // UCB
-
-object mychiseltest extends dependencies.`chisel-testers2`.build.chiseltestCrossModule(ivys.sv) {
-  override def millSourcePath = os.pwd /  "dependencies" / "chisel-testers2"
-
-  def chisel3Module: Option[PublishModule] = Some(mychisel3)
-
-  def treadleModule: Option[PublishModule] = Some(mytreadle)
-}
-
 object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
   override def millSourcePath = os.pwd /  "dependencies" / "berkeley-hardfloat"
 
   override def scalaVersion = ivys.sv
 
-  def chisel3Module: Option[PublishModule] = Some(mychisel3)
+  def chisel3Module: Option[PublishModule] = Some(mychisel)
 
   override def ivyDeps = super.ivyDeps() ++ Agg(
     ivys.parallel
   )
-  override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
-    mychisel3.plugin.jar()
-  ) }
 
   override def scalacOptions = T {
-    Seq(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Ymacro-annotations")
+    Seq(s"-Xplugin:${mychisel.pluginModule.jar().path}")
   }
+  override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
+    mychisel.pluginModule.jar()
+  ) }
 }
-
-/*
-object constellation extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "constellation"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
-}
-
-object mempress extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "mempress"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, firesim)
-}
-
-
-
-object testchipip extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "testchipip"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, blocks)
-}
-
-object icenet extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "icenet"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, testchipip)
-}
-
-
-object mdf extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "plsi-mdf"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, blocks)
-
-  override def ivyDeps = Agg(
-    ivys.playjson
-  )
-}
-
-object firesim extends CommonModule with SbtModule { fs =>
-
-  override def millSourcePath = os.pwd / "dependencies" / "firesim" / "sim"
-
-  object midas extends CommonModule with SbtModule {
-
-    override def millSourcePath = fs.millSourcePath / "midas"
-
-    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, targetutils, mdf)
-
-    object targetutils extends CommonModule with SbtModule
-  }
-
-  object lib extends CommonModule with SbtModule {
-    override def millSourcePath = fs.millSourcePath / "firesim-lib"
-
-    override def moduleDeps = super.moduleDeps ++ Seq(midas, testchipip, icenet)
-  }
-
-  override def moduleDeps = super.moduleDeps ++ Seq(lib, midas)
-}
-
-object boom extends CommonModule with SbtModule {
-  override def millSourcePath = os.pwd / "dependencies" / "riscv-boom"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, testchipip)
-}
-
-object barstools extends CommonModule with SbtModule { bt =>
-  override def millSourcePath = os.pwd / "dependencies" / "barstools"
-
-  object macros extends CommonModule with SbtModule {
-    override def millSourcePath = bt.millSourcePath / "macros"
-    override def moduleDeps = super.moduleDeps ++ Seq(mdf)
-  }
-
-  object iocell extends CommonModule with SbtModule {
-    override def millSourcePath = bt.millSourcePath / "iocell"
-  }
-
-  object tapeout extends CommonModule with SbtModule {
-    override def millSourcePath = bt.millSourcePath / "tapeout"
-  }
-
-  override def moduleDeps = super.moduleDeps ++ Seq(macros, iocell, tapeout)
-}
-
-object gemmini extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "gemmini"
-
-  override def ivyDeps = Agg(
-    ivys.breeze
-  )
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, testchipip, firesim.lib)
-}
-
-object nvdla extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "nvdla-wrapper"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
-}
-
-object cva6 extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "cva6-wrapper"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
-}
-
-object hwacha extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "hwacha"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
-}
-
-object sodor extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "riscv-sodor"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
-}
-
-object sha3 extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "sha3"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, mychiseltest, firesim.midas)
-}
-
-object ibex extends CommonModule with SbtModule {
-
-  override def millSourcePath = os.pwd / "dependencies" / "ibex-wrapper"
-
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
-}
-
-object chipyard extends CommonModule with SbtModule { cy =>
-  def basePath = os.pwd / "dependencies" / "chipyard"
-  override def millSourcePath = basePath / "generators" / "chipyard"
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, barstools, testchipip, blocks, icenet, boom, gemmini, nvdla, hwacha, cva6, tracegen, sodor, sha3, ibex, constellation, mempress)
-
-  object tracegen extends CommonModule with SbtModule {
-    override def millSourcePath = basePath / "generators" / "tracegen"
-    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, boom)
-  }
-
-  object fpga extends CommonModule with SbtModule {
-
-    override def millSourcePath = basePath / "fpga"
-    override def moduleDeps = super.moduleDeps ++ Seq(shells, chipyard)
-  }
-
-  object utilities extends CommonModule with SbtModule {
-    override def millSourcePath = basePath / "generators" / "utilities"
-    override def moduleDeps = super.moduleDeps ++ Seq(chipyard)
-  }
-}
-*/
 
 // CI Tests
 object sanitytests extends ScalaModule {
@@ -366,19 +161,11 @@ object spike extends Module {
 // Dummy
 
 object playground extends CommonModule {
-  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells, mychiseltest)
+  override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, inclusivecache, blocks, shells)
 
   // add some scala ivy module you like here.
   override def ivyDeps = Agg(
     ivys.oslib,
     ivys.pprint
   )
-
-  // use scalatest as your test framework
-  object tests extends Tests with TestModule.ScalaTest {
-    override def ivyDeps = Agg(
-      ivys.scalatest
-    )
-    override def moduleDeps = super.moduleDeps ++ Seq(mychiseltest)
-  }
 }
