@@ -28,6 +28,7 @@ object ivys {
   val playjson =ivy"com.typesafe.play::play-json:2.9.4"
   val breeze = ivy"org.scalanlp::breeze:1.1"
   val parallel = ivy"org.scala-lang.modules:scala-parallel-collections_3:1.0.4"
+  val mainargs = ivy"com.lihaoyi::mainargs:0.4.0"
 }
 
 // For modules not support mill yet, need to have a ScalaModule depend on our own repositories.
@@ -39,7 +40,7 @@ trait CommonModule extends ScalaModule {
   ) }
 
   override def scalacOptions = T {
-    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel.pluginModule.jar().path}", "-Ymacro-annotations")
+    super.scalacOptions() ++ Agg(s"-Xplugin:${mychisel.pluginModule.jar().path}", "-Ymacro-annotations", "-Ytasty-reader")
   }
 
   override def moduleDeps: Seq[ScalaModule] = Seq(mychisel)
@@ -123,6 +124,27 @@ object playground extends CommonModule {
   // add some scala ivy module you like here.
   override def ivyDeps = Agg(
     ivys.oslib,
-    ivys.pprint
+    ivys.pprint,
+    ivys.mainargs
   )
+
+  def lazymodule: String = "freechips.rocketchip.system.TestHarness"
+
+  def configs: String = "freechips.rocketchip.system.DefaultConfig"
+
+  def elaborate = T {
+    mill.modules.Jvm.runSubprocess(
+      finalMainClass(),
+      runClasspath().map(_.path),
+      forkArgs(),
+      forkEnv(),
+      Seq(
+        "--dir", T.dest.toString,
+        "--lm", lazymodule,
+        "--configs", configs
+      ),
+      workingDir = os.Path(T.dest.toString),
+    )
+    PathRef(T.dest)
+  }
 }
