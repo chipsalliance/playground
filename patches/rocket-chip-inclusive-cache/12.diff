@@ -1,0 +1,13 @@
+diff --git a/design/craft/inclusivecache/src/MSHR.scala b/design/craft/inclusivecache/src/MSHR.scala
+index b83372a..d1bc9cd 100644
+--- a/design/craft/inclusivecache/src/MSHR.scala
++++ b/design/craft/inclusivecache/src/MSHR.scala
+@@ -529,7 +529,7 @@ class MSHR(params: InclusiveCacheParameters) extends Module
+   }
+ 
+   when (io.allocate.valid) {
+-    assert (!request_valid || (no_wait && io.schedule.fire()))
++    assert (!request_valid || (no_wait && io.schedule.fire))
+     request_valid := true.B
+     request := io.allocate.bits
+   }

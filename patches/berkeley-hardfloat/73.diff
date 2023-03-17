@@ -1,0 +1,13 @@
+diff --git a/src/test/scala/FMATester.scala b/src/test/scala/FMATester.scala
+index 582f67c..21b823a 100644
+--- a/src/test/scala/FMATester.scala
++++ b/src/test/scala/FMATester.scala
+@@ -40,7 +40,7 @@ trait FMATester extends HardfloatTester {
+     val testDir: File = createTestDirectory(this.getClass.getSimpleName + s"_$name")
+     val testDirAbsolutePath: String = testDir.toPath.toAbsolutePath.toString
+     /** elaborate module to [[testDir]]. */
+-    val annos: AnnotationSeq = (new chisel3.stage.ChiselStage).execute(
++    val annos: AnnotationSeq = (new circt.stage.ChiselStage).execute(
+       Array("-X", "verilog"),
+       Seq(
+         TargetDirAnnotation(testDirAbsolutePath),

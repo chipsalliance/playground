@@ -1,0 +1,3665 @@
+diff --git a/src/main/scala/amba/axi4/Deinterleaver.scala b/src/main/scala/amba/axi4/Deinterleaver.scala
+index 2f0a47d8857..429078fd447 100644
+--- a/src/main/scala/amba/axi4/Deinterleaver.scala
++++ b/src/main/scala/amba/axi4/Deinterleaver.scala
+@@ -3,8 +3,7 @@
+ package freechips.rocketchip.amba.axi4
+ 
+ import chisel3._
+-import chisel3.util.{Cat, isPow2, log2Ceil, ReadyValidIO,
+-  log2Up, OHToUInt, Queue, QueueIO, UIntToOH}
++import chisel3.util.{isPow2, log2Ceil, ReadyValidIO, log2Up, OHToUInt, Queue, QueueIO, UIntToOH}
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util.leftOR
+diff --git a/src/main/scala/amba/axi4/IdIndexer.scala b/src/main/scala/amba/axi4/IdIndexer.scala
+index 9c49613d34a..a1f19f12c1c 100644
+--- a/src/main/scala/amba/axi4/IdIndexer.scala
++++ b/src/main/scala/amba/axi4/IdIndexer.scala
+@@ -6,7 +6,7 @@ import chisel3._
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util._
+-import chisel3.util.{log2Ceil, Cat}
++import chisel3.util.log2Ceil
+ import freechips.rocketchip.util.EnhancedChisel3Assign
+ 
+ case object AXI4ExtraId extends ControlKey[UInt]("extra_id")
+diff --git a/src/main/scala/aspects/RenameModulesAspect.scala b/src/main/scala/aspects/RenameModulesAspect.scala
+deleted file mode 100644
+index a062307ce28..00000000000
+--- a/src/main/scala/aspects/RenameModulesAspect.scala
++++ /dev/null
+@@ -1,46 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.aspects
+-
+-import chisel3.aop.Aspect
+-import chisel3.RawModule
+-
+-import firrtl.AnnotationSeq
+-import firrtl.stage.RunFirrtlTransformAnnotation
+-
+-import freechips.rocketchip.transforms.naming.{OverrideDesiredNameAnnotation, RenameDesiredNames}
+-
+-/** An aspect that renames modules
+-  *
+-  * @example renaming all Queues in a design to "Queue_$bundleType_entries_$numEntries"
+-  * {{{
+-  * case object StabilizeQueueNames extends RenameModulesAspect({ top: RawModule =>
+-  *   chisel3.aop.Select.collectDeep(top) {
+-  *     case m: Queue[_] =>
+-  *       m -> s"Queue_${m.genType.getClass.getSimpleName}_entries_${m.entries}"
+-  *   }.toSeq
+-  * })
+-  * }}}
+-  *
+-  * @example renaming a specific instance of RocketCore in the design
+-  * {{{
+-  * case object RenameRocketCore0 extends RenameModulesAspect({ top: RawModule =>
+-  *   chisel3.aop.Select.collectDeep(top) {
+-  *     case th: TestHarness =>
+-  *       val core = th.ldut.rocketTiles.head.module.core
+-  *       core -> "Rocket_Core_0"
+-  *   }.toSeq
+-  * })
+-  * }}}
+-  *
+-  * @param collectNameOverrides a function that takes the design top module and returns pairs of name overrides for the modules under the top module in the hierarchy
+-  */
+-abstract class RenameModulesAspect(
+-  collectNameOverrides: RawModule => Seq[(RawModule, String)]
+-  ) extends Aspect[RawModule] {
+-  final def toAnnotation(top: RawModule): AnnotationSeq = {
+-    RunFirrtlTransformAnnotation(new RenameDesiredNames) +: collectNameOverrides(top).map {
+-      case (m, nameOverride) => OverrideDesiredNameAnnotation(nameOverride, m.toTarget)
+-    }
+-  }
+-}
+diff --git a/src/main/scala/devices/debug/Debug.scala b/src/main/scala/devices/debug/Debug.scala
+index 10cb6effb43..3d1d5b3626a 100755
+--- a/src/main/scala/devices/debug/Debug.scala
++++ b/src/main/scala/devices/debug/Debug.scala
+@@ -895,7 +895,7 @@ class TLDebugModuleInner(device: Device, getNComponents: () => Int, beatBytes: I
+     if (nComponents > 1) {
+       when (~io.dmactive) {
+         selectedHartReg := 0.U
+-      }.elsewhen (io.innerCtrl.fire()){
++      }.elsewhen (io.innerCtrl.fire){
+         selectedHartReg := io.innerCtrl.bits.hartsel
+       }
+     }
+@@ -905,7 +905,7 @@ class TLDebugModuleInner(device: Device, getNComponents: () => Int, beatBytes: I
+       val hamaskReg = Reg(Vec(nComponents, Bool()))
+       when (~io.dmactive || ~dmAuthenticated) {
+         hamaskReg := hamaskZero
+-      }.elsewhen (io.innerCtrl.fire()){
++      }.elsewhen (io.innerCtrl.fire){
+         hamaskReg := Mux(io.innerCtrl.bits.hasel, io.innerCtrl.bits.hamask, hamaskZero)
+       }
+       hamaskFull := hamaskReg
+@@ -943,7 +943,7 @@ class TLDebugModuleInner(device: Device, getNComponents: () => Int, beatBytes: I
+ 
+     when (~io.dmactive || ~dmAuthenticated) {
+       hrmaskReg := hrReset
+-    }.elsewhen (io.innerCtrl.fire()){
++    }.elsewhen (io.innerCtrl.fire){
+       hrmaskReg := io.innerCtrl.bits.hrmask
+     }
+ 
+@@ -970,7 +970,7 @@ class TLDebugModuleInner(device: Device, getNComponents: () => Int, beatBytes: I
+     DMSTATUSRdData.version       := 2.U    // Version 0.13
+     io.auth.map(a => DMSTATUSRdData.authbusy := a.dmAuthBusy)
+ 
+-    val resumereq = io.innerCtrl.fire() && io.innerCtrl.bits.resumereq
++    val resumereq = io.innerCtrl.fire && io.innerCtrl.bits.resumereq
+ 
+     when (dmAuthenticated) {
+       DMSTATUSRdData.hasresethaltreq := true.B
+@@ -1003,7 +1003,7 @@ class TLDebugModuleInner(device: Device, getNComponents: () => Int, beatBytes: I
+     when(~io.dmactive || ~dmAuthenticated) {
+       haveResetBitRegs := 0.U
+     }.otherwise {
+-      when (io.innerCtrl.fire() && io.innerCtrl.bits.ackhavereset) {
++      when (io.innerCtrl.fire && io.innerCtrl.bits.ackhavereset) {
+         haveResetBitRegs := (haveResetBitRegs & (~(hamaskWrSel.asUInt))) | hartIsInResetSync.asUInt 
+       }.otherwise {
+         haveResetBitRegs := haveResetBitRegs | hartIsInResetSync.asUInt 
+diff --git a/src/main/scala/devices/debug/DebugTransport.scala b/src/main/scala/devices/debug/DebugTransport.scala
+index 33ce392b2c6..190dff11c27 100644
+--- a/src/main/scala/devices/debug/DebugTransport.scala
++++ b/src/main/scala/devices/debug/DebugTransport.scala
+@@ -143,7 +143,7 @@ class DebugTransportModuleJTAG(debugAddrBits: Int, c: JtagDTMConfig)
+   when (io.dmi.req.valid) {
+     busyReg := true.B
+   }
+-  when (io.dmi.resp.fire()) {
++  when (io.dmi.resp.fire) {
+     busyReg := false.B
+   }
+ 
+@@ -200,7 +200,7 @@ class DebugTransportModuleJTAG(debugAddrBits: Int, c: JtagDTMConfig)
+   // Drive Ready Valid Interface
+ 
+   val dmiReqValidCheck = WireInit(false.B)
+-  assert(!(dmiReqValidCheck && io.dmi.req.fire()), "Conflicting updates for dmiReqValidReg, should not happen.");
++  assert(!(dmiReqValidCheck && io.dmi.req.fire), "Conflicting updates for dmiReqValidReg, should not happen.");
+ 
+   when (dmiAccessChain.io.update.valid) {
+     when (stickyBusyReg) {
+@@ -217,7 +217,7 @@ class DebugTransportModuleJTAG(debugAddrBits: Int, c: JtagDTMConfig)
+     }
+   }
+ 
+-  when (io.dmi.req.fire()) {
++  when (io.dmi.req.fire) {
+     dmiReqValidReg := false.B
+   }
+ 
+diff --git a/src/main/scala/diplomacy/BundleBridge.scala b/src/main/scala/diplomacy/BundleBridge.scala
+index 18af5d5068e..6455372116e 100644
+--- a/src/main/scala/diplomacy/BundleBridge.scala
++++ b/src/main/scala/diplomacy/BundleBridge.scala
+@@ -4,7 +4,7 @@ package freechips.rocketchip.diplomacy
+ 
+ import chisel3._
+ import chisel3.internal.sourceinfo.SourceInfo
+-import chisel3.experimental.{DataMirror,IO}
++import chisel3.experimental.DataMirror
+ import chisel3.experimental.DataMirror.internal.chiselTypeClone
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.util.DataToAugmentedData
+diff --git a/src/main/scala/diplomacy/Nodes.scala b/src/main/scala/diplomacy/Nodes.scala
+index 16ca3e77fba..0f55b8a34ab 100644
+--- a/src/main/scala/diplomacy/Nodes.scala
++++ b/src/main/scala/diplomacy/Nodes.scala
+@@ -3,7 +3,7 @@
+ package freechips.rocketchip.diplomacy
+ 
+ import Chisel._
+-import chisel3.experimental.IO
++import chisel3.IO
+ import chisel3.internal.sourceinfo.SourceInfo
+ import org.chipsalliance.cde.config.{Field, Parameters}
+ import freechips.rocketchip.util.HeterogeneousBag
+diff --git a/src/main/scala/groundtest/Generator.scala b/src/main/scala/groundtest/Generator.scala
+deleted file mode 100644
+index 6279c67b4e3..00000000000
+--- a/src/main/scala/groundtest/Generator.scala
++++ /dev/null
+@@ -1,8 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.groundtest
+-
+-import firrtl.options.StageMain
+-import freechips.rocketchip.system.RocketChipStage
+-
+-object Generator extends StageMain(new RocketChipStage)
+diff --git a/src/main/scala/groundtest/TraceGen.scala b/src/main/scala/groundtest/TraceGen.scala
+index 5c5cba9b5f7..caf86608e66 100644
+--- a/src/main/scala/groundtest/TraceGen.scala
++++ b/src/main/scala/groundtest/TraceGen.scala
+@@ -20,7 +20,7 @@
+ package freechips.rocketchip.groundtest
+  
+ import chisel3._
+-import chisel3.util.{log2Up, MuxLookup, Cat, log2Ceil, Enum}
++import chisel3.util.{log2Up, MuxLookup, log2Ceil, Enum}
+ import org.chipsalliance.cde.config.{Parameters}
+ import freechips.rocketchip.diplomacy.{ClockCrossingType}
+ import freechips.rocketchip.rocket._
+diff --git a/src/main/scala/jtag/JtagShifter.scala b/src/main/scala/jtag/JtagShifter.scala
+index 69f6d1272fa..aa9fe9c6732 100644
+--- a/src/main/scala/jtag/JtagShifter.scala
++++ b/src/main/scala/jtag/JtagShifter.scala
+@@ -5,7 +5,7 @@ package freechips.rocketchip.jtag
+ import chisel3._
+ import chisel3.experimental.DataMirror
+ import chisel3.internal.firrtl.KnownWidth
+-import chisel3.util.{Cat, Valid}
++import chisel3.util.Valid
+ 
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.util.property
+diff --git a/src/main/scala/linting/LintAnnotation.scala b/src/main/scala/linting/LintAnnotation.scala
+deleted file mode 100644
+index ecf180b914f..00000000000
+--- a/src/main/scala/linting/LintAnnotation.scala
++++ /dev/null
+@@ -1,36 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-
+-import firrtl.ir.{Info, FileInfo}
+-import firrtl.annotations.NoTargetAnnotation
+-import chisel3.experimental.ChiselAnnotation
+-
+-/** Parent trait for all linting annotations */
+-trait LintAnnotation extends NoTargetAnnotation with ChiselAnnotation {
+-  override def toFirrtl = this
+-}
+-
+-/** Represents a linting violation under a given linter rule */
+-case class Violation(linter: rule.LintRule, info: Info, message: String, modules: Set[String]) extends LintAnnotation {
+-  def getScalaFiles: Seq[String] = {
+-    val scala = "(.*\\.scala).*".r
+-    rule.flatten(info).flatMap {
+-      case f: FileInfo => f.info.serialize match {
+-        case scala(file) => Some(file)
+-        case other => None
+-      }
+-      case other => None
+-    }
+-  }
+-}
+-
+-/** A list of files to ignore lint violations on, for a given lint rule */
+-case class Whitelist(lintName: String, whiteList: Set[String]) extends LintAnnotation
+-
+-/** A container of lint rule violation display options */
+-case class DisplayOptions(
+-    level: String  = "strict",
+-    totalLimit: Option[Int] = None,
+-    perErrorLimit: Map[String, Int] = Map.empty
+-) extends LintAnnotation
+diff --git a/src/main/scala/linting/LintException.scala b/src/main/scala/linting/LintException.scala
+deleted file mode 100644
+index 04d66c02269..00000000000
+--- a/src/main/scala/linting/LintException.scala
++++ /dev/null
+@@ -1,57 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-
+-import firrtl.FirrtlUserException
+-
+-/** Thrown to report all linting rule violations, according to the display options */
+-case class LintException(seq: Seq[Violation], lintDisplayOptions: DisplayOptions) extends FirrtlUserException(
+-  LintException.buildMessage(seq, lintDisplayOptions)
+-)
+-
+-object LintException {
+-  private def makeNumber(max: Int, n: Int, prefix: String): String = {
+-    val nDigits = max.toString.size
+-    val nLeading = nDigits - n.toString.size
+-    prefix * nLeading + n.toString
+-  }
+-
+-  private[linting] def buildMessage(seq: Seq[Violation], lintDisplayOptions: DisplayOptions): String = {
+-    val groupedErrors = seq.groupBy {
+-      case l: Violation => l.linter.lintName
+-    }
+-    val maxErrorNumber = groupedErrors.keys.max
+-
+-    val (_, reports) = groupedErrors.toSeq.sortBy(_._1).reverse.foldRight((0, Seq.empty[String])) {
+-      case ((lintName: String, lintErrors: Seq[Violation]), (totalErrors: Int, reportsSoFar: Seq[String])) =>
+-        val le                  = lintErrors.head.linter
+-        val perErrorLimit       = lintDisplayOptions.perErrorLimit.getOrElse(lintName, lintErrors.size)
+-        val totalErrorLimit     = lintDisplayOptions.totalLimit.map(t => t - totalErrors).getOrElse(perErrorLimit)
+-        val remainingErrorLimit = totalErrorLimit.min(perErrorLimit)
+-        val scalaFiles          = lintErrors.flatMap(_.getScalaFiles).distinct
+-        val lintString          = lintName
+-        val header =
+-          s"""
+-             |Lint rule ${le.lintName}: ${lintErrors.size} exceptions!
+-             | - Recommended fix:
+-             |     ${le.recommendedFix}
+-             | - Whitelist file via Chisel cmdline arg:
+-             |     ${le.whitelistAPI(scalaFiles)}
+-             | - Whitelist file via Chisel scala API:
+-             |     ${le.scalaAPI(scalaFiles)}
+-             | - Disable this linting check:
+-             |     ${le.disableCLI}
+-             | - Modify display settings with:
+-             |     --lint-options ...,display:${lintName}=<number>,...
+-             |""".stripMargin
+-
+-        val errors = lintErrors.zip(1 to remainingErrorLimit).map {
+-          case (lint: Violation, idx: Int) =>
+-            s"$lintString.${makeNumber(remainingErrorLimit.min(lintErrors.size),idx,"0")}:${lint.info} ${lint.message} in ${lint.modules}"
+-          }.mkString("\n")
+-
+-        (totalErrors + remainingErrorLimit, (header + errors) +: reportsSoFar)
+-    }
+-    reports.reverse.mkString("\n")
+-  }
+-}
+diff --git a/src/main/scala/linting/LintReporter.scala b/src/main/scala/linting/LintReporter.scala
+deleted file mode 100644
+index 7b3a74e7f6d..00000000000
+--- a/src/main/scala/linting/LintReporter.scala
++++ /dev/null
+@@ -1,77 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-
+-import firrtl._
+-import firrtl.options.{RegisteredLibrary, ShellOption, PreservesAll, Dependency}
+-import firrtl.stage.RunFirrtlTransformAnnotation
+-
+-/** The final transform for all linting
+-  * Collects all computer lint violations and displays them
+-  * Optionally kills the compilation, or proceeds with a warning
+-  */
+-final class LintReporter extends Transform with RegisteredLibrary with DependencyAPIMigration with PreservesAll[Transform] {
+-  val displayTotal = "displayTotal=(\\d+)".r
+-  val perTotal = "display:([_a-zA-Z0-9\\-]+)=(\\d+)".r
+-  val perAllTotal = "display:\\*=(\\d+)".r
+-
+-  lazy val options = Seq(
+-    new ShellOption[String](
+-      longOption = s"lint",
+-      toAnnotationSeq = {
+-        case "*" => RunFirrtlTransformAnnotation(this) +: (Linter.lintMap.values.map(RunFirrtlTransformAnnotation(_)).toSeq)
+-        case other => RunFirrtlTransformAnnotation(this) +: (other.split(',').toSeq.map { s =>
+-          Linter.lintMap.get(s) match {
+-            case Some(l) => RunFirrtlTransformAnnotation(l)
+-            case None => sys.error(s"Unknown linter argument: $s")
+-          }
+-        })
+-      },
+-      helpText = s"Enable linting for specified rules, where * is all rules. Available rules: ${Linter.linters.map(l => l.lintName).mkString(",")}.",
+-      helpValueName = Some("[*]|[<lintRule>,<lintRule>,...]")
+-    ),
+-    new ShellOption[String](
+-      longOption = "lint-options",
+-      toAnnotationSeq = { arg: String =>
+-        val displayOptions = arg.split(',').toSeq.foldLeft(DisplayOptions()) { (opt, str) =>
+-          str match {
+-            case "strict" => opt.copy(level = "strict")
+-            case "warn" => opt.copy(level = "warn")
+-            case displayTotal(n) => opt.copy(totalLimit = Some(n.toInt))
+-            case perTotal(lint, n) => opt.copy(perErrorLimit = opt.perErrorLimit + (Linter.lintMap(lint).lintName -> n.toInt))
+-            case perAllTotal(n) => opt.copy(perErrorLimit = Linter.linters.map(l => l.lintName -> n.toInt).toMap)
+-            case other => throw sys.error(s"Unrecognized option passed to --lint: $other")
+-          }
+-        }
+-        Seq(displayOptions)
+-      },
+-      helpText = "Customize linting options, including strict/warn or number of violations displayed.",
+-      helpValueName = Some("(strict|warn)[,displayTotal=<numError>][,display:<lintName>=<numError>]")
+-    )
+-  )
+-
+-  // Run before ExpandWhens
+-  override def optionalPrerequisiteOf = Seq(Dependency[firrtl.passes.ExpandWhensAndCheck])
+-
+-  override def execute(state: CircuitState): CircuitState = {
+-    val grouped = state.annotations.groupBy {
+-      case e: Violation => "v"
+-      case o: DisplayOptions => "o"
+-      case w: Whitelist => "w"
+-      case other => "a"
+-    }
+-
+-    val violations = grouped.getOrElse("v", Nil).asInstanceOf[Seq[Violation]]
+-    val options = grouped.getOrElse("o", Nil).headOption.getOrElse(DisplayOptions()).asInstanceOf[DisplayOptions]
+-    val remainingAnnotations = grouped.getOrElse("a", Nil)
+-
+-    if(violations.nonEmpty) {
+-      options.level match {
+-        case "strict" => throw LintException(violations.toSeq, options)
+-        case "warn" => println(LintException.buildMessage(violations.toSeq, options))
+-      }
+-    }
+-
+-    state.copy(annotations = remainingAnnotations)
+-  }
+-}
+diff --git a/src/main/scala/linting/Linter.scala b/src/main/scala/linting/Linter.scala
+deleted file mode 100644
+index 8fd421fabe2..00000000000
+--- a/src/main/scala/linting/Linter.scala
++++ /dev/null
+@@ -1,32 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-
+-import chisel3.experimental.annotate
+-
+-/** Chisel users: Use to whitelist files
+-  * Lint rule writers: update linters list whenever a new lint rule is created
+-  */
+-object Linter {
+-
+-  /** Use to whitelist specific files from specific linting rules
+-    *
+-    * @param lintRuleName the name of the lint rule
+-    * @param filenames scala files to except from this linting rule
+-    */
+-  def whitelist(lintRuleName: String, filenames: String*) = {
+-    require(lintMap.contains(lintRuleName), s"Unknown lint name: $lintRuleName")
+-    annotate(Whitelist(lintRuleName, filenames.toSet))
+-  }
+-
+-  // Update list for any new lint rule
+-  private[linting] lazy val linters = Seq(
+-    new rule.LintAnonymousRegisters,
+-    new rule.LintTruncatingWidths,
+-    new rule.LintConflictingModuleNames
+-  )
+-
+-  private [linting] lazy val lintMap = linters.flatMap {
+-    l => Seq(l.lintName -> l)
+-  }.toMap
+-}
+diff --git a/src/main/scala/linting/rule/LintAnonymousRegisters.scala b/src/main/scala/linting/rule/LintAnonymousRegisters.scala
+deleted file mode 100644
+index 0192746c6f9..00000000000
+--- a/src/main/scala/linting/rule/LintAnonymousRegisters.scala
++++ /dev/null
+@@ -1,34 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-package rule
+-
+-import firrtl.ir._
+-import firrtl.options.Dependency
+-
+-
+-/** Reports all anonymous registers in design
+-  * An anonymous register is one which is prefixed with an "_"
+-  */
+-final class LintAnonymousRegisters extends LintRule {
+-
+-  val recommendedFix: String = "Use named intermediate val, or if that fails use @chiselName or *.suggestName(...)"
+-
+-  val lintName: String = "anon-regs"
+-
+-  // Should run before LowerTypes so anonymous aggregate registers are reported as one register
+-  override def optionalPrerequisiteOf = super.optionalPrerequisiteOf :+ Dependency(firrtl.passes.LowerTypes)
+-
+-  override protected def lintStatement(violations: Violations, mname: String)(s: Statement): Unit = {
+-    s match {
+-      case r: DefRegister  if isTemporary(r.name) =>
+-        // Report scala info, if its present. Otherwise, use existing Info
+-        getScalaInfo(r.info) match {
+-          case Some(scalaInfo: FileInfo) => updateViolations(scalaInfo, "", violations, mname)
+-          case None                      => updateViolations(r.info, "", violations, mname)
+-        }
+-      case other =>
+-    }
+-    super.lintStatement(violations, mname)(s)
+-  }
+-}
+diff --git a/src/main/scala/linting/rule/LintConflictingModuleNames.scala b/src/main/scala/linting/rule/LintConflictingModuleNames.scala
+deleted file mode 100644
+index e805c2d9117..00000000000
+--- a/src/main/scala/linting/rule/LintConflictingModuleNames.scala
++++ /dev/null
+@@ -1,104 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-package rule
+-
+-import firrtl._
+-import firrtl.annotations.{IsModule, SingleTargetAnnotation, Target}
+-import firrtl.ir._
+-import firrtl.options.Dependency
+-
+-import freechips.rocketchip.transforms.naming.RenameDesiredNames
+-
+-import chisel3.aop.{Aspect, Select}
+-import chisel3.RawModule
+-
+-import scala.collection.mutable
+-
+-/** Captures the original desired name for a module
+-  */
+-case class DesiredNameAnnotation(
+-  desiredName: String,
+-  target: IsModule
+-) extends SingleTargetAnnotation[IsModule] {
+-  def duplicate(newTarget: IsModule): DesiredNameAnnotation = {
+-    this.copy(target = newTarget)
+-  }
+-}
+-
+-/** Collects [[DesiredNameAnnotation]]s for [[LintConflictingModuleNames]] to lint
+-  */
+-case object LintConflictingModuleNamesAspect extends Aspect[RawModule] {
+-  def toAnnotation(top: RawModule): AnnotationSeq = {
+-    Select.collectDeep(top) {
+-      case m: RawModule => DesiredNameAnnotation(m.desiredName, m.toTarget)
+-    }.toSeq
+-  }
+-}
+-
+-/** This LintRule checks for module name collisions
+-  *
+-  * Module name collisions occur when different [[Module]]s are annotated with
+-  * [[DesiredNameAnnotation]]s that have the same desiredName. Module name
+-  * conflicts will cause a [[LintViolation]].
+-  */
+-final class LintConflictingModuleNames extends LintRule {
+-  val recommendedFix: String = "override desiredName based on module parameters ('override def desiredName = \"...\"') or use RenameModulesAspect"
+-
+-  val lintName: String = "conflicting-module-names"
+-
+-  // depends on DedupModules which comes from super[LintRule].optionalPrerequisites
+-  override def optionalPrerequisites: Seq[Dependency[Transform]] =
+-    Dependency[RenameDesiredNames] +: super.optionalPrerequisites
+-
+-  override def execute(state: CircuitState): CircuitState = {
+-    val violations = new Violations()
+-
+-    val modMap = state.circuit.modules.collect {
+-      case m: Module => m.name -> m
+-    }.toMap
+-
+-    val desiredNameAnnos = state.annotations.collect {
+-      case a: DesiredNameAnnotation if a.target.circuit == state.circuit.main => a
+-    }
+-
+-    val moduleToDesiredName: mutable.Map[String, mutable.Set[String]] = mutable.Map()
+-
+-    val nameMap = desiredNameAnnos.groupBy(_.desiredName).mapValues { annos =>
+-      annos.map(a => Target.referringModule(a.target).module).distinct.map { referringModule =>
+-        require(modMap.contains(referringModule), s"ModuleNameAnnotations may not refer to blackboxes: $referringModule")
+-        val desiredNames = moduleToDesiredName.getOrElseUpdate(referringModule, mutable.Set())
+-        desiredNames += annos.head.desiredName
+-        modMap(referringModule)
+-      }
+-    }
+-
+-    val conflictingDesiredNames = moduleToDesiredName.collect {
+-      case kv@ (moduleName, desiredName) if desiredName.size > 1 => kv
+-    }
+-
+-    require(conflictingDesiredNames.size == 0, {
+-      val explanation = conflictingDesiredNames.map {
+-        case (modName, desiredNames) => s"  ${modName}: ${desiredNames.mkString(", ")}"
+-      }.mkString("\n")
+-      s"Modules may not have more than one desiredName:\n${explanation}"
+-    })
+-
+-    nameMap.foreach {
+-      case (desiredName, modules) if modules.size > 1 =>
+-        val msg = s"Module conflicts for desired name $desiredName: ${modules.map(_.name).mkString(", ")}"
+-        val info = MultiInfo(modules.map(_.info))
+-        val mods = violations.getOrElse((info, msg), Set.empty)
+-        violations((info, msg)) = mods ++ modules.map(_.name)
+-      case _ =>
+-    }
+-
+-    val whitelist = collectWhitelist(state.annotations)
+-    val errorList = violations.collect {
+-      case ((info, message), mods) if !isWhitelisted(info, whitelist) => Violation(this, info, message, mods)
+-    }.toSeq.sortBy { _.toString }
+-    val newAnnos = errorList ++ state.annotations
+-
+-    state.copy(annotations = newAnnos)
+-  }
+-}
+diff --git a/src/main/scala/linting/rule/LintRule.scala b/src/main/scala/linting/rule/LintRule.scala
+deleted file mode 100644
+index 4b053a8cbc2..00000000000
+--- a/src/main/scala/linting/rule/LintRule.scala
++++ /dev/null
+@@ -1,92 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-package rule
+-
+-import firrtl._
+-import firrtl.ir._
+-import firrtl.traversals.Foreachers._
+-import firrtl.options.{RegisteredLibrary, ShellOption, Dependency, PreservesAll}
+-import firrtl.stage.RunFirrtlTransformAnnotation
+-
+-/** Template class for lint rules
+-  * @note After extending this class, be sure to update the linter list in [[Linter]]
+-  */
+-abstract class LintRule extends Transform with RegisteredLibrary with DependencyAPIMigration with PreservesAll[Transform] {
+-
+-  // Name of this rule. Cannot contain spaces!
+-  val lintName: String
+-
+-  // Recommended fix to the user
+-  val recommendedFix: String
+-
+-  lazy val disableCLI: String = s"Omit $lintName from --lint option"
+-
+-  /** A string representation of using the Chisel/Scala API to whitelist files
+-    *
+-    * @param files a list of scala files to whitelist
+-    */
+-  def scalaAPI(files: Seq[String]): String = {
+-    val setArg = files.map(f => s""""$f"""").mkString(",")
+-    s"""whitelist("$lintName", Set($setArg))"""
+-  }
+-
+-  /** A string representation of using the commandline API to whitelist files
+-    *
+-    * @param files a list of scala files to whitelist
+-    */
+-  def whitelistAPI(files: Seq[String]): String = {
+-    val arg = files.mkString(",")
+-    s"""--${options.head.longOption} $arg"""
+-  }
+-
+-  /** A utiltiy functions to find whitelisted files in the given annotations
+-    *
+-    * @param annotations Input annotations to find all whitelisted files for this lint rule
+-    */
+-  def collectWhitelist(annotations: AnnotationSeq): Set[String] = annotations.flatMap {
+-    case Whitelist(name, whitelist) if name == lintName => whitelist.toSeq
+-    case other => Nil
+-  }.toSet
+-
+-
+-  lazy val options = Seq(
+-    new ShellOption[String](
+-      longOption = s"lint-whitelist:$lintName",
+-      toAnnotationSeq = {
+-        case whitelist: String => Seq(
+-          RunFirrtlTransformAnnotation(this),
+-          Whitelist(lintName, whitelist.split(',').toSet)
+-        )
+-      },
+-      helpText = "Enable linting anonymous registers for all files except provided files.",
+-      helpValueName = Some("<filename1>.scala[,<filename2>.scala]*")
+-    )
+-  )
+-
+-  // Run lint rules after deduplication
+-  override def optionalPrerequisites: Seq[Dependency[Transform]] = Seq(Dependency[firrtl.transforms.DedupModules])
+-
+-  // Run lint rules before the Lint Reporter
+-  override def optionalPrerequisiteOf: Seq[Dependency[Transform]] = Seq(Dependency[LintReporter])
+-
+-  override def execute(state: CircuitState): CircuitState = {
+-    val violations = new Violations()
+-    val whitelist = collectWhitelist(state.annotations)
+-    state.circuit.foreach(lintModule(violations))
+-    val errorList = violations.collect {
+-      case ((info, message), mods) if !isWhitelisted(info, whitelist) => Violation(this, info, message, mods)
+-    }.toSeq.sortBy { _.toString }
+-    state.copy(annotations = errorList ++ state.annotations )
+-  }
+-
+-  // Can be overridden by subclass implementations
+-  protected def lintModule(violations: Violations)(m: DefModule): Unit = {
+-    m.foreach(lintStatement(violations, m.name))
+-  }
+-
+-  // Can be overridden by subclass implementations
+-  protected def lintStatement(violations: Violations, mname: String)(s: Statement): Unit = {
+-    s.foreach(lintStatement(violations, mname))
+-  }
+-}
+diff --git a/src/main/scala/linting/rule/LintTruncatingWidths.scala b/src/main/scala/linting/rule/LintTruncatingWidths.scala
+deleted file mode 100644
+index 9f819b68ba7..00000000000
+--- a/src/main/scala/linting/rule/LintTruncatingWidths.scala
++++ /dev/null
+@@ -1,42 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-package rule
+-
+-import firrtl.ir._
+-import firrtl.options.Dependency
+-
+-/** Reports all connections from a wider signal to a smaller signal
+-  * Includes subfields of bulk connections
+-  */
+-final class LintTruncatingWidths extends LintRule {
+-
+-  override def optionalPrerequisites = Seq(
+-    Dependency(firrtl.passes.ExpandConnects), // Require expanding connects to see subfield bulk assignments
+-    Dependency[firrtl.passes.InferWidths]     // Require widths to have been inferred
+-  )
+-
+-  // Run prior to expand whens to get better fileinfo information
+-  override def optionalPrerequisiteOf = super.optionalPrerequisiteOf :+ Dependency[firrtl.passes.ExpandWhensAndCheck]
+-
+-  val lintName: String = "trunc-widths"
+-
+-  val recommendedFix: String = "Truncate width prior to connections"
+-
+-  override protected def lintStatement(violations: Violations, mname: String)(s: Statement): Unit = {
+-    s match {
+-      case c@Connect(info, loc, expr) => (loc.tpe, expr.tpe) match {
+-        case (GroundType(IntWidth(locWidth)), GroundType(IntWidth(exprWidth))) if exprWidth > locWidth =>
+-          val message = s"${c.copy(info = NoInfo).serialize} // Connecting width ${exprWidth} to width ${locWidth}"
+-          getScalaInfo(info) match {
+-            case Some(scalaInfo: FileInfo) =>
+-              updateViolations(scalaInfo, message, violations, mname)
+-            case None => updateViolations(info, message, violations, mname)
+-          }
+-        case other =>
+-      }
+-      case other =>
+-    }
+-    super.lintStatement(violations, mname)(s)
+-  }
+-}
+diff --git a/src/main/scala/linting/rule/package.scala b/src/main/scala/linting/rule/package.scala
+deleted file mode 100644
+index 46b74da6fa1..00000000000
+--- a/src/main/scala/linting/rule/package.scala
++++ /dev/null
+@@ -1,86 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.linting
+-
+-import firrtl._
+-import firrtl.ir._
+-import scala.collection.mutable
+-
+-package object rule {
+-  /** Determines whether name is prepended with an underscore, indicating a bad name
+-    *
+-    * @param name a signal's name
+-    */
+-  private [linting] def isTemporary(name: String): Boolean = name.nonEmpty && name.head == '_'
+-
+-  /** Determines whether name is prepended with an underscore, indicating a bad name
+-    *
+-    * @param expr a expression of a signal name
+-    */
+-  private [linting] def isTemporary(expr: Expression): Boolean = isTemporary(getName(expr))
+-
+-  /** Returns the root reference name of an Expression
+-    *
+-    * @throws Exception
+-    * @param expr an expression of a signal name. Cannot contain DoPrims or Muxes etc.
+-    */
+-  private [linting] def getName(expr: Expression): String = expr match {
+-    case r: WRef => r.name
+-    case f: WSubField => getName(f.expr)
+-    case i: WSubIndex => getName(i.expr)
+-    case a: WSubAccess => getName(a.expr)
+-    case other => throw new Exception(s"Unexpected match! $other")
+-  }
+-
+-  /** Splits an info into non-nested Infos
+-    * Right now the FIRRTL parser concatenates the infos if using both .fir and .scala source locators, instead of using
+-    *   MultiInfo. This code will work with both the current concatenation and a future FIRRTL change to migrate to MultiInfo.
+-    *
+-    * @param info given fileinfo to flatten
+-    */
+-  private [linting] def flatten(info: Info): Seq[FileInfo] = info match {
+-    case MultiInfo(seq) => seq.flatMap(flatten)
+-    case f: FileInfo =>
+-      val infoRegex = "\\s*(.*\\.scala \\d+:\\d+):(.*\\.fir@\\d+\\.\\d+)\\s*".r
+-      f.info.serialize match {
+-        case infoRegex(scala, fir) => Seq(FileInfo(StringLit(scala)), FileInfo(StringLit(fir)))
+-        case other => Seq(f)
+-      }
+-    case other => Nil
+-  }
+-
+-  /** Returns the first .scala source location contained inside info
+-    *
+-    * @param info given fileinfo to find scala fileinfo
+-    */
+-  private [linting] def getScalaInfo(info: Info): Option[FileInfo] = flatten(info).collectFirst {
+-    case i: FileInfo if i.serialize.contains("scala") => i
+-  }
+-
+-  /** Returns whether the given file is contained in the whiteList
+-    *
+-    * @param info given fileinfo to determine if it is whitelisted
+-    * @param whiteList list of files to exempt from lint rule
+-    */
+-  private [linting] def isWhitelisted(info: Info, whiteList: Set[String]): Boolean = {
+-    flatten(info).exists { i =>
+-      val file = i.info.serialize.split(' ').head
+-      whiteList.contains(file)
+-    } 
+-  }
+-
+-  /** Records a linting violation
+-    *
+-    * @param info given fileinfo of the violation
+-    * @param message Message to include in the violation report
+-    * @param violations container of existing violations
+-    * @param mname module name containing the violation
+-    */
+-  private [linting] def updateViolations(info: Info, message: String, violations: Violations, mname: String): Unit = {
+-      val mods = violations.getOrElse((info, message), Set.empty)
+-      violations((info, message)) = mods + mname
+-  }
+-
+-  // Container of violations
+-  private [linting] type Violations = mutable.HashMap[(Info, String), Set[String]]
+-}
+diff --git a/src/main/scala/prci/ClockGroupDriver.scala b/src/main/scala/prci/ClockGroupDriver.scala
+index 6ad4b2a294c..63ff42f1e42 100644
+--- a/src/main/scala/prci/ClockGroupDriver.scala
++++ b/src/main/scala/prci/ClockGroupDriver.scala
+@@ -2,7 +2,6 @@
+ package freechips.rocketchip.prci
+ 
+ import chisel3._
+-import chisel3.experimental.IO
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy.{InModuleBody, ModuleValue, ValName}
+ import freechips.rocketchip.util.{RecordMap}
+diff --git a/src/main/scala/prci/IOHelper.scala b/src/main/scala/prci/IOHelper.scala
+index 3292bce88ee..e33e618103b 100644
+--- a/src/main/scala/prci/IOHelper.scala
++++ b/src/main/scala/prci/IOHelper.scala
+@@ -3,7 +3,6 @@
+ package freechips.rocketchip.prci
+ 
+ import chisel3._
+-import chisel3.experimental.IO
+ import freechips.rocketchip.diplomacy._
+ 
+ object IOHelper {
+diff --git a/src/main/scala/regmapper/RegMapper.scala b/src/main/scala/regmapper/RegMapper.scala
+index 122c0e4f7a8..b482e50c67c 100644
+--- a/src/main/scala/regmapper/RegMapper.scala
++++ b/src/main/scala/regmapper/RegMapper.scala
+@@ -4,7 +4,7 @@ package freechips.rocketchip.regmapper
+ 
+ import chisel3._
+ import chisel3.internal.sourceinfo.SourceInfo
+-import chisel3.util.{DecoupledIO, Decoupled, Queue, Cat, FillInterleaved, UIntToOH}
++import chisel3.util.{DecoupledIO, Decoupled, Queue, FillInterleaved, UIntToOH}
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util._
+ import freechips.rocketchip.util.property
+diff --git a/src/main/scala/regmapper/Test.scala b/src/main/scala/regmapper/Test.scala
+index 376756ae17a..f32ba33c9d7 100644
+--- a/src/main/scala/regmapper/Test.scala
++++ b/src/main/scala/regmapper/Test.scala
+@@ -3,7 +3,7 @@
+ package freechips.rocketchip.regmapper
+ 
+ import chisel3._
+-import chisel3.util.{Cat, log2Ceil}
++import chisel3.util.log2Ceil
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy.LazyModuleImp
+ import freechips.rocketchip.util.{Pow2ClockDivider}
+diff --git a/src/main/scala/rocket/ALU.scala b/src/main/scala/rocket/ALU.scala
+index 49a156fab53..f4ec8d51cf9 100644
+--- a/src/main/scala/rocket/ALU.scala
++++ b/src/main/scala/rocket/ALU.scala
+@@ -4,7 +4,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{BitPat, Fill, Cat, Reverse}
++import chisel3.util.{BitPat, Fill, Reverse}
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.tile.CoreModule
+ 
+diff --git a/src/main/scala/rocket/Breakpoint.scala b/src/main/scala/rocket/Breakpoint.scala
+index ea3b362d066..3384ce178ae 100644
+--- a/src/main/scala/rocket/Breakpoint.scala
++++ b/src/main/scala/rocket/Breakpoint.scala
+@@ -3,7 +3,6 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Cat}
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.tile.{CoreBundle, HasCoreParameters}
+ import freechips.rocketchip.util._
+diff --git a/src/main/scala/rocket/CSR.scala b/src/main/scala/rocket/CSR.scala
+index 326e50a1db8..22be384092e 100644
+--- a/src/main/scala/rocket/CSR.scala
++++ b/src/main/scala/rocket/CSR.scala
+@@ -4,7 +4,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{BitPat, Cat, Fill, Mux1H, PopCount, PriorityMux, RegEnable, UIntToOH, Valid, log2Ceil, log2Up}
++import chisel3.util.{BitPat, Fill, Mux1H, PopCount, PriorityMux, RegEnable, UIntToOH, Valid, log2Ceil, log2Up}
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.devices.debug.DebugModuleKey
+ import freechips.rocketchip.tile._
+diff --git a/src/main/scala/rocket/DCache.scala b/src/main/scala/rocket/DCache.scala
+index 0467d149a97..51434e3db34 100644
+--- a/src/main/scala/rocket/DCache.scala
++++ b/src/main/scala/rocket/DCache.scala
+@@ -156,13 +156,13 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+       (tl_out.c, true.B)
+     }
+ 
+-  val s1_valid = RegNext(io.cpu.req.fire(), false.B)
+-  val s1_probe = RegNext(tl_out.b.fire(), false.B)
+-  val probe_bits = RegEnable(tl_out.b.bits, tl_out.b.fire()) // TODO has data now :(
++  val s1_valid = RegNext(io.cpu.req.fire, false.B)
++  val s1_probe = RegNext(tl_out.b.fire, false.B)
++  val probe_bits = RegEnable(tl_out.b.bits, tl_out.b.fire) // TODO has data now :(
+   val s1_nack = WireDefault(false.B)
+   val s1_valid_masked = s1_valid && !io.cpu.s1_kill
+   val s1_valid_not_nacked = s1_valid && !s1_nack
+-  val s1_tlb_req_valid = RegNext(tlb_port.req.fire(), false.B)
++  val s1_tlb_req_valid = RegNext(tlb_port.req.fire, false.B)
+   val s2_tlb_req_valid = RegNext(s1_tlb_req_valid, false.B)
+   val s0_clk_en = metaArb.io.out.valid && !metaArb.io.out.bits.write
+ 
+@@ -174,7 +174,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   val s1_vaddr = Cat(s1_req.idx.getOrElse(s1_req.addr) >> tagLSB, s1_req.addr(tagLSB-1, 0))
+ 
+   val s0_tlb_req = WireInit(tlb_port.req.bits)
+-  when (!tlb_port.req.fire()) {
++  when (!tlb_port.req.fire) {
+     s0_tlb_req.passthrough := s0_req.phys
+     s0_tlb_req.vaddr := s0_req.addr
+     s0_tlb_req.size := s0_req.size
+@@ -605,7 +605,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+ 
+   // Set pending bits for outstanding TileLink transaction
+   val a_sel = UIntToOH(a_source, maxUncachedInFlight+mmioOffset) >> mmioOffset
+-  when (tl_out_a.fire()) {
++  when (tl_out_a.fire) {
+     when (s2_uncached) {
+       (a_sel.asBools zip (uncachedInFlight zip uncachedReqs)) foreach { case (s, (f, r)) =>
+         when (s) {
+@@ -648,7 +648,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   tl_out.d.ready := Mux(grantIsCached, (!d_first || tl_out.e.ready) && canAcceptCachedGrant, true.B)
+   val uncachedRespIdxOH = UIntToOH(tl_out.d.bits.source, maxUncachedInFlight+mmioOffset) >> mmioOffset
+   uncachedResp := Mux1H(uncachedRespIdxOH, uncachedReqs)
+-  when (tl_out.d.fire()) {
++  when (tl_out.d.fire) {
+     when (grantIsCached) {
+       grantInProgress := true.B
+       assert(cached_grant_wait, "A GrantData was unexpected by the dcache.")
+@@ -690,7 +690,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   // Finish TileLink transaction by issuing a GrantAck
+   tl_out.e.valid := tl_out.d.valid && d_first && grantIsCached && canAcceptCachedGrant
+   tl_out.e.bits := edge.GrantAck(tl_out.d.bits)
+-  assert(tl_out.e.fire() === (tl_out.d.fire() && d_first && grantIsCached))
++  assert(tl_out.e.fire === (tl_out.d.fire && d_first && grantIsCached))
+ 
+   // data refill
+   // note this ready-valid signaling ignores E-channel backpressure, which
+@@ -775,9 +775,9 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   // release
+   val (c_first, c_last, releaseDone, c_count) = edge.count(tl_out_c)
+   val releaseRejected = Wire(Bool())
+-  val s1_release_data_valid = RegNext(dataArb.io.in(2).fire())
++  val s1_release_data_valid = RegNext(dataArb.io.in(2).fire)
+   val s2_release_data_valid = RegNext(s1_release_data_valid && !releaseRejected)
+-  releaseRejected := s2_release_data_valid && !tl_out_c.fire()
++  releaseRejected := s2_release_data_valid && !tl_out_c.fire
+   val releaseDataBeat = Cat(0.U, c_count) + Mux(releaseRejected, 0.U, s1_release_data_valid + Cat(0.U, s2_release_data_valid))
+ 
+   val nackResponseMessage = edge.ProbeAck(b = probe_bits, reportPermissions = TLPermissions.NtoN)
+@@ -853,7 +853,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+       newCoh := voluntaryNewCoh
+       releaseWay := s2_victim_or_hit_way
+       when (releaseDone) { release_state := s_voluntary_write_meta }
+-      when (tl_out_c.fire() && c_first) {
++      when (tl_out_c.fire && c_first) {
+         release_ack_wait := true.B
+         release_ack_addr := probe_bits.address
+       }
+@@ -888,7 +888,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   metaArb.io.in(4).bits.idx := probeIdx(probe_bits)
+   metaArb.io.in(4).bits.addr := Cat(io.cpu.req.bits.addr >> untagBits, probe_bits.address(idxMSB, 0))
+   metaArb.io.in(4).bits.data := tECC.encode(L1Metadata(tl_out_c.bits.address >> tagLSB, newCoh).asUInt)
+-  when (metaArb.io.in(4).fire()) { release_state := s_ready }
++  when (metaArb.io.in(4).fire) { release_state := s_ready }
+ 
+   // cached response
+   io.cpu.resp.bits <> s2_req
+@@ -923,7 +923,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   val s2_uncached_data_word = RegEnable(s1_uncached_data_word, io.cpu.replay_next)
+   val doUncachedResp = RegNext(io.cpu.replay_next)
+   io.cpu.resp.valid := (s2_valid_hit_pre_data_ecc || doUncachedResp) && !s2_data_error
+-  io.cpu.replay_next := tl_out.d.fire() && grantIsUncachedData && !cacheParams.separateUncachedResp.B
++  io.cpu.replay_next := tl_out.d.fire && grantIsUncachedData && !cacheParams.separateUncachedResp.B
+   when (doUncachedResp) {
+     assert(!s2_valid_hit)
+     io.cpu.resp.bits.replay := true.B
+@@ -987,7 +987,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   val flushCounterWrap = flushCounterNext(log2Ceil(nSets)-1, 0)
+   ccover(s2_valid_masked && s2_cmd_flush_all && s2_meta_error, "TAG_ECC_ERROR_DURING_FENCE_I", "D$ ECC error in tag array during cache flush")
+   ccover(s2_valid_masked && s2_cmd_flush_all && s2_data_error, "DATA_ECC_ERROR_DURING_FENCE_I", "D$ ECC error in data array during cache flush")
+-  s1_flush_valid := metaArb.io.in(5).fire() && !s1_flush_valid && !s2_flush_valid_pre_tag_ecc && release_state === s_ready && !release_ack_wait
++  s1_flush_valid := metaArb.io.in(5).fire && !s1_flush_valid && !s2_flush_valid_pre_tag_ecc && release_state === s_ready && !release_ack_wait
+   metaArb.io.in(5).valid := flushing && !flushed
+   metaArb.io.in(5).bits.write := false.B
+   metaArb.io.in(5).bits.idx := flushCounter(idxBits-1, 0)
+@@ -1004,7 +1004,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+       }
+     }
+ 
+-    when (tl_out_a.fire() && !s2_uncached) { flushed := false.B }
++    when (tl_out_a.fire && !s2_uncached) { flushed := false.B }
+     when (flushing) {
+       s1_victim_way := flushCounter >> log2Up(nSets)
+       when (s2_flush_valid) {
+@@ -1052,7 +1052,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   io.cpu.perf.acquire := edge.done(tl_out_a)
+   io.cpu.perf.release := edge.done(tl_out_c)
+   io.cpu.perf.grant := tl_out.d.valid && d_last
+-  io.cpu.perf.tlbMiss := io.ptw.req.fire()
++  io.cpu.perf.tlbMiss := io.ptw.req.fire
+   io.cpu.perf.storeBufferEmptyAfterLoad := !(
+     (s1_valid && s1_write) ||
+     ((s2_valid && s2_write && !s2_waw_hazard) || pstore1_held) ||
+@@ -1076,7 +1076,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+     }
+     val near_end_of_refill = if (cacheBlockBytes / beatBytes <= beatsBeforeEnd) tl_out.d.valid else {
+       val refill_count = RegInit(0.U((cacheBlockBytes / beatBytes).log2.W))
+-      when (tl_out.d.fire() && grantIsRefill) { refill_count := refill_count + 1.U }
++      when (tl_out.d.fire && grantIsRefill) { refill_count := refill_count + 1.U }
+       refill_count >= (cacheBlockBytes / beatBytes - beatsBeforeEnd).U
+     }
+     cached_grant_wait && !near_end_of_refill
+@@ -1085,7 +1085,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+   // report errors
+   val (data_error, data_error_uncorrectable, data_error_addr) =
+     if (usingDataScratchpad) (s2_valid_data_error, s2_data_error_uncorrectable, s2_req.addr) else {
+-      (RegNext(tl_out_c.fire() && inWriteback && s2_data_error),
++      (RegNext(tl_out_c.fire && inWriteback && s2_data_error),
+         RegNext(s2_data_error_uncorrectable),
+         probe_bits.address) // This is stable for a cycle after tl_out_c.fire, so don't need a register
+     }
+@@ -1102,7 +1102,7 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
+       c.bits := error_addr
+       io.errors.uncorrectable.foreach { u => when (u.valid) { c.valid := false.B } }
+     }
+-    io.errors.bus.valid := tl_out.d.fire() && (tl_out.d.bits.denied || tl_out.d.bits.corrupt)
++    io.errors.bus.valid := tl_out.d.fire && (tl_out.d.bits.denied || tl_out.d.bits.corrupt)
+     io.errors.bus.bits := Mux(grantIsCached, s2_req.addr >> idxLSB << idxLSB, 0.U)
+ 
+     ccoverNotScratchpad(io.errors.bus.valid && grantIsCached, "D_ERROR_CACHED", "D$ D-channel error, cached")
+diff --git a/src/main/scala/rocket/HellaCache.scala b/src/main/scala/rocket/HellaCache.scala
+index 945f5d0e11c..f4000de55c1 100644
+--- a/src/main/scala/rocket/HellaCache.scala
++++ b/src/main/scala/rocket/HellaCache.scala
+@@ -327,7 +327,7 @@ class L1MetadataArray[T <: L1Metadata](onReset: () => T)(implicit p: Parameters)
+   when (wen) {
+     tag_array.write(waddr, VecInit.fill(nWays)(wdata), wmask)
+   }
+-  io.resp := tag_array.read(io.read.bits.idx, io.read.fire()).map(_.asTypeOf(chiselTypeOf(rstVal)))
++  io.resp := tag_array.read(io.read.bits.idx, io.read.fire).map(_.asTypeOf(chiselTypeOf(rstVal)))
+ 
+   io.read.ready := !wen // so really this could be a 6T RAM
+   io.write.ready := !rst
+diff --git a/src/main/scala/rocket/HellaCacheArbiter.scala b/src/main/scala/rocket/HellaCacheArbiter.scala
+index 4b9fc08f4cb..2e5b3e2b9e3 100644
+--- a/src/main/scala/rocket/HellaCacheArbiter.scala
++++ b/src/main/scala/rocket/HellaCacheArbiter.scala
+@@ -4,7 +4,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Cat,log2Up}
++import chisel3.util.log2Up
+ import org.chipsalliance.cde.config.Parameters
+ 
+ class HellaCacheArbiter(n: Int)(implicit p: Parameters) extends Module
+diff --git a/src/main/scala/rocket/IBuf.scala b/src/main/scala/rocket/IBuf.scala
+index c0a383d79ca..6bf2760cc4c 100644
+--- a/src/main/scala/rocket/IBuf.scala
++++ b/src/main/scala/rocket/IBuf.scala
+@@ -3,7 +3,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Decoupled,log2Ceil,Cat,UIntToOH,Fill}
++import chisel3.util.{Decoupled,log2Ceil,UIntToOH,Fill}
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.util._
+diff --git a/src/main/scala/rocket/ICache.scala b/src/main/scala/rocket/ICache.scala
+index 2cc95ce8e9d..b5961f3ef8a 100644
+--- a/src/main/scala/rocket/ICache.scala
++++ b/src/main/scala/rocket/ICache.scala
+@@ -4,7 +4,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Cat, Decoupled, Mux1H, OHToUInt, RegEnable, Valid, isPow2, log2Ceil, log2Up, PopCount}
++import chisel3.util.{Decoupled, Mux1H, OHToUInt, RegEnable, Valid, isPow2, log2Ceil, log2Up, PopCount}
+ import freechips.rocketchip.amba._
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy._
+@@ -319,13 +319,13 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+   def scratchpadLine(addr: UInt) = addr(untagBits+log2Ceil(nWays)-1, blockOffBits)
+ 
+   /** scratchpad access valid in stage N*/
+-  val s0_slaveValid = tl_in.map(_.a.fire()).getOrElse(false.B)
++  val s0_slaveValid = tl_in.map(_.a.fire).getOrElse(false.B)
+   val s1_slaveValid = RegNext(s0_slaveValid, false.B)
+   val s2_slaveValid = RegNext(s1_slaveValid, false.B)
+   val s3_slaveValid = RegNext(false.B)
+ 
+   /** valid signal for CPU accessing cache in stage 0. */
+-  val s0_valid = io.req.fire()
++  val s0_valid = io.req.fire
+   /** virtual address from CPU in stage 0. */
+   val s0_vaddr = io.req.bits.addr
+ 
+@@ -363,7 +363,7 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+    * */
+   val send_hint = RegInit(false.B)
+   /** indicate [[tl_out]] is performing a refill. */
+-  val refill_fire = tl_out.a.fire() && !send_hint
++  val refill_fire = tl_out.a.fire && !send_hint
+   /** register to indicate there is a outstanding hint. */
+   val hint_outstanding = RegInit(false.B)
+   /** [[io]] access L1 I$ miss. */
+@@ -380,14 +380,14 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+   val refill_tag = refill_paddr >> pgUntagBits
+   val refill_idx = index(refill_vaddr, refill_paddr)
+   /** AccessAckData, is refilling I$, it will block request from CPU. */
+-  val refill_one_beat = tl_out.d.fire() && edge_out.hasData(tl_out.d.bits)
++  val refill_one_beat = tl_out.d.fire && edge_out.hasData(tl_out.d.bits)
+ 
+   /** block request from CPU when refill or scratch pad access. */
+   io.req.ready := !(refill_one_beat || s0_slaveValid || s3_slaveValid)
+   s1_valid := s0_valid
+ 
+   val (_, _, d_done, refill_cnt) = edge_out.count(tl_out.d)
+-  /** at last beat of `tl_out.d.fire()`, finish refill. */
++  /** at last beat of `tl_out.d.fire`, finish refill. */
+   val refill_done = refill_one_beat && d_done
+   /** scratchpad is writing data. block refill. */
+   tl_out.d.ready := !s3_slaveValid
+@@ -430,7 +430,7 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+     ccover(refillError, "D_CORRUPT", "I$ D-channel corrupt")
+   }
+   // notify CPU, I$ has corrupt.
+-  io.errors.bus.valid := tl_out.d.fire() && (tl_out.d.bits.denied || tl_out.d.bits.corrupt)
++  io.errors.bus.valid := tl_out.d.fire && (tl_out.d.bits.denied || tl_out.d.bits.corrupt)
+   io.errors.bus.bits  := (refill_paddr >> blockOffBits) << blockOffBits
+ 
+   /** true indicate this cacheline is valid,
+@@ -714,7 +714,7 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+         }
+ 
+         // back pressure is allowed on the [[tl]]
+-        // pull up [[respValid]] when [[s2_slaveValid]] until [[tl.d.fire()]]
++        // pull up [[respValid]] when [[s2_slaveValid]] until [[tl.d.fire]]
+         respValid := s2_slaveValid || (respValid && !tl.d.ready)
+         // if [[s2_full_word_write]] will overwrite data, and [[s2_data_decoded.uncorrectable]] can be ignored.
+         val respError = RegEnable(s2_scratchpad_hit && s2_data_decoded.uncorrectable && !s1s2_full_word_write, s2_slaveValid)
+@@ -767,7 +767,7 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+       */
+     val (crosses_page, next_block) = Split(refill_paddr(pgIdxBits-1, blockOffBits) +& 1.U, pgIdxBits-blockOffBits)
+ 
+-    when (tl_out.a.fire()) {
++    when (tl_out.a.fire) {
+       send_hint := !hint_outstanding && io.s2_prefetch && !crosses_page
+       when (send_hint) {
+         send_hint := false.B
+@@ -781,7 +781,7 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+     }
+ 
+     // D channel reply with HintAck.
+-    when (tl_out.d.fire() && !refill_one_beat) {
++    when (tl_out.d.fire && !refill_one_beat) {
+       hint_outstanding := false.B
+     }
+ 
+@@ -795,9 +795,9 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
+     }
+ 
+     ccover(send_hint && !tl_out.a.ready, "PREFETCH_A_STALL", "I$ prefetch blocked by A-channel")
+-    ccover(refill_valid && (tl_out.d.fire() && !refill_one_beat), "PREFETCH_D_BEFORE_MISS_D", "I$ prefetch resolves before miss")
+-    ccover(!refill_valid && (tl_out.d.fire() && !refill_one_beat), "PREFETCH_D_AFTER_MISS_D", "I$ prefetch resolves after miss")
+-    ccover(tl_out.a.fire() && hint_outstanding, "PREFETCH_D_AFTER_MISS_A", "I$ prefetch resolves after second miss")
++    ccover(refill_valid && (tl_out.d.fire && !refill_one_beat), "PREFETCH_D_BEFORE_MISS_D", "I$ prefetch resolves before miss")
++    ccover(!refill_valid && (tl_out.d.fire && !refill_one_beat), "PREFETCH_D_AFTER_MISS_D", "I$ prefetch resolves after miss")
++    ccover(tl_out.a.fire && hint_outstanding, "PREFETCH_D_AFTER_MISS_A", "I$ prefetch resolves after second miss")
+   }
+   // Drive APROT information
+   tl_out.a.bits.user.lift(AMBAProt).foreach { x =>
+diff --git a/src/main/scala/rocket/Multiplier.scala b/src/main/scala/rocket/Multiplier.scala
+index f1c519138b1..848e693f993 100644
+--- a/src/main/scala/rocket/Multiplier.scala
++++ b/src/main/scala/rocket/Multiplier.scala
+@@ -4,7 +4,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Cat, log2Up, log2Ceil, log2Floor, Log2, Decoupled, Enum, Fill, Valid, Pipe}
++import chisel3.util.{log2Up, log2Ceil, log2Floor, Log2, Decoupled, Enum, Fill, Valid, Pipe}
+ import freechips.rocketchip.util._
+ 
+ class MultiplierReq(dataBits: Int, tagBits: Int, aluFn: ALUFN = new ALUFN) extends Bundle {
+@@ -155,10 +155,10 @@ class MulDiv(cfg: MulDivParams, width: Int, nXpr: Int = 32, aluFn: ALUFN = new A
+     }
+     when (divby0 && !isHi) { neg_out := false.B }
+   }
+-  when (io.resp.fire() || io.kill) {
++  when (io.resp.fire || io.kill) {
+     state := s_ready
+   }
+-  when (io.req.fire()) {
++  when (io.req.fire) {
+     state := Mux(cmdMul, s_mul, Mux(lhs_sign || rhs_sign, s_neg_inputs, s_div))
+     isHi := cmdHi
+     resHi := false.B
+diff --git a/src/main/scala/rocket/PMP.scala b/src/main/scala/rocket/PMP.scala
+index 11fe95d9e0b..0b16c22a61b 100644
+--- a/src/main/scala/rocket/PMP.scala
++++ b/src/main/scala/rocket/PMP.scala
+@@ -3,7 +3,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Cat, log2Ceil}
++import chisel3.util.log2Ceil
+ import org.chipsalliance.cde.config._
+ import freechips.rocketchip.tile._
+ import freechips.rocketchip.util._
+diff --git a/src/main/scala/rocket/PTW.scala b/src/main/scala/rocket/PTW.scala
+index 7c36bdbf377..52cd26db25f 100644
+--- a/src/main/scala/rocket/PTW.scala
++++ b/src/main/scala/rocket/PTW.scala
+@@ -4,7 +4,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Arbiter, Cat, Decoupled, Enum, Mux1H, OHToUInt, PopCount, PriorityEncoder, PriorityEncoderOH, RegEnable, UIntToOH, Valid, is, isPow2, log2Ceil, switch}
++import chisel3.util.{Arbiter, Decoupled, Enum, Mux1H, OHToUInt, PopCount, PriorityEncoder, PriorityEncoderOH, RegEnable, UIntToOH, Valid, is, isPow2, log2Ceil, switch}
+ import chisel3.withClock
+ import chisel3.internal.sourceinfo.SourceInfo
+ import org.chipsalliance.cde.config.Parameters
+diff --git a/src/main/scala/rocket/SimpleHellaCacheIF.scala b/src/main/scala/rocket/SimpleHellaCacheIF.scala
+index e4121cfa8b2..5369dc482b0 100644
+--- a/src/main/scala/rocket/SimpleHellaCacheIF.scala
++++ b/src/main/scala/rocket/SimpleHellaCacheIF.scala
+@@ -4,7 +4,7 @@
+ package freechips.rocketchip.rocket
+ 
+ import chisel3._
+-import chisel3.util.{Valid,Decoupled,Queue,log2Up,OHToUInt,UIntToOH,PriorityEncoderOH,Arbiter,RegEnable,Cat}
++import chisel3.util.{Valid,Decoupled,Queue,log2Up,OHToUInt,UIntToOH,PriorityEncoderOH,Arbiter,RegEnable}
+ 
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.util._
+@@ -79,15 +79,15 @@ class SimpleHellaCacheIFReplayQueue(depth: Int)
+ 
+   // Set inflight bit when a request is made
+   // Clear it when it is successfully completed
+-  inflight := (inflight | Mux(io.req.fire(), next_inflight_onehot, 0.U)) &
++  inflight := (inflight | Mux(io.req.fire, next_inflight_onehot, 0.U)) &
+                           ~Mux(io.resp.valid, resp_onehot, 0.U)
+ 
+-  when (io.req.fire()) {
++  when (io.req.fire) {
+     reqs(next_inflight) := io.req.bits
+   }
+ 
+   // Only one replay outstanding at a time
+-  when (io.replay.fire()) { replaying := true.B }
++  when (io.replay.fire) { replaying := true.B }
+   when (nack_head || replay_complete) { replaying := false.B }
+ }
+ 
+@@ -115,7 +115,7 @@ class SimpleHellaCacheIF(implicit p: Parameters) extends Module
+   replayq.io.req.valid := req_helper.fire(replayq.io.req.ready)
+   replayq.io.req.bits := io.requestor.req.bits
+ 
+-  val s0_req_fire = io.cache.req.fire()
++  val s0_req_fire = io.cache.req.fire
+   val s1_req_fire = RegNext(s0_req_fire)
+   val s2_req_fire = RegNext(s1_req_fire)
+   val s1_req_tag = RegNext(io.cache.req.bits.tag)
+diff --git a/src/main/scala/stage/RocketChipAnnotations.scala b/src/main/scala/stage/RocketChipAnnotations.scala
+deleted file mode 100644
+index f0c2c1302cf..00000000000
+--- a/src/main/scala/stage/RocketChipAnnotations.scala
++++ /dev/null
+@@ -1,52 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage
+-
+-import chisel3.experimental.BaseModule
+-import firrtl.annotations.{Annotation, NoTargetAnnotation}
+-import firrtl.options.{HasShellOptions, ShellOption, Unserializable}
+-
+-sealed trait RocketChipOption extends Unserializable { this: Annotation => }
+-
+-/* required options */
+-
+-/** Path to top module class */
+-case class TopModuleAnnotation(clazz: Class[_ <: Any]) extends NoTargetAnnotation with RocketChipOption
+-private[stage] object TopModuleAnnotation extends HasShellOptions {
+-  override val options = Seq(
+-    new ShellOption[String](
+-      longOption = "top-module",
+-      toAnnotationSeq = a => Seq(TopModuleAnnotation(Class.forName(a).asInstanceOf[Class[_ <: BaseModule]])),
+-      helpText = "<top module>",
+-      shortOption = Some("T")
+-    )
+-  )
+-}
+-
+-/** Paths to config classes */
+-case class ConfigsAnnotation(configNames: Seq[String]) extends NoTargetAnnotation with RocketChipOption
+-private[stage] object ConfigsAnnotation extends HasShellOptions {
+-  override val options = Seq(
+-    new ShellOption[Seq[String]](
+-      longOption = "configs",
+-      toAnnotationSeq = a => Seq(ConfigsAnnotation(a)),
+-      helpText = "<comma-delimited configs>",
+-      shortOption = Some("C")
+-    )
+-  )
+-}
+-
+-/* optional options */
+-
+-/** Optional base name for generated files' filenames */
+-case class OutputBaseNameAnnotation(outputBaseName: String) extends NoTargetAnnotation with RocketChipOption
+-private[stage] object OutputBaseNameAnnotation extends HasShellOptions {
+-  override val options = Seq(
+-    new ShellOption[String](
+-      longOption = "name",
+-      toAnnotationSeq = a => Seq(OutputBaseNameAnnotation(a)),
+-      helpText = "<base name of output files>",
+-      shortOption = Some("n")
+-    )
+-  )
+-}
+diff --git a/src/main/scala/stage/RocketChipCli.scala b/src/main/scala/stage/RocketChipCli.scala
+deleted file mode 100644
+index c6e322607e7..00000000000
+--- a/src/main/scala/stage/RocketChipCli.scala
++++ /dev/null
+@@ -1,17 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage
+-
+-import firrtl.options.Shell
+-
+-trait RocketChipCli { this: Shell =>
+-
+-  parser.note("Rocket Chip Compiler Options")
+-  Seq(
+-    TopModuleAnnotation,
+-    ConfigsAnnotation,
+-    OutputBaseNameAnnotation
+-  )
+-    .foreach(_.addOptions(parser))
+-
+-}
+diff --git a/src/main/scala/stage/RocketChipOptions.scala b/src/main/scala/stage/RocketChipOptions.scala
+deleted file mode 100644
+index 2fac6a276ff..00000000000
+--- a/src/main/scala/stage/RocketChipOptions.scala
++++ /dev/null
+@@ -1,41 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage
+-
+-class RocketChipOptions private[stage] (
+-                                         val topModule:         Option[Class[_ <: Any]] = None,
+-                                         val configNames:       Option[Seq[String]] = None,
+-                                         val outputBaseName:    Option[String] = None) {
+-
+-  private[stage] def copy(
+-                           topModule:         Option[Class[_ <: Any]] = topModule,
+-                           configNames:       Option[Seq[String]] = configNames,
+-                           outputBaseName:    Option[String] = outputBaseName,
+-                         ): RocketChipOptions = {
+-
+-    new RocketChipOptions(
+-      topModule=topModule,
+-      configNames=configNames,
+-      outputBaseName=outputBaseName,
+-    )
+-  }
+-
+-  lazy val topPackage: Option[String] = topModule match {
+-    case Some(a) => Some(a.getPackage.getName)
+-    case _ => None
+-  }
+-
+-  lazy val configClass: Option[String] = configNames match {
+-    case Some(names) =>
+-      val classNames = names.map{ n => n.split('.').last }
+-      Some(classNames.mkString("_"))
+-    case _ => None
+-  }
+-
+-  lazy val longName: Option[String] = outputBaseName match {
+-    case Some(name) => Some(name)
+-    case _ =>
+-      if (!topPackage.isEmpty && !configClass.isEmpty) Some(s"${topPackage.get}.${configClass.get}") else None
+-  }
+-}
+-
+diff --git a/src/main/scala/stage/package.scala b/src/main/scala/stage/package.scala
+deleted file mode 100644
+index db5b42234d1..00000000000
+--- a/src/main/scala/stage/package.scala
++++ /dev/null
+@@ -1,24 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip
+-
+-import firrtl.AnnotationSeq
+-import firrtl.options.OptionsView
+-
+-package object stage {
+-
+-  implicit object RocketChipOptionsView extends OptionsView[RocketChipOptions] {
+-
+-    def view(annotations: AnnotationSeq): RocketChipOptions = annotations
+-      .collect { case a: RocketChipOption => a }
+-      .foldLeft(new RocketChipOptions()){ (c, x) =>
+-        x match {
+-          case TopModuleAnnotation(a)         => c.copy(topModule = Some(a))
+-          case ConfigsAnnotation(a)           => c.copy(configNames = Some(a))
+-          case OutputBaseNameAnnotation(a)    => c.copy(outputBaseName = Some(a))
+-        }
+-      }
+-
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/AddDefaultTests.scala b/src/main/scala/stage/phases/AddDefaultTests.scala
+deleted file mode 100644
+index 8a39abef2fe..00000000000
+--- a/src/main/scala/stage/phases/AddDefaultTests.scala
++++ /dev/null
+@@ -1,144 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-
+-import org.chipsalliance.cde.config.Parameters
+-import firrtl.AnnotationSeq
+-import firrtl.annotations.NoTargetAnnotation
+-import firrtl.options.{Dependency, Phase, PreservesAll, Unserializable}
+-import firrtl.options.Viewer.view
+-import freechips.rocketchip.stage.RocketChipOptions
+-import freechips.rocketchip.system.{DefaultTestSuites, RegressionTestSuite, RocketTestSuite}
+-import freechips.rocketchip.subsystem.{TilesLocated, InSubsystem, RocketTileAttachParams}
+-import freechips.rocketchip.tile.XLen
+-import freechips.rocketchip.util.HasRocketChipStageUtils
+-import freechips.rocketchip.system.DefaultTestSuites._
+-
+-import scala.collection.mutable
+-
+-/** Annotation that contains a list of [[RocketTestSuite]]s to run */
+-case class RocketTestSuiteAnnotation(tests: Seq[RocketTestSuite]) extends NoTargetAnnotation with Unserializable
+-
+-/** Generates [[RocketTestSuiteAnnotation]] depending on whether the top-module project is part of
+- *  [[freechips.rocketchip.system]] or not (e.g. for unit tests).
+- */
+-class AddDefaultTests extends Phase with PreservesAll[Phase] with HasRocketChipStageUtils {
+-
+-  override val prerequisites = Seq(Dependency[freechips.rocketchip.system.RocketChiselStage])
+-  override val dependents = Seq(Dependency[GenerateTestSuiteMakefrags])
+-
+-  def GenerateDefaultTestSuites(): List[RocketTestSuite] = {
+-    List(DefaultTestSuites.groundtest64("p"), DefaultTestSuites.emptyBmarks, DefaultTestSuites.singleRegression)
+-  }
+-
+-  def GenerateSystemTestSuites(annotations: AnnotationSeq): scala.collection.mutable.Buffer[RocketTestSuite] = {
+-    val params: Parameters = getConfig(view[RocketChipOptions](annotations).configNames.get).toInstance
+-    val xlen = params(XLen)
+-    val tests = scala.collection.mutable.Buffer[RocketTestSuite]()
+-
+-    val regressionTests = mutable.LinkedHashSet(
+-      "rv64ud-v-fcvt",
+-      "rv64ud-p-fdiv",
+-      "rv64ud-v-fadd",
+-      "rv64uf-v-fadd",
+-      "rv64um-v-mul",
+-      "rv64mi-p-breakpoint",
+-      "rv64uc-v-rvc",
+-      "rv64ud-v-structural",
+-      "rv64si-p-wfi",
+-      "rv64um-v-divw",
+-      "rv64ua-v-lrsc",
+-      "rv64ui-v-fence_i",
+-      "rv64ud-v-fcvt_w",
+-      "rv64uf-v-fmin",
+-      "rv64ui-v-sb",
+-      "rv64ua-v-amomax_d",
+-      "rv64ud-v-move",
+-      "rv64ud-v-fclass",
+-      "rv64ua-v-amoand_d",
+-      "rv64ua-v-amoxor_d",
+-      "rv64si-p-sbreak",
+-      "rv64ud-v-fmadd",
+-      "rv64uf-v-ldst",
+-      "rv64um-v-mulh",
+-      "rv64si-p-dirty",
+-      "rv32mi-p-ma_addr",
+-      "rv32mi-p-csr",
+-      "rv32ui-p-sh",
+-      "rv32ui-p-lh",
+-      "rv32uc-p-rvc",
+-      "rv32mi-p-sbreak",
+-      "rv32ui-p-sll")
+-
+-    // TODO: for now only generate tests for the first core in the first subsystem
+-    val rocketTileParams = params(TilesLocated(InSubsystem)).collect { case n: RocketTileAttachParams => n }.map(_.tileParams)
+-    rocketTileParams.headOption.map { tileParams =>
+-      val coreParams = tileParams.core
+-      val vm = coreParams.useVM
+-      val env = if (vm) List("p", "v") else List("p")
+-      coreParams.fpu foreach { case cfg =>
+-        if (xlen == 32) {
+-          tests ++= env.map(rv32uf)
+-          if (cfg.fLen >= 64)
+-            tests ++= env.map(rv32ud)
+-          if (cfg.minFLen <= 16)
+-            tests ++= env.map(rv32uzfh)
+-        } else {
+-          tests += rv32udBenchmarks
+-          tests ++= env.map(rv64uf)
+-          if (cfg.fLen >= 64)
+-            tests ++= env.map(rv64ud)
+-          if (cfg.minFLen <= 16)
+-            tests ++= env.map(rv64uzfh)
+-        }
+-      }
+-      if (coreParams.useAtomics) {
+-        if (tileParams.dcache.flatMap(_.scratch).isEmpty)
+-          tests ++= env.map(if (xlen == 64) rv64ua else rv32ua)
+-        else
+-          tests ++= env.map(if (xlen == 64) rv64uaSansLRSC else rv32uaSansLRSC)
+-      }
+-      if (coreParams.useCompressed) tests ++= env.map(if (xlen == 64) rv64uc else rv32uc)
+-      val (rvi, rvu) =
+-        if (xlen == 64) ((if (vm) rv64i else rv64pi), rv64u)
+-        else ((if (vm) rv32i else rv32pi), rv32u)
+-
+-      tests ++= rvi.map(_ ("p"))
+-      tests ++= (if (vm) List("v") else List()).flatMap(env => rvu.map(_ (env)))
+-      tests += benchmarks
+-
+-      /* Filter the regression tests based on what the Rocket Chip configuration supports */
+-      val extensions = {
+-        val fd = coreParams.fpu.map {
+-          case cfg if cfg.fLen >= 64 => "fd"
+-          case _ => "f"
+-        }
+-        val m = coreParams.mulDiv.map { case _ => "m" }
+-        fd ++ m ++ Seq(if (coreParams.useRVE) Some("e") else Some("i"),
+-          if (coreParams.useAtomics) Some("a") else None,
+-          if (coreParams.useCompressed) Some("c") else None)
+-          .flatten
+-          .mkString("")
+-      }
+-      val re = s"""^rv$xlen[usm][$extensions].+""".r
+-      regressionTests.retain {
+-        case re() => true
+-        case _ => false
+-      }
+-      tests += new RegressionTestSuite(regressionTests)
+-    }
+-    tests
+-  }
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-    val ropts = view[RocketChipOptions](annotations)
+-    val tests = ropts.topPackage.get match {
+-      case "freechips.rocketchip.system" => GenerateSystemTestSuites(annotations)
+-      case _ => GenerateDefaultTestSuites()
+-    }
+-
+-    RocketTestSuiteAnnotation(tests.toSeq) +: annotations
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/Checks.scala b/src/main/scala/stage/phases/Checks.scala
+deleted file mode 100644
+index fbfd8bb757a..00000000000
+--- a/src/main/scala/stage/phases/Checks.scala
++++ /dev/null
+@@ -1,47 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-import firrtl.AnnotationSeq
+-import firrtl.annotations.Annotation
+-import firrtl.options.{OptionsException, Phase, PreservesAll, TargetDirAnnotation}
+-import freechips.rocketchip.stage._
+-
+-import scala.collection.mutable
+-
+-/** Checks for the correct type and number of command line arguments */
+-class Checks extends Phase with PreservesAll[Phase] {
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-    val targetDir, topModule, configNames, outputBaseName = mutable.ListBuffer[Annotation]()
+-
+-    annotations.foreach {
+-      case a: TargetDirAnnotation      => a +=: targetDir
+-      case a: TopModuleAnnotation      => a +=: topModule
+-      case a: ConfigsAnnotation        => a +=: configNames
+-      case a: OutputBaseNameAnnotation => a +=: outputBaseName
+-      case _ =>
+-    }
+-
+-    def required(annoList: mutable.ListBuffer[Annotation], option: String): Unit = {
+-      if (annoList.size != 1) {
+-        throw new OptionsException(s"Exactly one $option required")
+-      }
+-    }
+-
+-    def optional(annoList: mutable.ListBuffer[Annotation], option: String): Unit = {
+-      if (annoList.size > 1) {
+-        throw new OptionsException(s"Too many $option options have been specified")
+-      }
+-    }
+-
+-    required(targetDir, "target directory")
+-    required(topModule, "top module")
+-    required(configNames, "configs string (','-delimited)")
+-
+-    optional(outputBaseName, "output base name")
+-
+-    annotations
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/GenerateArtefacts.scala b/src/main/scala/stage/phases/GenerateArtefacts.scala
+deleted file mode 100644
+index 1b15ac24436..00000000000
+--- a/src/main/scala/stage/phases/GenerateArtefacts.scala
++++ /dev/null
+@@ -1,26 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-import firrtl.AnnotationSeq
+-import firrtl.options.{Dependency, Phase, PreservesAll, StageOptions}
+-import firrtl.options.Viewer.view
+-import freechips.rocketchip.stage.RocketChipOptions
+-import freechips.rocketchip.util.{ElaborationArtefacts, HasRocketChipStageUtils}
+-
+-/** Writes [[ElaborationArtefacts]] into files */
+-class GenerateArtefacts extends Phase with PreservesAll[Phase] with HasRocketChipStageUtils {
+-
+-  override val prerequisites = Seq(Dependency[freechips.rocketchip.system.RocketChiselStage])
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-    val targetDir = view[StageOptions](annotations).targetDir
+-
+-    ElaborationArtefacts.files.foreach { case (extension, contents) =>
+-      writeOutputFile(targetDir, s"${view[RocketChipOptions](annotations).longName.get}.${extension}", contents ())
+-    }
+-
+-    annotations
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/GenerateFirrtlAnnos.scala b/src/main/scala/stage/phases/GenerateFirrtlAnnos.scala
+deleted file mode 100644
+index 3565c1db1b0..00000000000
+--- a/src/main/scala/stage/phases/GenerateFirrtlAnnos.scala
++++ /dev/null
+@@ -1,37 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-import firrtl.AnnotationSeq
+-import firrtl.annotations.{DeletedAnnotation, JsonProtocol}
+-import firrtl.options.Viewer.view
+-import firrtl.options._
+-import freechips.rocketchip.stage.RocketChipOptions
+-import freechips.rocketchip.util.HasRocketChipStageUtils
+-
+-/** Writes FIRRTL annotations into a file */
+-class GenerateFirrtlAnnos extends Phase with PreservesAll[Phase] with HasRocketChipStageUtils {
+-
+-  override val prerequisites = Seq(Dependency[freechips.rocketchip.system.RocketChiselStage])
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-    val targetDir = view[StageOptions](annotations).targetDir
+-    val fileName = s"${view[RocketChipOptions](annotations).longName.get}.anno.json"
+-
+-    val annos = annotations.view.flatMap {
+-      // Remove TargetDirAnnotation so that we can pass as argument to FIRRTL
+-      // Remove CustomFileEmission, those are serialized automatically by Stages
+-      case (_: Unserializable | _: TargetDirAnnotation | _: CustomFileEmission) =>
+-        None
+-      case DeletedAnnotation(_, (_: Unserializable | _: CustomFileEmission)) =>
+-        None
+-      case a =>
+-        Some(a)
+-    }
+-
+-    writeOutputFile(targetDir, fileName, JsonProtocol.serialize(annos.toSeq))
+-
+-    annotations
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/GenerateROMs.scala b/src/main/scala/stage/phases/GenerateROMs.scala
+deleted file mode 100644
+index b13f7077fb6..00000000000
+--- a/src/main/scala/stage/phases/GenerateROMs.scala
++++ /dev/null
+@@ -1,31 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-import chisel3.stage.ChiselCircuitAnnotation
+-import chisel3.stage.phases.{Convert, Elaborate}
+-import firrtl.AnnotationSeq
+-import firrtl.options.{Dependency, Phase, PreservesAll, StageOptions}
+-import firrtl.options.Viewer.view
+-import freechips.rocketchip.stage.RocketChipOptions
+-import freechips.rocketchip.util.HasRocketChipStageUtils
+-
+-/** Dumps ROM information into a file */
+-class GenerateROMs extends Phase with PreservesAll[Phase] with HasRocketChipStageUtils {
+-
+-  override val prerequisites = Seq(Dependency[Checks], Dependency[Elaborate])
+-  override val dependents = Seq(Dependency[Convert])
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-    val targetDir = view[StageOptions](annotations).targetDir
+-    val fileName = s"${view[RocketChipOptions](annotations).longName.get}.rom.conf"
+-
+-    annotations.flatMap {
+-      case a: ChiselCircuitAnnotation =>
+-        writeOutputFile(targetDir, fileName, enumerateROMs(a.circuit))
+-        Some(a)
+-      case a => Some(a)
+-    }
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/GenerateTestSuiteMakefrags.scala b/src/main/scala/stage/phases/GenerateTestSuiteMakefrags.scala
+deleted file mode 100644
+index 0c9b00f67af..00000000000
+--- a/src/main/scala/stage/phases/GenerateTestSuiteMakefrags.scala
++++ /dev/null
+@@ -1,32 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-import firrtl.AnnotationSeq
+-import firrtl.options.{Dependency, Phase, PreservesAll, StageOptions}
+-import firrtl.options.Viewer.view
+-import freechips.rocketchip.stage.RocketChipOptions
+-import freechips.rocketchip.system.TestGeneration
+-import freechips.rocketchip.util.HasRocketChipStageUtils
+-
+-/** Generates a make script to run tests in [[RocketTestSuiteAnnotation]]. */
+-class GenerateTestSuiteMakefrags extends Phase with PreservesAll[Phase] with HasRocketChipStageUtils {
+-
+-  override val prerequisites = Seq(Dependency[freechips.rocketchip.system.RocketChiselStage])
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-    val targetDir = view[StageOptions](annotations).targetDir
+-    val fileName = s"${view[RocketChipOptions](annotations).longName.get}.d"
+-
+-    annotations.flatMap {
+-      case a: RocketTestSuiteAnnotation =>
+-        val makefrag = a.tests.groupBy(_.kind)
+-          .map { case (kind, s) => TestGeneration.gen(kind, s) }
+-          .mkString("\n")
+-        writeOutputFile(targetDir, fileName, makefrag)
+-        Some(a)
+-      case a => Some(a)
+-    }
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/PreElaboration.scala b/src/main/scala/stage/phases/PreElaboration.scala
+deleted file mode 100644
+index c307390c228..00000000000
+--- a/src/main/scala/stage/phases/PreElaboration.scala
++++ /dev/null
+@@ -1,44 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-import chisel3.RawModule
+-import chisel3.stage.ChiselGeneratorAnnotation
+-import firrtl.AnnotationSeq
+-import firrtl.options.Viewer.view
+-import firrtl.options.{Dependency, Phase, PreservesAll, StageOptions}
+-import org.chipsalliance.cde.config.{Field, Parameters}
+-import freechips.rocketchip.diplomacy._
+-import freechips.rocketchip.stage.RocketChipOptions
+-import freechips.rocketchip.util.HasRocketChipStageUtils
+-
+-case object TargetDirKey extends Field[String](".")
+-
+-/** Constructs a generator function that returns a top module with given config parameters */
+-class PreElaboration extends Phase with PreservesAll[Phase] with HasRocketChipStageUtils {
+-
+-  override val prerequisites = Seq(Dependency[Checks])
+-  override val dependents = Seq(Dependency[chisel3.stage.phases.Elaborate])
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-
+-    val stageOpts = view[StageOptions](annotations)
+-    val rOpts = view[RocketChipOptions](annotations)
+-    val topMod = rOpts.topModule.get
+-
+-    val config = getConfig(rOpts.configNames.get).alterPartial {
+-      case TargetDirKey => stageOpts.targetDir
+-    }
+-
+-    val gen = () =>
+-      topMod
+-        .getConstructor(classOf[Parameters])
+-        .newInstance(config) match {
+-          case a: RawModule => a
+-          case a: LazyModule => LazyModule(a).module
+-        }
+-
+-    ChiselGeneratorAnnotation(gen) +: annotations
+-  }
+-
+-}
+diff --git a/src/main/scala/stage/phases/TransformAnnotations.scala b/src/main/scala/stage/phases/TransformAnnotations.scala
+deleted file mode 100644
+index 6be2434923b..00000000000
+--- a/src/main/scala/stage/phases/TransformAnnotations.scala
++++ /dev/null
+@@ -1,22 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.stage.phases
+-
+-import chisel3.stage.ChiselOutputFileAnnotation
+-import firrtl.AnnotationSeq
+-import firrtl.options.Viewer.view
+-import firrtl.options.{Dependency, Phase, PreservesAll}
+-import freechips.rocketchip.stage.RocketChipOptions
+-import freechips.rocketchip.util.HasRocketChipStageUtils
+-
+-/** Transforms RocketChipAnnotations into those used by other stages */
+-class TransformAnnotations extends Phase with PreservesAll[Phase] with HasRocketChipStageUtils {
+-
+-  override val prerequisites = Seq(Dependency[Checks])
+-  override val dependents = Seq(Dependency[chisel3.stage.phases.AddImplicitOutputFile])
+-
+-  override def transform(annotations: AnnotationSeq): AnnotationSeq = {
+-    /** Construct output file annotation for emission */
+-    new ChiselOutputFileAnnotation(view[RocketChipOptions](annotations).longName.get) +: annotations
+-  }
+-}
+diff --git a/src/main/scala/system/RocketChipStageGenerator.scala b/src/main/scala/system/RocketChipStageGenerator.scala
+deleted file mode 100644
+index a85edada3ea..00000000000
+--- a/src/main/scala/system/RocketChipStageGenerator.scala
++++ /dev/null
+@@ -1,48 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.system
+-
+-import chisel3.stage.{ChiselCli, ChiselStage}
+-import firrtl.AnnotationSeq
+-import firrtl.options.PhaseManager.PhaseDependency
+-import firrtl.options.{Dependency, Phase, PhaseManager, PreservesAll, Shell, Stage, StageMain}
+-import firrtl.stage.FirrtlCli
+-import freechips.rocketchip.stage.RocketChipCli
+-
+-/** Modified ChiselStage that includes the GenerateROMs phase */
+-private[freechips] final class RocketChiselStage extends ChiselStage {
+-
+-  override val targets = Seq(
+-    Dependency[chisel3.stage.phases.Checks],
+-    Dependency[chisel3.stage.phases.Elaborate],
+-    Dependency[freechips.rocketchip.stage.phases.GenerateROMs],
+-    Dependency[chisel3.stage.phases.AddImplicitOutputFile],
+-    Dependency[chisel3.stage.phases.AddImplicitOutputAnnotationFile],
+-    Dependency[chisel3.stage.phases.MaybeAspectPhase],
+-    Dependency[chisel3.stage.phases.Emitter],
+-    Dependency[chisel3.stage.phases.Convert]
+-  )
+-
+-}
+-
+-class RocketChipStage extends Stage with PreservesAll[Phase] {
+-
+-  override val shell = new Shell("rocket-chip") with RocketChipCli with ChiselCli with FirrtlCli
+-  val targets: Seq[PhaseDependency] = Seq(
+-    Dependency[freechips.rocketchip.stage.phases.Checks],
+-    Dependency[freechips.rocketchip.stage.phases.TransformAnnotations],
+-    Dependency[freechips.rocketchip.stage.phases.PreElaboration],
+-    Dependency[RocketChiselStage],
+-    Dependency[freechips.rocketchip.stage.phases.GenerateFirrtlAnnos],
+-    Dependency[freechips.rocketchip.stage.phases.AddDefaultTests],
+-    Dependency[freechips.rocketchip.stage.phases.GenerateTestSuiteMakefrags],
+-    Dependency[freechips.rocketchip.stage.phases.GenerateArtefacts]
+-  )
+-
+-  private val pm = new PhaseManager(targets)
+-
+-  override def run(annotations: AnnotationSeq): AnnotationSeq = pm.transform(annotations)
+-
+-}
+-
+-object Generator extends StageMain(new RocketChipStage)
+diff --git a/src/main/scala/tile/LazyRoCC.scala b/src/main/scala/tile/LazyRoCC.scala
+index 56cec0de167..d8291c682a3 100644
+--- a/src/main/scala/tile/LazyRoCC.scala
++++ b/src/main/scala/tile/LazyRoCC.scala
+@@ -140,7 +140,7 @@ class AccumulatorExampleModuleImp(outer: AccumulatorExample)(implicit p: Paramet
+   val accum = regfile(addr)
+   val wdata = Mux(doWrite, addend, accum + addend)
+ 
+-  when (cmd.fire() && (doWrite || doAccum)) {
++  when (cmd.fire && (doWrite || doAccum)) {
+     regfile(addr) := wdata
+   }
+ 
+@@ -150,7 +150,7 @@ class AccumulatorExampleModuleImp(outer: AccumulatorExample)(implicit p: Paramet
+   }
+ 
+   // control
+-  when (io.mem.req.fire()) {
++  when (io.mem.req.fire) {
+     busy(addr) := true.B
+   }
+ 
+@@ -205,7 +205,7 @@ class TranslatorExampleModuleImp(outer: TranslatorExample)(implicit p: Parameter
+ 
+   io.cmd.ready := (state === s_idle)
+ 
+-  when (io.cmd.fire()) {
++  when (io.cmd.fire) {
+     req_rd := io.cmd.bits.inst.rd
+     req_addr := io.cmd.bits.rs1
+     state := s_ptw_req
+@@ -213,14 +213,14 @@ class TranslatorExampleModuleImp(outer: TranslatorExample)(implicit p: Parameter
+ 
+   private val ptw = io.ptw(0)
+ 
+-  when (ptw.req.fire()) { state := s_ptw_resp }
++  when (ptw.req.fire) { state := s_ptw_resp }
+ 
+   when (state === s_ptw_resp && ptw.resp.valid) {
+     pte := ptw.resp.bits.pte
+     state := s_resp
+   }
+ 
+-  when (io.resp.fire()) { state := s_idle }
++  when (io.resp.fire) { state := s_idle }
+ 
+   ptw.req.valid := (state === s_ptw_req)
+   ptw.req.bits.valid := true.B
+@@ -289,7 +289,7 @@ class CharacterCountExampleModuleImp(outer: CharacterCountExample)(implicit p: P
+                        lgSize = lgCacheBlockBytes.U)._2
+   tl_out.d.ready := (state === s_gnt)
+ 
+-  when (io.cmd.fire()) {
++  when (io.cmd.fire) {
+     addr := io.cmd.bits.rs1
+     needle := io.cmd.bits.rs2
+     resp_rd := io.cmd.bits.inst.rd
+@@ -298,9 +298,9 @@ class CharacterCountExampleModuleImp(outer: CharacterCountExample)(implicit p: P
+     state := s_acq
+   }
+ 
+-  when (tl_out.a.fire()) { state := s_gnt }
++  when (tl_out.a.fire) { state := s_gnt }
+ 
+-  when (tl_out.d.fire()) {
++  when (tl_out.d.fire) {
+     recv_beat := recv_beat + 1.U
+     recv_data := gnt.data
+     state := s_check
+@@ -319,7 +319,7 @@ class CharacterCountExampleModuleImp(outer: CharacterCountExample)(implicit p: P
+     }
+   }
+ 
+-  when (io.resp.fire()) { state := s_idle }
++  when (io.resp.fire) { state := s_idle }
+ 
+   io.busy := (state =/= s_idle)
+   io.interrupt := false.B
+diff --git a/src/main/scala/tilelink/AddressAdjuster.scala b/src/main/scala/tilelink/AddressAdjuster.scala
+index fff21175427..e73859912e4 100644
+--- a/src/main/scala/tilelink/AddressAdjuster.scala
++++ b/src/main/scala/tilelink/AddressAdjuster.scala
+@@ -283,12 +283,12 @@ class AddressAdjuster(
+         // Sources unused in the stall signal calculation should be pruned by DCE
+         // Only fix-up order when crossing local/remote boundaries
+         val flight = RegInit(VecInit(Seq.fill(parentEdge.client.endSourceId) { false.B }))
+-        when (a_first && parent.a.fire() && a_adjustable) { flight(parent.a.bits.source) := true.B  }
+-        when (d_first && parent.d.fire())                 { flight(parent.d.bits.source) := false.B }
++        when (a_first && parent.a.fire && a_adjustable) { flight(parent.a.bits.source) := true.B  }
++        when (d_first && parent.d.fire)                 { flight(parent.d.bits.source) := false.B }
+ 
+         val stalls = parentEdge.client.clients.filter(c => c.requestFifo && c.sourceId.size > 1).map { c =>
+           val a_sel = c.sourceId.contains(parent.a.bits.source)
+-          val local = RegEnable(a_dynamic_local, parent.a.fire() && a_sel)
++          val local = RegEnable(a_dynamic_local, parent.a.fire && a_sel)
+           val track = flight.slice(c.sourceId.start, c.sourceId.end)
+ 
+           a_sel && a_first && track.reduce(_ || _) && (local =/= a_dynamic_local)
+diff --git a/src/main/scala/tilelink/Arbiter.scala b/src/main/scala/tilelink/Arbiter.scala
+index 3e0c9bc7c0f..ec4e539c411 100644
+--- a/src/main/scala/tilelink/Arbiter.scala
++++ b/src/main/scala/tilelink/Arbiter.scala
+@@ -111,7 +111,7 @@ object TLArbiter
+       // Track remaining beats
+       val maskedBeats = (winnerQual zip beatsIn) map { case (w,b) => Mux(w, b, 0.U) }
+       val initBeats = maskedBeats.reduce(_ | _) // no winner => 0 beats
+-      beatsLeft := Mux(latch, initBeats, beatsLeft - sink.fire())
++      beatsLeft := Mux(latch, initBeats, beatsLeft - sink.fire)
+ 
+       // The one-hot source granted access in the previous cycle
+       val state = RegInit(VecInit(Seq.fill(sources.size)(false.B)))
+@@ -177,7 +177,7 @@ class TLDecoupledArbiterRobinTest(txns: Int = 128, timeout: Int = 500000, print:
+     case (s, i) => s.valid := (if (i % 2 == 1) false.B else valid)
+   }
+ 
+-  when (sink.fire()) {
++  when (sink.fire) {
+     if (print) { printf("TestRobin: %d\n", sink.bits) }
+     when (beatsLeft === 0.U) {
+       assert(lastWinner =/= sink.bits, "Round robin did not pick a new idx despite one being valid.")
+@@ -189,7 +189,7 @@ class TLDecoupledArbiterRobinTest(txns: Int = 128, timeout: Int = 500000, print:
+     }
+   }
+   if (print) {
+-    when (!sink.fire()) { printf("TestRobin: idle (%d %d)\n", valid, ready) }
++    when (!sink.fire) { printf("TestRobin: idle (%d %d)\n", valid, ready) }
+   }
+ }
+ /** This tests that the lowest index is always selected across random single cycle transactions. */
+@@ -204,7 +204,7 @@ class TLDecoupledArbiterLowestTest(txns: Int = 128, timeout: Int = 500000)(impli
+ 
+   sources.zipWithIndex.map { case (s, i) => s.valid := lfsr(i) }
+   sink.ready := lfsr(15)
+-  when (sink.fire()) { (0 until numSources).foreach(assertLowest(_)) }
++  when (sink.fire) { (0 until numSources).foreach(assertLowest(_)) }
+ }
+ 
+ /** This tests that the highest index is always selected across random single cycle transactions. */
+@@ -219,5 +219,5 @@ class TLDecoupledArbiterHighestTest(txns: Int = 128, timeout: Int = 500000)(impl
+ 
+   sources.zipWithIndex.map { case (s, i) => s.valid := lfsr(i) }
+   sink.ready := lfsr(15)
+-  when (sink.fire()) { (0 until numSources).foreach(assertHighest(_)) }
++  when (sink.fire) { (0 until numSources).foreach(assertHighest(_)) }
+ }
+diff --git a/src/main/scala/tilelink/AtomicAutomata.scala b/src/main/scala/tilelink/AtomicAutomata.scala
+index e56e6ab492a..37509a1be84 100644
+--- a/src/main/scala/tilelink/AtomicAutomata.scala
++++ b/src/main/scala/tilelink/AtomicAutomata.scala
+@@ -7,7 +7,7 @@ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util._
+ import scala.math.{min,max}
+-import chisel3.util.{PriorityMux, Cat, FillInterleaved, Mux1H, MuxLookup, log2Up}
++import chisel3.util.{PriorityMux, FillInterleaved, Mux1H, MuxLookup, log2Up}
+ 
+ // Ensures that all downstream RW managers support Atomic operations.
+ // If !passthrough, intercept all Atomics. Otherwise, only intercept those unsupported downstream.
+@@ -173,7 +173,7 @@ class TLAtomicAutomata(logical: Boolean = true, arithmetic: Boolean = true, conc
+         TLArbiter(TLArbiter.lowestIndexFirst)(out.a, (0.U, source_c), (edgeOut.numBeats1(in.a.bits), source_i))
+ 
+         // Capture the A state into the CAM
+-        when (source_i.fire() && !a_isSupported) {
++        when (source_i.fire && !a_isSupported) {
+           (a_cam_sel_free zip cam_a) foreach { case (en, r) =>
+             when (en) {
+               r.fifoId := a_fifoId
+@@ -193,7 +193,7 @@ class TLAtomicAutomata(logical: Boolean = true, arithmetic: Boolean = true, conc
+         }
+ 
+         // Advance the put state
+-        when (source_c.fire()) {
++        when (source_c.fire) {
+           (a_cam_sel_put zip cam_s) foreach { case (en, r) =>
+             when (en) {
+               r.state := ACK
+@@ -215,7 +215,7 @@ class TLAtomicAutomata(logical: Boolean = true, arithmetic: Boolean = true, conc
+         val d_ackd = out.d.bits.opcode === TLMessages.AccessAckData
+         val d_ack  = out.d.bits.opcode === TLMessages.AccessAck
+ 
+-        when (out.d.fire() && d_first) {
++        when (out.d.fire && d_first) {
+           (d_cam_sel zip cam_d) foreach { case (en, r) =>
+             when (en && d_ackd) {
+               r.data := out.d.bits.data
+diff --git a/src/main/scala/tilelink/Broadcast.scala b/src/main/scala/tilelink/Broadcast.scala
+index bac5a5b89ee..074917c3d95 100644
+--- a/src/main/scala/tilelink/Broadcast.scala
++++ b/src/main/scala/tilelink/Broadcast.scala
+@@ -111,7 +111,7 @@ class TLBroadcast(params: TLBroadcastParams)(implicit p: Parameters) extends Laz
+       // We always accept E
+       in.e.ready := true.B
+       (trackers zip UIntToOH(in.e.bits.sink).asBools) foreach { case (tracker, select) =>
+-        tracker.e_last := select && in.e.fire()
++        tracker.e_last := select && in.e.fire
+       }
+ 
+       // Depending on the high source bits, we might transform D
+@@ -140,8 +140,8 @@ class TLBroadcast(params: TLBroadcastParams)(implicit p: Parameters) extends Laz
+       // A tracker response is anything neither dropped nor a ReleaseAck
+       val d_response = d_hasData || !d_what(1)
+       (trackers zip d_trackerOH.asBools) foreach { case (tracker, select) =>
+-        tracker.d_last := select && d_normal.fire() && d_response && d_last
+-        tracker.probedack := select && out.d.fire() && d_drop
++        tracker.d_last := select && d_normal.fire && d_response && d_last
++        tracker.probedack := select && out.d.fire && d_drop
+       }
+ 
+       d_allow := filter.io.update.ready || !d_response || !d_last
+@@ -168,13 +168,13 @@ class TLBroadcast(params: TLBroadcastParams)(implicit p: Parameters) extends Laz
+       val CisN = in.c.bits.param === TLPermissions.TtoN ||
+                  in.c.bits.param === TLPermissions.BtoN ||
+                  in.c.bits.param === TLPermissions.NtoN
+-      val clearOH = Mux(in.c.fire() && (c_probeack || c_probeackdata) && CisN, whoC, 0.U)
++      val clearOH = Mux(in.c.fire && (c_probeack || c_probeackdata) && CisN, whoC, 0.U)
+ 
+       // Decrement the tracker's outstanding probe counter
+       (trackers zip c_trackerOH) foreach { case (tracker, select) =>
+         tracker.clearOH := Mux(select, clearOH, 0.U)
+-        tracker.probenack := in.c.fire() && c_probeack && select
+-        tracker.probesack := in.c.fire() && select && (c_probeack || c_probeackdata) && (
++        tracker.probenack := in.c.fire && c_probeack && select
++        tracker.probesack := in.c.fire && select && (c_probeack || c_probeackdata) && (
+           in.c.bits.param === TLPermissions.TtoB ||
+           in.c.bits.param === TLPermissions.BtoB)
+       }
+@@ -225,7 +225,7 @@ class TLBroadcast(params: TLBroadcastParams)(implicit p: Parameters) extends Laz
+       if (caches.size != 0) {
+         in.b.bits := edgeIn.Probe(probe_line << lineShift, probe_target, lineShift.U, probe_perms)._2
+       }
+-      when (in.b.fire()) { probe_todo := probe_todo & ~probe_next }
++      when (in.b.fire) { probe_todo := probe_todo & ~probe_next }
+ 
+       // Which cache does a request come from?
+       val a_cache = if (caches.size == 0) 0.U else VecInit(caches.map(_.contains(in.a.bits.source))).asUInt
+@@ -258,7 +258,7 @@ class TLBroadcast(params: TLBroadcastParams)(implicit p: Parameters) extends Laz
+       val others = filter.io.response.bits.cacheOH & ~filter.io.response.bits.allocOH
+       val todo = Mux(leaveB, 0.U, others)
+       filter.io.response.ready := !probe_busy
+-      when (filter.io.response.fire()) {
++      when (filter.io.response.fire) {
+         probe_todo  := todo
+         probe_line  := filter.io.response.bits.address >> lineShift
+         probe_perms := Mux(filter.io.response.bits.needT, TLPermissions.toN, TLPermissions.toB)
+@@ -268,9 +268,9 @@ class TLBroadcast(params: TLBroadcastParams)(implicit p: Parameters) extends Laz
+       val responseCache = filter.io.response.bits.cacheOH | filter.io.response.bits.allocOH
+       val responseCount = PopCount(todo)
+       val responseMSHR = UIntToOH(filter.io.response.bits.mshr, params.numTrackers).asBools
+-      val sack = filter.io.response.fire() && leaveB && others =/= 0.U
++      val sack = filter.io.response.fire && leaveB && others =/= 0.U
+       (trackers zip responseMSHR) foreach { case (tracker, select) =>
+-        tracker.probe.valid := filter.io.response.fire() && select
++        tracker.probe.valid := filter.io.response.fire && select
+         tracker.probe.bits.count   := responseCount
+         tracker.probe.bits.cacheOH := responseCache
+         when (sack && select) { tracker.probesack := true.B }
+@@ -435,7 +435,7 @@ class TLBroadcastTracker(id: Int, lineBytes: Int, caches: Int, bufferless: Boole
+   val cacheOH = Reg(UInt(caches.W))
+   val idle    = got_e && sent_d
+ 
+-  when (io.in_a.fire() && io.in_a_first) {
++  when (io.in_a.fire && io.in_a_first) {
+     assert (idle)
+     sent_d  := false.B
+     shared  := false.B
+diff --git a/src/main/scala/tilelink/CacheCork.scala b/src/main/scala/tilelink/CacheCork.scala
+index 74f830c5a8b..fcf648daad7 100644
+--- a/src/main/scala/tilelink/CacheCork.scala
++++ b/src/main/scala/tilelink/CacheCork.scala
+@@ -116,13 +116,13 @@ class TLCacheCork(params: TLCacheCorkParams = TLCacheCorkParams())(implicit p: P
+ 
+         // Track in-flight sinkIds
+         val pool = Module(new IDPool(sinkIds))
+-        pool.io.free.valid := in.e.fire()
++        pool.io.free.valid := in.e.fire
+         pool.io.free.bits  := in.e.bits.sink
+ 
+         val in_d = Wire(in.d)
+         val d_first = edgeOut.first(in_d)
+         val d_grant = in_d.bits.opcode === GrantData || in_d.bits.opcode === Grant
+-        pool.io.alloc.ready := in.d.fire() && d_first && d_grant
++        pool.io.alloc.ready := in.d.fire && d_first && d_grant
+         in.d.valid := in_d.valid && (pool.io.alloc.valid || !d_first || !d_grant)
+         in_d.ready := in.d.ready && (pool.io.alloc.valid || !d_first || !d_grant)
+         in.d.bits := in_d.bits
+@@ -141,7 +141,7 @@ class TLCacheCork(params: TLCacheCorkParams = TLCacheCorkParams())(implicit p: P
+         val bypass = Bool(edgeIn.manager.minLatency == 0) && in.a.valid && in.a.bits.source === d_d.bits.source
+         val dWHeld = Mux(bypass, aWOk, dWOk) holdUnless d_first
+ 
+-        when (in.a.fire()) {
++        when (in.a.fire) {
+           wSourceVec(in.a.bits.source) := aWOk
+         }
+ 
+diff --git a/src/main/scala/tilelink/ErrorEvaluator.scala b/src/main/scala/tilelink/ErrorEvaluator.scala
+index f3953978de9..2b9488c8c13 100644
+--- a/src/main/scala/tilelink/ErrorEvaluator.scala
++++ b/src/main/scala/tilelink/ErrorEvaluator.scala
+@@ -51,20 +51,20 @@ class TLErrorEvaluator(test: RequestPattern, testOn: Boolean, testOff: Boolean,
+       val (d_first, d_last, _) = edgeOut.firstlast(out.d)
+       val d_hasData = edgeOut.hasData(out.d.bits)
+ 
+-      when (in.a.fire()) { inject_map.write(in.a.bits.source, inject_now) }
++      when (in.a.fire) { inject_map.write(in.a.bits.source, inject_now) }
+ 
+-      val bypass = Bool(edgeOut.manager.minLatency == 0) && in.a.fire() && in.a.bits.source === in.d.bits.source
++      val bypass = Bool(edgeOut.manager.minLatency == 0) && in.a.fire && in.a.bits.source === in.d.bits.source
+       val d_inject = Mux(bypass, inject_now, inject_map.read(in.d.bits.source)) holdUnless d_first
+       in.d.bits.corrupt := out.d.bits.corrupt || (d_inject &&   d_hasData)
+       in.d.bits.denied  := out.d.bits.denied  || (d_inject && (!d_hasData || Bool(deny)))
+ 
+       val r_detect = Reg(Bool())
+       val d_detect = (!d_first && r_detect) || (Bool(!deny) && out.d.bits.corrupt) || out.d.bits.denied
+-      when (out.d.fire()) { r_detect := d_detect }
++      when (out.d.fire) { r_detect := d_detect }
+ 
+       val d_hint = out.d.bits.opcode === TLMessages.HintAck // even illegal hints can succeed
+-      assert (Bool(!testOn)  || !out.d.fire() || !d_last || !d_inject ||  d_detect || d_hint, "Denied/Corrupt flag was not set!")
+-      assert (Bool(!testOff) || !out.d.fire() || !d_last ||  d_inject || !d_detect, "Denied/Corrupt flag was set!")
++      assert (Bool(!testOn)  || !out.d.fire || !d_last || !d_inject ||  d_detect || d_hint, "Denied/Corrupt flag was not set!")
++      assert (Bool(!testOff) || !out.d.fire || !d_last ||  d_inject || !d_detect, "Denied/Corrupt flag was set!")
+     }
+   }
+ }
+diff --git a/src/main/scala/tilelink/FIFOFixer.scala b/src/main/scala/tilelink/FIFOFixer.scala
+index 4ea1840e9ce..5cc02576283 100644
+--- a/src/main/scala/tilelink/FIFOFixer.scala
++++ b/src/main/scala/tilelink/FIFOFixer.scala
+@@ -70,12 +70,12 @@ class TLFIFOFixer(policy: TLFIFOFixer.Policy = TLFIFOFixer.all)(implicit p: Para
+       // Keep one bit for each source recording if there is an outstanding request that must be made FIFO
+       // Sources unused in the stall signal calculation should be pruned by DCE
+       val flight = RegInit(Vec.fill(edgeIn.client.endSourceId) { Bool(false) })
+-      when (a_first && in.a.fire()) { flight(in.a.bits.source) := !a_notFIFO }
+-      when (d_first && in.d.fire()) { flight(in.d.bits.source) := Bool(false) }
++      when (a_first && in.a.fire) { flight(in.a.bits.source) := !a_notFIFO }
++      when (d_first && in.d.fire) { flight(in.d.bits.source) := Bool(false) }
+ 
+       val stalls = edgeIn.client.clients.filter(c => c.requestFifo && c.sourceId.size > 1).map { c =>
+         val a_sel = c.sourceId.contains(in.a.bits.source)
+-        val id    = RegEnable(a_id, in.a.fire() && a_sel && !a_notFIFO)
++        val id    = RegEnable(a_id, in.a.fire && a_sel && !a_notFIFO)
+         val track = flight.slice(c.sourceId.start, c.sourceId.end)
+ 
+         a_sel && a_first && track.reduce(_ || _) && (a_noDomain || id =/= a_id)
+@@ -109,10 +109,10 @@ class TLFIFOFixer(policy: TLFIFOFixer.Policy = TLFIFOFixer.all)(implicit p: Para
+       val SourceIdSet = Wire(init = UInt(0, width = edgeIn.client.endSourceId))
+       val SourceIdClear = Wire(init = UInt(0, width = edgeIn.client.endSourceId))
+ 
+-      when (a_first && in.a.fire() && !a_notFIFO)  {
++      when (a_first && in.a.fire && !a_notFIFO)  {
+         SourceIdSet := UIntToOH(in.a.bits.source)
+       }
+-      when (d_first && in.d.fire())  {
++      when (d_first && in.d.fire)  {
+         SourceIdClear := UIntToOH(in.d.bits.source)
+       }
+ 
+diff --git a/src/main/scala/tilelink/Fragmenter.scala b/src/main/scala/tilelink/Fragmenter.scala
+index 6540e27b7da..3442f869def 100644
+--- a/src/main/scala/tilelink/Fragmenter.scala
++++ b/src/main/scala/tilelink/Fragmenter.scala
+@@ -206,7 +206,7 @@ class TLFragmenter(val minSize: Int, val maxSize: Int, val alwaysMin: Boolean =
+         // calculate the original size
+         val dFirst_size = OH1ToUInt((dFragnum << log2Ceil(minSize)) | dsizeOH1)
+ 
+-        when (out.d.fire()) {
++        when (out.d.fire) {
+           acknum := Mux(dFirst, dFirst_acknum, acknum - ack_decrement)
+           when (dFirst) {
+             dOrig := dFirst_size
+@@ -230,7 +230,7 @@ class TLFragmenter(val minSize: Int, val maxSize: Int, val alwaysMin: Boolean =
+         if (edgeOut.manager.mayDenyPut) {
+           val r_denied = Reg(Bool())
+           val d_denied = (!dFirst && r_denied) || out.d.bits.denied
+-          when (out.d.fire()) { r_denied := d_denied }
++          when (out.d.fire) { r_denied := d_denied }
+           in.d.bits.denied := d_denied
+         }
+         if (edgeOut.manager.mayDenyGet) {
+@@ -298,7 +298,7 @@ class TLFragmenter(val minSize: Int, val maxSize: Int, val alwaysMin: Boolean =
+         val aToggle = !Mux(aFirst, dToggle, RegEnable(dToggle, aFirst))
+         val aFull = if (earlyAck == EarlyAck.PutFulls) Some(in_a.bits.opcode === TLMessages.PutFullData) else None
+ 
+-        when (out.a.fire()) { gennum := new_gennum }
++        when (out.a.fire) { gennum := new_gennum }
+ 
+         repeater.io.repeat := !aHasData && aFragnum =/= UInt(0)
+         out.a <> in_a
+diff --git a/src/main/scala/tilelink/Fuzzer.scala b/src/main/scala/tilelink/Fuzzer.scala
+index 76fdbdba325..f55eb952a1d 100644
+--- a/src/main/scala/tilelink/Fuzzer.scala
++++ b/src/main/scala/tilelink/Fuzzer.scala
+@@ -26,10 +26,10 @@ class IDMapGenerator(numIds: Int) extends Module {
+   io.alloc.valid := bitmap.orR
+ 
+   val clr = Wire(init = UInt(0, width = numIds))
+-  when (io.alloc.fire()) { clr := UIntToOH(io.alloc.bits) }
++  when (io.alloc.fire) { clr := UIntToOH(io.alloc.bits) }
+ 
+   val set = Wire(init = UInt(0, width = numIds))
+-  when (io.free.fire()) { set := UIntToOH(io.free.bits) }
++  when (io.free.fire) { set := UIntToOH(io.free.bits) }
+ 
+   bitmap := (bitmap & ~clr) | set
+   assert (!io.free.valid || !(bitmap & ~clr)(io.free.bits)) // No double freeing
+@@ -199,7 +199,7 @@ class TLFuzzer(
+     val a_gen = if (nOperations>0) num_reqs =/= UInt(0) else Bool(true)
+     out.a.valid := !reset && a_gen && legal && (!a_first || idMap.io.alloc.valid)
+     idMap.io.alloc.ready := a_gen && legal && a_first && out.a.ready
+-    idMap.io.free.valid := d_first && out.d.fire()
++    idMap.io.free.valid := d_first && out.d.fire
+     idMap.io.free.bits := out.d.bits.source
+ 
+     out.a.bits  := bits
+@@ -210,14 +210,14 @@ class TLFuzzer(
+ 
+     // Increment the various progress-tracking states
+     inc := !legal || req_done
+-    inc_beat := !legal || out.a.fire()
++    inc_beat := !legal || out.a.fire
+ 
+     if (nOperations>0) {
+-      when (out.a.fire() && a_last) {
++      when (out.a.fire && a_last) {
+         num_reqs := num_reqs - UInt(1)
+       }
+ 
+-      when (out.d.fire() && d_last) {
++      when (out.d.fire && d_last) {
+         num_resps := num_resps - UInt(1)
+       }
+     }
+diff --git a/src/main/scala/tilelink/Monitor.scala b/src/main/scala/tilelink/Monitor.scala
+index 2e3e416ce6f..f34e388e54c 100644
+--- a/src/main/scala/tilelink/Monitor.scala
++++ b/src/main/scala/tilelink/Monitor.scala
+@@ -380,7 +380,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+   }
+ 
+   def legalizeMultibeatA(a: DecoupledIO[TLBundleA], edge: TLEdge): Unit = {
+-    val a_first = edge.first(a.bits, a.fire())
++    val a_first = edge.first(a.bits, a.fire)
+     val opcode  = Reg(UInt())
+     val param   = Reg(UInt())
+     val size    = Reg(UInt())
+@@ -393,7 +393,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       monAssert (a.bits.source === source, "'A' channel source changed within multibeat operation" + extra)
+       monAssert (a.bits.address=== address,"'A' channel address changed with multibeat operation" + extra)
+     }
+-    when (a.fire() && a_first) {
++    when (a.fire && a_first) {
+       opcode  := a.bits.opcode
+       param   := a.bits.param
+       size    := a.bits.size
+@@ -403,7 +403,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+   }
+ 
+   def legalizeMultibeatB(b: DecoupledIO[TLBundleB], edge: TLEdge): Unit = {
+-    val b_first = edge.first(b.bits, b.fire())
++    val b_first = edge.first(b.bits, b.fire)
+     val opcode  = Reg(UInt())
+     val param   = Reg(UInt())
+     val size    = Reg(UInt())
+@@ -416,7 +416,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       monAssert (b.bits.source === source, "'B' channel source changed within multibeat operation" + extra)
+       monAssert (b.bits.address=== address,"'B' channel addresss changed with multibeat operation" + extra)
+     }
+-    when (b.fire() && b_first) {
++    when (b.fire && b_first) {
+       opcode  := b.bits.opcode
+       param   := b.bits.param
+       size    := b.bits.size
+@@ -456,14 +456,14 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+     val my_opcode    = Reg(UInt())
+     val my_size      = Reg(UInt())
+ 
+-    val a_first = bundle.a.valid && edge.first(bundle.a.bits, bundle.a.fire())
+-    val d_first = bundle.d.valid && edge.first(bundle.d.bits, bundle.d.fire())
++    val a_first = bundle.a.valid && edge.first(bundle.a.bits, bundle.a.fire)
++    val d_first = bundle.d.valid && edge.first(bundle.d.bits, bundle.d.fire)
+ 
+     val my_a_first_beat = a_first && (bundle.a.bits.source === sym_source)
+     val my_d_first_beat = d_first && (bundle.d.bits.source === sym_source)
+ 
+-    val my_clr_resp_pend = (bundle.d.fire() && my_d_first_beat)
+-    val my_set_resp_pend = (bundle.a.fire() && my_a_first_beat && !my_clr_resp_pend)
++    val my_clr_resp_pend = (bundle.d.fire && my_d_first_beat)
++    val my_set_resp_pend = (bundle.a.fire && my_a_first_beat && !my_clr_resp_pend)
+     when (my_set_resp_pend) {
+       my_resp_pend := true.B
+     } .elsewhen (my_clr_resp_pend) {
+@@ -508,7 +508,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+   }
+ 
+   def legalizeMultibeatC(c: DecoupledIO[TLBundleC], edge: TLEdge): Unit = {
+-    val c_first = edge.first(c.bits, c.fire())
++    val c_first = edge.first(c.bits, c.fire)
+     val opcode  = Reg(UInt())
+     val param   = Reg(UInt())
+     val size    = Reg(UInt())
+@@ -521,7 +521,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       monAssert (c.bits.source === source, "'C' channel source changed within multibeat operation" + extra)
+       monAssert (c.bits.address=== address,"'C' channel address changed with multibeat operation" + extra)
+     }
+-    when (c.fire() && c_first) {
++    when (c.fire && c_first) {
+       opcode  := c.bits.opcode
+       param   := c.bits.param
+       size    := c.bits.size
+@@ -531,7 +531,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+   }
+ 
+   def legalizeMultibeatD(d: DecoupledIO[TLBundleD], edge: TLEdge): Unit = {
+-    val d_first = edge.first(d.bits, d.fire())
++    val d_first = edge.first(d.bits, d.fire)
+     val opcode  = Reg(UInt())
+     val param   = Reg(UInt())
+     val size    = Reg(UInt())
+@@ -546,7 +546,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       assume (d.bits.sink   === sink,   "'D' channel sink changed with multibeat operation" + extra)
+       assume (d.bits.denied === denied, "'D' channel denied changed with multibeat operation" + extra)
+     }
+-    when (d.fire() && d_first) {
++    when (d.fire && d_first) {
+       opcode  := d.bits.opcode
+       param   := d.bits.param
+       size    := d.bits.size
+@@ -570,18 +570,18 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+   def legalizeADSourceOld(bundle: TLBundle, edge: TLEdge): Unit = {
+     val inflight = RegInit(0.U(edge.client.endSourceId.W))
+ 
+-    val a_first = edge.first(bundle.a.bits, bundle.a.fire())
+-    val d_first = edge.first(bundle.d.bits, bundle.d.fire())
++    val a_first = edge.first(bundle.a.bits, bundle.a.fire)
++    val d_first = edge.first(bundle.d.bits, bundle.d.fire)
+ 
+     val a_set = WireInit(0.U(edge.client.endSourceId.W))
+-    when (bundle.a.fire() && a_first && edge.isRequest(bundle.a.bits)) {
++    when (bundle.a.fire && a_first && edge.isRequest(bundle.a.bits)) {
+       a_set := UIntToOH(bundle.a.bits.source)
+       assert(!inflight(bundle.a.bits.source), "'A' channel re-used a source ID" + extra)
+     }
+ 
+     val d_clr = WireInit(0.U(edge.client.endSourceId.W))
+     val d_release_ack = bundle.d.bits.opcode === TLMessages.ReleaseAck
+-    when (bundle.d.fire() && d_first && edge.isResponse(bundle.d.bits) && !d_release_ack) {
++    when (bundle.d.fire && d_first && edge.isResponse(bundle.d.bits) && !d_release_ack) {
+       d_clr := UIntToOH(bundle.d.bits.source)
+       assume((a_set | inflight)(bundle.d.bits.source), "'D' channel acknowledged for nothing inflight" + extra)
+     }
+@@ -598,7 +598,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+     assert (!inflight.orR || limit === 0.U || watchdog < limit, "TileLink timeout expired" + extra)
+ 
+     watchdog := watchdog + 1.U
+-    when (bundle.a.fire() || bundle.d.fire()) { watchdog := 0.U }
++    when (bundle.a.fire || bundle.d.fire) { watchdog := 0.U }
+   }
+ 
+   def legalizeADSource(bundle: TLBundle, edge: TLEdge): Unit = {
+@@ -615,9 +615,9 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+     val inflight_sizes = RegInit(0.U((edge.client.endSourceId << log_a_size_bus_size).W))
+     inflight_sizes.suggestName("inflight_sizes")
+ 
+-    val a_first = edge.first(bundle.a.bits, bundle.a.fire())
++    val a_first = edge.first(bundle.a.bits, bundle.a.fire)
+     a_first.suggestName("a_first")
+-    val d_first = edge.first(bundle.d.bits, bundle.d.fire())
++    val d_first = edge.first(bundle.d.bits, bundle.d.fire)
+     d_first.suggestName("d_first")
+ 
+     val a_set          = WireInit(0.U(edge.client.endSourceId.W))
+@@ -649,7 +649,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       a_set_wo_ready := UIntToOH(bundle.a.bits.source)
+     }
+ 
+-    when (bundle.a.fire() && a_first && edge.isRequest(bundle.a.bits)) {
++    when (bundle.a.fire && a_first && edge.isRequest(bundle.a.bits)) {
+       a_set                := UIntToOH(bundle.a.bits.source)
+       a_opcodes_set_interm := (bundle.a.bits.opcode << 1.U) | 1.U
+       a_sizes_set_interm   := (bundle.a.bits.size << 1.U) | 1.U
+@@ -672,7 +672,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       d_clr_wo_ready := UIntToOH(bundle.d.bits.source)
+     }
+ 
+-    when (bundle.d.fire() && d_first && edge.isResponse(bundle.d.bits) && !d_release_ack) {
++    when (bundle.d.fire && d_first && edge.isResponse(bundle.d.bits) && !d_release_ack) {
+       d_clr         := UIntToOH(bundle.d.bits.source)
+       d_opcodes_clr := size_to_numfullbits(1.U << log_a_opcode_bus_size.U) << (bundle.d.bits.source << log_a_opcode_bus_size.U)
+       d_sizes_clr   := size_to_numfullbits(1.U << log_a_size_bus_size.U) << (bundle.d.bits.source << log_a_size_bus_size.U)
+@@ -709,7 +709,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+     monAssert (!inflight.orR || limit === 0.U || watchdog < limit, "TileLink timeout expired" + extra)
+ 
+     watchdog := watchdog + 1.U
+-    when (bundle.a.fire() || bundle.d.fire()) { watchdog := 0.U }
++    when (bundle.a.fire || bundle.d.fire) { watchdog := 0.U }
+   }
+ 
+   def legalizeCDSource(bundle: TLBundle, edge: TLEdge): Unit = {
+@@ -727,8 +727,8 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+     inflight_opcodes.suggestName("inflight_opcodes")
+     inflight_sizes.suggestName("inflight_sizes")
+ 
+-    val c_first = edge.first(bundle.c.bits, bundle.c.fire())
+-    val d_first = edge.first(bundle.d.bits, bundle.d.fire())
++    val c_first = edge.first(bundle.c.bits, bundle.c.fire)
++    val d_first = edge.first(bundle.d.bits, bundle.d.fire)
+     c_first.suggestName("c_first")
+     d_first.suggestName("d_first")
+ 
+@@ -757,7 +757,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       c_set_wo_ready := UIntToOH(bundle.c.bits.source)
+     }
+ 
+-    when (bundle.c.fire() && c_first && edge.isRequest(bundle.c.bits)) {
++    when (bundle.c.fire && c_first && edge.isRequest(bundle.c.bits)) {
+       c_set                := UIntToOH(bundle.c.bits.source)
+       c_opcodes_set_interm := (bundle.c.bits.opcode << 1.U) | 1.U
+       c_sizes_set_interm   := (bundle.c.bits.size << 1.U) | 1.U
+@@ -782,7 +782,7 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+       d_clr_wo_ready := UIntToOH(bundle.d.bits.source)
+     }
+ 
+-    when (bundle.d.fire() && d_first && edge.isResponse(bundle.d.bits) && d_release_ack) {
++    when (bundle.d.fire && d_first && edge.isResponse(bundle.d.bits) && d_release_ack) {
+       d_clr         := UIntToOH(bundle.d.bits.source)
+       d_opcodes_clr := size_to_numfullbits(1.U << log_c_opcode_bus_size.U) << (bundle.d.bits.source << log_c_opcode_bus_size.U)
+       d_sizes_clr   := size_to_numfullbits(1.U << log_c_size_bus_size.U) << (bundle.d.bits.source << log_c_size_bus_size.U)
+@@ -818,23 +818,23 @@ class TLMonitor(args: TLMonitorArgs, monitorDir: MonitorDirection = MonitorDirec
+     monAssert (!inflight.orR || limit === 0.U || watchdog < limit, "TileLink timeout expired" + extra)
+ 
+     watchdog := watchdog + 1.U
+-    when (bundle.c.fire() || bundle.d.fire()) { watchdog := 0.U }
++    when (bundle.c.fire || bundle.d.fire) { watchdog := 0.U }
+   }
+ 
+   def legalizeDESink(bundle: TLBundle, edge: TLEdge): Unit = {
+     val inflight = RegInit(0.U(edge.manager.endSinkId.W))
+ 
+-    val d_first = edge.first(bundle.d.bits, bundle.d.fire())
++    val d_first = edge.first(bundle.d.bits, bundle.d.fire)
+     val e_first = true.B
+ 
+     val d_set = WireInit(0.U(edge.manager.endSinkId.W))
+-    when (bundle.d.fire() && d_first && edge.isRequest(bundle.d.bits)) {
++    when (bundle.d.fire && d_first && edge.isRequest(bundle.d.bits)) {
+       d_set := UIntToOH(bundle.d.bits.sink)
+       assume(!inflight(bundle.d.bits.sink), "'D' channel re-used a sink ID" + extra)
+     }
+ 
+     val e_clr = WireInit(0.U(edge.manager.endSinkId.W))
+-    when (bundle.e.fire() && e_first && edge.isResponse(bundle.e.bits)) {
++    when (bundle.e.fire && e_first && edge.isResponse(bundle.e.bits)) {
+       e_clr := UIntToOH(bundle.e.bits.sink)
+       monAssert((d_set | inflight)(bundle.e.bits.sink), "'E' channel acknowledged for nothing inflight" + extra)
+     }
+diff --git a/src/main/scala/tilelink/PatternPusher.scala b/src/main/scala/tilelink/PatternPusher.scala
+index c27bbb2b44d..f76006c0e04 100644
+--- a/src/main/scala/tilelink/PatternPusher.scala
++++ b/src/main/scala/tilelink/PatternPusher.scala
+@@ -59,15 +59,15 @@ class TLPatternPusher(name: String, pattern: Seq[Pattern])(implicit p: Parameter
+     val d = tl_out.d
+ 
+     // Expected response?
+-    val check  = Vec(pattern.map(p => Bool(p.dataIn.isDefined)))(step) holdUnless a.fire()
+-    val expect = Vec(pattern.map(p => UInt(p.dataIn.getOrElse(BigInt(0)))))(step) holdUnless a.fire()
+-    assert (!check || !d.fire() || expect === d.bits.data)
++    val check  = Vec(pattern.map(p => Bool(p.dataIn.isDefined)))(step) holdUnless a.fire
++    val expect = Vec(pattern.map(p => UInt(p.dataIn.getOrElse(BigInt(0)))))(step) holdUnless a.fire
++    assert (!check || !d.fire || expect === d.bits.data)
+ 
+-    when (a.fire()) {
++    when (a.fire) {
+       flight := Bool(true)
+       step := step + UInt(1)
+     }
+-    when (d.fire()) {
++    when (d.fire) {
+       flight := Bool(false)
+     }
+ 
+diff --git a/src/main/scala/tilelink/RAMModel.scala b/src/main/scala/tilelink/RAMModel.scala
+index 5cde8b337e3..12f004a9e7c 100644
+--- a/src/main/scala/tilelink/RAMModel.scala
++++ b/src/main/scala/tilelink/RAMModel.scala
+@@ -89,13 +89,13 @@ class TLRAMModel(log: String = "", ignoreCorruptData: Boolean = false, ignoreDen
+       a_flight.size   := edge.size(in.a.bits)
+       a_flight.opcode := in.a.bits.opcode
+ 
+-      when (in.a.fire()) { flight(in.a.bits.source) := a_flight }
++      when (in.a.fire) { flight(in.a.bits.source) := a_flight }
+       val bypass = if (edge.manager.minLatency > 0) Bool(false) else in.a.valid && in.a.bits.source === out.d.bits.source
+       val d_flight = RegEnable(Mux(bypass, a_flight, flight(out.d.bits.source)), edge.first(out.d))
+ 
+       // Process A access requests
+       val a = Reg(next = in.a.bits)
+-      val a_fire = Reg(next = in.a.fire(), init = Bool(false))
++      val a_fire = Reg(next = in.a.fire, init = Bool(false))
+       val (a_first, a_last, _, a_address_inc) = edge.addr_inc(a, a_fire)
+       val a_size = edge.size(a)
+       val a_sizeOH = UIntToOH(a_size)
+@@ -199,7 +199,7 @@ class TLRAMModel(log: String = "", ignoreCorruptData: Boolean = false, ignoreDen
+ 
+       // Process D access responses
+       val d = RegNext(out.d.bits)
+-      val d_fire = Reg(next = out.d.fire(), init = Bool(false))
++      val d_fire = Reg(next = out.d.fire, init = Bool(false))
+       val (d_first, d_last, _, d_address_inc) = edge.addr_inc(d, d_fire)
+       val d_size = edge.size(d)
+       val d_sizeOH = UIntToOH(d_size)
+diff --git a/src/main/scala/tilelink/SRAM.scala b/src/main/scala/tilelink/SRAM.scala
+index 7405d15c380..ffae62391d9 100644
+--- a/src/main/scala/tilelink/SRAM.scala
++++ b/src/main/scala/tilelink/SRAM.scala
+@@ -257,7 +257,7 @@ class TLRAM(
+ 
+     // Forward pipeline stage from A to R
+     when (r_ready) { r_full := false.B }
+-    when (in.a.fire()) {
++    when (in.a.fire) {
+       r_full     := true.B
+       r_sublane  := a_sublane
+       r_opcode   := in.a.bits.opcode
+@@ -289,7 +289,7 @@ class TLRAM(
+     val a_lanes = Cat(Seq.tabulate(lanes) { i => in.a.bits.mask(eccBytes*(i+1)-1, eccBytes*i).orR }.reverse)
+ 
+     // SRAM arbitration
+-    val a_fire = in.a.fire()
++    val a_fire = in.a.fire
+     val a_ren = a_read || a_atomic || a_sublane
+     val r_ren = r_read || r_atomic || r_sublane
+     val wen = d_wb || Mux(r_replay, !r_ren, a_fire && !a_ren)
+diff --git a/src/main/scala/tilelink/SourceShrinker.scala b/src/main/scala/tilelink/SourceShrinker.scala
+index e6500701d5d..24f846944fc 100644
+--- a/src/main/scala/tilelink/SourceShrinker.scala
++++ b/src/main/scala/tilelink/SourceShrinker.scala
+@@ -68,12 +68,12 @@ class TLSourceShrinker(maxInFlight: Int)(implicit p: Parameters) extends LazyMod
+         in.d <> out.d
+         in.d.bits.source := Mux(bypass, in.a.bits.source, sourceIdMap(out.d.bits.source))
+ 
+-        when (a_first && in.a.fire()) {
++        when (a_first && in.a.fire) {
+           sourceIdMap(nextFree) := in.a.bits.source
+         }
+ 
+-        val alloc = a_first && in.a.fire()
+-        val free = d_last && in.d.fire()
++        val alloc = a_first && in.a.fire
++        val free = d_last && in.d.fire
+         val alloc_id = Mux(alloc, nextFreeOH, UInt(0))
+         val free_id = Mux(free, UIntToOH(out.d.bits.source), UInt(0))
+         allocated := (allocated | alloc_id) & ~free_id
+diff --git a/src/main/scala/tilelink/ToAHB.scala b/src/main/scala/tilelink/ToAHB.scala
+index 0fc801c60e7..c4586ae6102 100644
+--- a/src/main/scala/tilelink/ToAHB.scala
++++ b/src/main/scala/tilelink/ToAHB.scala
+@@ -9,7 +9,7 @@ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util._
+ import AHBParameters._
+-import chisel3.util.{RegEnable, Queue, Cat, log2Ceil}
++import chisel3.util.{RegEnable, Queue, log2Ceil}
+ import freechips.rocketchip.util.EnhancedChisel3Assign
+ 
+ case class TLToAHBNode(supportHints: Boolean)(implicit valName: ValName) extends MixedAdapterNode(TLImp, AHBImpMaster)(
+@@ -141,9 +141,9 @@ class TLToAHB(val aFlow: Boolean = false, val supportHints: Boolean = true, val
+         a_commit   := !d_block && !pre.write // only read beats commit to a D beat answer
+         in.a.ready := !d_block && pre.write
+       } .otherwise /* new burst */ {
+-        a_commit := in.a.fire() // every first beat commits to a D beat answer
++        a_commit := in.a.fire // every first beat commits to a D beat answer
+         in.a.ready := !d_block
+-        when (in.a.fire()) {
++        when (in.a.fire) {
+           post.full  := true.B
+           post.send  := true.B
+           post.last  := a_singleBeat
+@@ -153,7 +153,7 @@ class TLToAHB(val aFlow: Boolean = false, val supportHints: Boolean = true, val
+           post.hauser:<= in.a.bits.user
+           post.echo  :<= in.a.bits.echo
+         }
+-        when (in.a.fire() && !a_hint) {
++        when (in.a.fire && !a_hint) {
+           post.write := edgeIn.hasData(in.a.bits)
+           post.hsize := Mux(a_singleBeat, in.a.bits.size, lgBytes.U)
+           post.hburst:= Mux(a_singleBeat, BURST_SINGLE, (a_logBeats1<<1) | 1.U)
+@@ -211,7 +211,7 @@ class TLToAHB(val aFlow: Boolean = false, val supportHints: Boolean = true, val
+ 
+       val d_flight = RegInit(0.U(2.W))
+       assert (d_flight <= depth.U)
+-      d_flight := d_flight + a_commit.asUInt - in.d.fire().asUInt
++      d_flight := d_flight + a_commit.asUInt - in.d.fire.asUInt
+       d_block := d_flight >= depth.U
+ 
+       val d_valid   = RegInit(false.B)
+diff --git a/src/main/scala/tilelink/ToAPB.scala b/src/main/scala/tilelink/ToAPB.scala
+index 68f9f90735c..11ee0f25533 100644
+--- a/src/main/scala/tilelink/ToAPB.scala
++++ b/src/main/scala/tilelink/ToAPB.scala
+@@ -81,7 +81,7 @@ class TLToAPB(val aFlow: Boolean = true)(implicit p: Parameters) extends LazyMod
+       val d_echo   = RegEnable(a.bits.echo,   enable_d)
+ 
+       when (a_sel)    { a_enable := true.B }
+-      when (d.fire()) { a_enable := false.B }
++      when (d.fire) { a_enable := false.B }
+ 
+       out.psel    := a_sel
+       out.penable := a_enable
+diff --git a/src/main/scala/tilelink/ToAXI4.scala b/src/main/scala/tilelink/ToAXI4.scala
+index dcb2b4a213a..4ceb7a64e8f 100644
+--- a/src/main/scala/tilelink/ToAXI4.scala
++++ b/src/main/scala/tilelink/ToAXI4.scala
+@@ -8,7 +8,7 @@ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util._
+ import freechips.rocketchip.amba.axi4._
+ import freechips.rocketchip.amba._
+-import chisel3.util.{log2Ceil, UIntToOH, Queue, Decoupled, Cat}
++import chisel3.util.{log2Ceil, UIntToOH, Queue, Decoupled}
+ import freechips.rocketchip.util.EnhancedChisel3Assign
+ 
+ class AXI4TLStateBundle(val sourceBits: Int) extends Bundle {
+@@ -162,7 +162,7 @@ class TLToAXI4(val combinational: Boolean = true, val adapterName: Option[String
+       val beatBytes = edgeIn.manager.beatBytes
+       val maxSize   = log2Ceil(beatBytes).U
+       val doneAW    = RegInit(false.B)
+-      when (in.a.fire()) { doneAW := !a_last }
++      when (in.a.fire) { doneAW := !a_last }
+ 
+       val arw = out_arw.bits
+       arw.wen   := a_isPut
+@@ -207,7 +207,7 @@ class TLToAXI4(val combinational: Boolean = true, val adapterName: Option[String
+ 
+       // R and B => D arbitration
+       val r_holds_d = RegInit(false.B)
+-      when (out.r.fire()) { r_holds_d := !out.r.bits.last }
++      when (out.r.fire) { r_holds_d := !out.r.bits.last }
+       // Give R higher priority than B, unless B has been delayed for 8 cycles
+       val b_delay = Reg(UInt(3.W))
+       when (out.b.valid && !out.b.ready) {
+@@ -225,7 +225,7 @@ class TLToAXI4(val combinational: Boolean = true, val adapterName: Option[String
+       // request. We must pulse extend this value as AXI is allowed to change the
+       // value of RRESP on every beat, and ChipLink may not.
+       val r_first = RegInit(true.B)
+-      when (out.r.fire()) { r_first := out.r.bits.last }
++      when (out.r.fire) { r_first := out.r.bits.last }
+       val r_denied  = out.r.bits.resp === AXI4Parameters.RESP_DECERR holdUnless r_first
+       val r_corrupt = out.r.bits.resp =/= AXI4Parameters.RESP_OKAY
+       val b_denied  = out.b.bits.resp =/= AXI4Parameters.RESP_OKAY
+@@ -258,8 +258,8 @@ class TLToAXI4(val combinational: Boolean = true, val adapterName: Option[String
+         val write = Reg(Bool())
+         val idle = count === 0.U
+ 
+-        val inc = as && out_arw.fire()
+-        val dec = ds && d_last && in.d.fire()
++        val inc = as && out_arw.fire
++        val dec = ds && d_last && in.d.fire
+         count := count + inc.asUInt - dec.asUInt
+ 
+         assert (!dec || count =/= 0.U)        // underflow
+diff --git a/src/main/scala/tilelink/WidthWidget.scala b/src/main/scala/tilelink/WidthWidget.scala
+index e8c664a29d2..4a57fcea7c1 100644
+--- a/src/main/scala/tilelink/WidthWidget.scala
++++ b/src/main/scala/tilelink/WidthWidget.scala
+@@ -3,7 +3,7 @@
+ package freechips.rocketchip.tilelink
+ 
+ import chisel3._
+-import chisel3.util.{DecoupledIO, log2Ceil, Cat, RegEnable}
++import chisel3.util.{DecoupledIO, log2Ceil, RegEnable}
+ import org.chipsalliance.cde.config.Parameters
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.util._
+@@ -41,7 +41,7 @@ class TLWidthWidget(innerBeatBytes: Int)(implicit p: Parameters) extends LazyMod
+       val corrupt_in = edgeIn.corrupt(in.bits)
+       val corrupt_out = corrupt_in || corrupt_reg
+ 
+-      when (in.fire()) {
++      when (in.fire) {
+         count := count + 1.U
+         corrupt_reg := corrupt_out
+         when (last) {
+@@ -61,7 +61,7 @@ class TLWidthWidget(innerBeatBytes: Int)(implicit p: Parameters) extends LazyMod
+         val rdata = Reg(Vec(ratio-1, chiselTypeOf(idata)))
+         val pdata = rdata :+ idata
+         val mdata = (masked_enable zip (odata zip pdata)) map { case (e, (o, p)) => Mux(e, o, p) }
+-        when (in.fire() && !last) {
++        when (in.fire && !last) {
+           rdata_written_once := true.B
+           (rdata zip mdata) foreach { case (r, m) => r := m }
+         }
+@@ -101,7 +101,7 @@ class TLWidthWidget(innerBeatBytes: Int)(implicit p: Parameters) extends LazyMod
+       val first = count === 0.U
+       val last  = count === limit || !hasData
+ 
+-      when (out.fire()) {
++      when (out.fire) {
+         count := count + 1.U
+         when (last) { count := 0.U }
+       }
+@@ -180,7 +180,7 @@ class TLWidthWidget(innerBeatBytes: Int)(implicit p: Parameters) extends LazyMod
+         val dropBits = log2Ceil(edgeIn.manager.beatBytes)
+         val sources  = Reg(Vec(edgeIn.client.endSourceId, UInt((keepBits-dropBits).W)))
+         val a_sel = in.a.bits.address(keepBits-1, dropBits)
+-        when (in.a.fire()) {
++        when (in.a.fire) {
+           sources(in.a.bits.source) := a_sel
+         }
+ 
+diff --git a/src/main/scala/transforms/naming/RenameDesiredNames.scala b/src/main/scala/transforms/naming/RenameDesiredNames.scala
+deleted file mode 100644
+index 8e58e9196d8..00000000000
+--- a/src/main/scala/transforms/naming/RenameDesiredNames.scala
++++ /dev/null
+@@ -1,131 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.transforms.naming
+-
+-import firrtl._
+-import firrtl.annotations.{CircuitTarget, IsModule, SingleTargetAnnotation, Target}
+-import firrtl.ir._
+-import firrtl.options.Dependency
+-import firrtl.transforms.DedupModules
+-
+-import freechips.rocketchip.linting.rule.DesiredNameAnnotation
+-
+-import scala.collection.mutable
+-
+-/** A helper to rename modules in a [[Circuit]]
+-  */
+-object RenameModules {
+-  def onStmt(moduleNameMap: Map[String, String])(stmt: Statement): Statement = stmt match {
+-    case inst: WDefInstance if moduleNameMap.contains(inst.module) => inst.copy(module = moduleNameMap(inst.module))
+-    case inst: DefInstance if moduleNameMap.contains(inst.module) => inst.copy(module = moduleNameMap(inst.module))
+-    case other => other.mapStmt(onStmt(moduleNameMap))
+-  }
+-
+-  /** Renames the modules in a circuit given a mapping of old names to new names
+-    *
+-    * @param nameMappings mapping of old to new names
+-    * @param circuit the circuit to rename
+-    */
+-  def apply(nameMappings: Map[String, String], circuit: Circuit): Circuit = {
+-    val modules = circuit.modules.map {
+-      case mod: Module => mod.mapStmt(onStmt(nameMappings)).mapString(m => nameMappings.getOrElse(m, m))
+-      case ext: ExtModule => ext
+-    }
+-    val main = nameMappings.getOrElse(circuit.main, circuit.main)
+-    circuit.copy(main = main, modules = modules)
+-  }
+-}
+-
+-/** Specifies the desired name to rename the module to, overriding the Module.desiredName
+-  */
+-case class OverrideDesiredNameAnnotation(
+-  desiredName: String,
+-  target: IsModule
+-) extends SingleTargetAnnotation[IsModule] {
+-  def duplicate(newTarget: IsModule): OverrideDesiredNameAnnotation = {
+-    this.copy(target = newTarget)
+-  }
+-}
+-
+-/** Renames modules based on their overridden desired names
+-  *
+-  * Desired module name overrides are specified by
+-  * [[OverrideDesiredNameAnnotation]].
+-  */
+-class RenameDesiredNames extends Transform with DependencyAPIMigration {
+-
+-  override def prerequisites = Seq(Dependency[DedupModules])
+-  override def optionalPrerequisiteOf = Seq(Dependency[VerilogEmitter])
+-
+-  override def invalidates(transform: Transform) = false
+-
+-  def execute(state: CircuitState): CircuitState = {
+-    val modMap = state.circuit.modules.collect {
+-      case m: Module => m.name -> m
+-    }.toMap
+-
+-    val overrideDesiredNameAnnos = state.annotations.collect {
+-      case a: OverrideDesiredNameAnnotation if a.target.circuit == state.circuit.main => a
+-    }
+-
+-    val moduleToDesiredName: mutable.Map[String, mutable.Set[String]] = mutable.Map()
+-
+-    val nameMap = overrideDesiredNameAnnos.groupBy(_.desiredName).mapValues { annos =>
+-      annos.map(a => Target.referringModule(a.target).module).distinct.map { referringModule =>
+-        require(modMap.contains(referringModule), "ModuleNameAnnotations may not refer to blackboxes")
+-        val desiredNames = moduleToDesiredName.getOrElseUpdate(referringModule, mutable.Set())
+-        desiredNames += annos.head.desiredName
+-        modMap(referringModule)
+-      }
+-    }
+-
+-    val conflictingDesiredNames = moduleToDesiredName.collect {
+-      case kv@ (moduleName, desiredName) if desiredName.size > 1 => kv
+-    }
+-
+-    require(conflictingDesiredNames.size == 0, {
+-      val explanation = conflictingDesiredNames.map {
+-        case (modName, desiredNames) => s"  ${modName}: ${desiredNames.mkString(", ")}"
+-      }.mkString("\n")
+-      s"Modules may not have more than one desiredName:\n${explanation}"
+-    })
+-
+-    val renamedDesiredNames = mutable.Set[String]()
+-    val nameMappings = nameMap.flatMap { case (desiredName, modules) =>
+-      if (modules.size == 1) {
+-        renamedDesiredNames += desiredName
+-        Some(modules.head.name -> desiredName)
+-      } else {
+-        None
+-      }
+-    }.toMap
+-
+-    val finalNames = state.circuit.modules.map {
+-      case m: Module if nameMappings.contains(m.name) => nameMappings(m.name)
+-      case m: DefModule => m.name
+-    }
+-    val renameConflicts = finalNames.groupBy(identity).collect {
+-      case (_, conflicts) if conflicts.size > 1 => conflicts.head
+-    }
+-    require(renameConflicts.size == 0, s"desired names conflict with pre-existing module names: ${renameConflicts.mkString(", ")}")
+-
+-    val circuit = RenameModules(nameMappings, state.circuit)
+-
+-    val newMain = CircuitTarget(circuit.main)
+-    val oldMain = CircuitTarget(state.circuit.main)
+-    val renames = RenameMap()
+-    nameMappings.foreach { case (from, to) =>
+-      renames.record(oldMain.module(from), newMain.module(to))
+-    }
+-
+-    // delete override annotations and rename desired name annotations for ones that were renamed
+-    val newAnnos = state.annotations.flatMap {
+-      case a: OverrideDesiredNameAnnotation if renamedDesiredNames(a.desiredName) => None
+-      case a: DesiredNameAnnotation if nameMappings.contains(Target.referringModule(a.target).module) =>
+-        Some(a.copy(desiredName = nameMappings(Target.referringModule(a.target).module)))
+-      case a => Some(a)
+-    }
+-
+-    state.copy(circuit = circuit, annotations = newAnnos, renames = Some(renames))
+-  }
+-}
+diff --git a/src/main/scala/unittest/Generator.scala b/src/main/scala/unittest/Generator.scala
+deleted file mode 100644
+index 01ef16886e5..00000000000
+--- a/src/main/scala/unittest/Generator.scala
++++ /dev/null
+@@ -1,8 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package freechips.rocketchip.unittest
+-
+-import firrtl.options.StageMain
+-import freechips.rocketchip.system.RocketChipStage
+-
+-object Generator extends StageMain(new RocketChipStage)
+diff --git a/src/main/scala/unittest/UnitTest.scala b/src/main/scala/unittest/UnitTest.scala
+index 3ba7e26350a..952b20a703c 100644
+--- a/src/main/scala/unittest/UnitTest.scala
++++ b/src/main/scala/unittest/UnitTest.scala
+@@ -4,7 +4,6 @@ package freechips.rocketchip.unittest
+ 
+ import chisel3._
+ import chisel3.util._
+-import chisel3.experimental.{IO}
+ import org.chipsalliance.cde.config._
+ import freechips.rocketchip.util._
+ 
+diff --git a/src/main/scala/util/AsyncQueue.scala b/src/main/scala/util/AsyncQueue.scala
+index f61636b63fa..5bb35d30776 100644
+--- a/src/main/scala/util/AsyncQueue.scala
++++ b/src/main/scala/util/AsyncQueue.scala
+@@ -78,12 +78,12 @@ class AsyncQueueSource[T <: Data](gen: T, params: AsyncQueueParams = AsyncQueueP
+   val bits = params.bits
+   val sink_ready = WireInit(true.B)
+   val mem = Reg(Vec(params.depth, gen)) // This does NOT need to be reset at all.
+-  val widx = withReset(reset.asAsyncReset)(GrayCounter(bits+1, io.enq.fire(), !sink_ready, "widx_bin"))
++  val widx = withReset(reset.asAsyncReset)(GrayCounter(bits+1, io.enq.fire, !sink_ready, "widx_bin"))
+   val ridx = AsyncResetSynchronizerShiftReg(io.async.ridx, params.sync, Some("ridx_gray"))
+   val ready = sink_ready && widx =/= (ridx ^ (params.depth | params.depth >> 1).U)
+ 
+   val index = if (bits == 0) 0.U else io.async.widx(bits-1, 0) ^ (io.async.widx(bits, bits) << (bits-1))
+-  when (io.enq.fire()) { mem(index) := io.enq.bits }
++  when (io.enq.fire) { mem(index) := io.enq.bits }
+ 
+   val ready_reg = withReset(reset.asAsyncReset)(RegNext(next=ready, init=false.B).suggestName("ready_reg"))
+   io.enq.ready := ready_reg && sink_ready
+@@ -141,7 +141,7 @@ class AsyncQueueSink[T <: Data](gen: T, params: AsyncQueueParams = AsyncQueuePar
+ 
+   val bits = params.bits
+   val source_ready = WireInit(true.B)
+-  val ridx = withReset(reset.asAsyncReset)(GrayCounter(bits+1, io.deq.fire(), !source_ready, "ridx_bin"))
++  val ridx = withReset(reset.asAsyncReset)(GrayCounter(bits+1, io.deq.fire, !source_ready, "ridx_bin"))
+   val widx = AsyncResetSynchronizerShiftReg(io.async.widx, params.sync, Some("widx_gray"))
+   val valid = source_ready && ridx =/= widx
+ 
+diff --git a/src/main/scala/util/CreditedIO.scala b/src/main/scala/util/CreditedIO.scala
+index 5b9b77a0d96..4b81f0eb789 100644
+--- a/src/main/scala/util/CreditedIO.scala
++++ b/src/main/scala/util/CreditedIO.scala
+@@ -56,7 +56,7 @@ final class CreditedIO[T <: Data](gen: T) extends Bundle
+     val counter = new CreditedIOCounter(depth, depth)
+     counter.update(this)
+     res.ready := !counter.empty || (pipe.B && credit)
+-    debit := res.fire()
++    debit := res.fire
+     bits  := res.bits
+     res
+   }
+@@ -74,7 +74,7 @@ final class CreditedIO[T <: Data](gen: T) extends Bundle
+     enq.bits := bits
+     assert (!enq.valid || enq.ready)
+     val res = Queue.irrevocable(enq, depth, pipe=true, flow=flow)
+-    credit := res.fire()
++    credit := res.fire
+     res
+   }
+ 
+diff --git a/src/main/scala/util/LanePositionedQueue.scala b/src/main/scala/util/LanePositionedQueue.scala
+index f9d823c2002..6a359dbf1a2 100644
+--- a/src/main/scala/util/LanePositionedQueue.scala
++++ b/src/main/scala/util/LanePositionedQueue.scala
+@@ -185,8 +185,8 @@ class LanePositionedQueueBase[T <: Data](val gen: T, args: LanePositionedQueueAr
+   val nEnq    = RegInit(capacity.U(capBits1.W)) // enq.ready
+   val nCommit = RegInit(       0.U(capBits1.W)) // commit.ready
+ 
+-  val freed     = io.free  .map(x => Mux(x.fire(), x.bits, 0.U)).getOrElse(io.deq.ready)
+-  val committed = io.commit.map(x => Mux(x.fire(), x.bits, 0.U)).getOrElse(io.enq.valid)
++  val freed     = io.free  .map(x => Mux(x.fire, x.bits, 0.U)).getOrElse(io.deq.ready)
++  val committed = io.commit.map(x => Mux(x.fire, x.bits, 0.U)).getOrElse(io.enq.valid)
+   io.free.foreach   { x => x.ready := x.bits <= nFree   + io.deq.ready }
+   io.commit.foreach { x => x.ready := x.bits <= nCommit + io.enq.valid }
+ 
+@@ -536,7 +536,7 @@ class PositionedQueueTest(queueFactory: LanePositionedQueue, lanes: Int, rows: I
+     assert (c.ready || c.bits > legal)
+     c.valid := LFSR64()(0)
+     c.bits  := ((legal + 1.U) * LFSR64()) >> 63 // 50% likely to be legal
+-    when (c.fire()) { com := com + c.bits }
++    when (c.fire) { com := com + c.bits }
+   }
+ 
+   q.io.free.foreach { f =>
+@@ -544,19 +544,19 @@ class PositionedQueueTest(queueFactory: LanePositionedQueue, lanes: Int, rows: I
+     assert (f.ready || f.bits > legal)
+     f.valid := LFSR64()(0)
+     f.bits  := ((legal + 1.U) * LFSR64()) >> 63
+-    when (f.fire()) { abt := abt + f.bits }
++    when (f.fire) { abt := abt + f.bits }
+   }
+ 
+   q.io.rewind.foreach { r =>
+     val f = q.io.free.get
+     r := (LFSR64() & 0xf.U) === 0.U
+-    when (r) { deq := Mux(f.fire(), abt + f.bits, abt) }
++    when (r) { deq := Mux(f.fire, abt + f.bits, abt) }
+   }
+ 
+   q.io.abort .foreach { a =>
+     val c = q.io.commit.get
+     a := (LFSR64() & 0xf.U) === 0.U
+-    when (a) { enq := Mux(c.fire(), com + c.bits, com) }
++    when (a) { enq := Mux(c.fire, com + c.bits, com) }
+   }
+ 
+   when (enq >= (cycles*lanes).U) { done := true.B }
+diff --git a/src/main/scala/util/MultiPortQueue.scala b/src/main/scala/util/MultiPortQueue.scala
+index e7348e27c8e..d497d9d14ef 100644
+--- a/src/main/scala/util/MultiPortQueue.scala
++++ b/src/main/scala/util/MultiPortQueue.scala
+@@ -87,8 +87,8 @@ class MultiPortQueueTest(lanes: Int, wlanes: Int, rows: Int, cycles: Int, timeou
+   val valid = LFSR64()(lanes-1, 0)
+   val ready = LFSR64()(lanes-1, 0)
+ 
+-  enq := enq + PopCount(q.io.enq.map(_.fire()))
+-  deq := deq + PopCount(q.io.deq.map(_.fire()))
++  enq := enq + PopCount(q.io.enq.map(_.fire))
++  deq := deq + PopCount(q.io.deq.map(_.fire))
+ 
+   val enq_bits = RipplePrefixSum(enq +: valid.asBools.map(x => WireInit(UInt(bits.W), x)))(_ + _)
+   val deq_bits = RipplePrefixSum(deq +: ready.asBools.map(x => WireInit(UInt(bits.W), x)))(_ + _)
+@@ -97,6 +97,6 @@ class MultiPortQueueTest(lanes: Int, wlanes: Int, rows: Int, cycles: Int, timeou
+     q.io.enq(i).valid := valid(i)
+     q.io.enq(i).bits  := Mux(valid(i), enq_bits(i), 0.U)
+     q.io.deq(i).ready := ready(i)
+-    assert (!q.io.deq(i).fire() || q.io.deq(i).bits === deq_bits(i))
++    assert (!q.io.deq(i).fire || q.io.deq(i).bits === deq_bits(i))
+   }
+ }
+diff --git a/src/main/scala/util/MultiWidthFifo.scala b/src/main/scala/util/MultiWidthFifo.scala
+index 240f914a80f..21105c2dd5a 100644
+--- a/src/main/scala/util/MultiWidthFifo.scala
++++ b/src/main/scala/util/MultiWidthFifo.scala
+@@ -31,17 +31,17 @@ class MultiWidthFifo(inW: Int, outW: Int, n: Int) extends Module {
+     val tail = Reg(init = UInt(0, log2Up(n)))
+     val size = Reg(init = UInt(0, log2Up(n + 1)))
+ 
+-    when (io.in.fire()) {
++    when (io.in.fire) {
+       wdata(head) := io.in.bits
+       head := head + UInt(1)
+     }
+ 
+-    when (io.out.fire()) { tail := tail + UInt(1) }
++    when (io.out.fire) { tail := tail + UInt(1) }
+ 
+     size := MuxCase(size, Seq(
+-      (io.in.fire() && io.out.fire()) -> (size + UInt(nBeats - 1)),
+-      io.in.fire() -> (size + UInt(nBeats)),
+-      io.out.fire() -> (size - UInt(1))))
++      (io.in.fire && io.out.fire) -> (size + UInt(nBeats - 1)),
++      io.in.fire -> (size + UInt(nBeats)),
++      io.out.fire -> (size - UInt(1))))
+ 
+     io.out.valid := size > UInt(0)
+     io.out.bits := rdata(tail)
+@@ -60,17 +60,17 @@ class MultiWidthFifo(inW: Int, outW: Int, n: Int) extends Module {
+     val tail = Reg(init = UInt(0, log2Up(n)))
+     val size = Reg(init = UInt(0, log2Up(n * nBeats + 1)))
+ 
+-    when (io.in.fire()) {
++    when (io.in.fire) {
+       wdata(head) := io.in.bits
+       head := head + UInt(1)
+     }
+ 
+-    when (io.out.fire()) { tail := tail + UInt(1) }
++    when (io.out.fire) { tail := tail + UInt(1) }
+ 
+     size := MuxCase(size, Seq(
+-      (io.in.fire() && io.out.fire()) -> (size - UInt(nBeats - 1)),
+-      io.in.fire() -> (size + UInt(1)),
+-      io.out.fire() -> (size - UInt(nBeats))))
++      (io.in.fire && io.out.fire) -> (size - UInt(nBeats - 1)),
++      io.in.fire -> (size + UInt(1)),
++      io.out.fire -> (size - UInt(nBeats))))
+ 
+     io.count := size >> UInt(log2Up(nBeats))
+     io.out.valid := io.count > UInt(0)
+@@ -93,11 +93,11 @@ class MultiWidthFifoTest extends UnitTest {
+   val bl_data = Vec.tabulate(4){i => UInt((2 * i + 1) * 256 + 2 * i, 16)}
+   val lb_data = Vec.tabulate(8){i => UInt(i, 8)}
+ 
+-  val (bl_send_cnt, bl_send_done) = Counter(big2little.io.in.fire(), 4)
+-  val (lb_send_cnt, lb_send_done) = Counter(little2big.io.in.fire(), 8)
++  val (bl_send_cnt, bl_send_done) = Counter(big2little.io.in.fire, 4)
++  val (lb_send_cnt, lb_send_done) = Counter(little2big.io.in.fire, 8)
+ 
+-  val (bl_recv_cnt, bl_recv_done) = Counter(big2little.io.out.fire(), 8)
+-  val (lb_recv_cnt, lb_recv_done) = Counter(little2big.io.out.fire(), 4)
++  val (bl_recv_cnt, bl_recv_done) = Counter(big2little.io.out.fire, 8)
++  val (lb_recv_cnt, lb_recv_done) = Counter(little2big.io.out.fire, 4)
+ 
+   big2little.io.in.valid := bl_send
+   big2little.io.in.bits := bl_data(bl_send_cnt)
+diff --git a/src/main/scala/util/RationalCrossing.scala b/src/main/scala/util/RationalCrossing.scala
+index 7d89ef967e8..e68e26c972a 100644
+--- a/src/main/scala/util/RationalCrossing.scala
++++ b/src/main/scala/util/RationalCrossing.scala
+@@ -89,7 +89,7 @@ class RationalCrossingSource[T <: Data](gen: T, direction: RationalDirection = S
+   deq.bits1  := RegEnable(enq.bits, equal)
+   enq.ready  := Mux(equal, deq.ready, count(1) =/= deq.sink(0))
+ 
+-  when (enq.fire()) { count := Cat(count(0), !count(1)) }
++  when (enq.fire) { count := Cat(count(0), !count(1)) }
+ 
+   // Ensure the clocking is setup correctly
+   direction match {
+@@ -124,7 +124,7 @@ class RationalCrossingSink[T <: Data](gen: T, direction: RationalDirection = Sym
+   deq.bits  := Mux(equal, enq.bits0, enq.bits1)
+   deq.valid := Mux(equal, enq.valid, count(1) =/= enq.source(0))
+ 
+-  when (deq.fire()) { count := Cat(count(0), !count(1)) }
++  when (deq.fire) { count := Cat(count(0), !count(1)) }
+ 
+   // Ensure the clocking is setup correctly
+   direction match {
+diff --git a/src/main/scala/util/ReadyValidCancel.scala b/src/main/scala/util/ReadyValidCancel.scala
+index 231cae0f0a6..d6ec0bca9d8 100644
+--- a/src/main/scala/util/ReadyValidCancel.scala
++++ b/src/main/scala/util/ReadyValidCancel.scala
+@@ -46,7 +46,7 @@ class ReadyValidCancel[+T <: Data](gen: T) extends ValidCancel(gen)
+ {
+   val ready = Input(Bool())
+   def mightFire(): Bool = ready && earlyValid
+-  def fire():      Bool = ready && validQual()
++  def fire:      Bool = ready && validQual()
+ 
+   /** Down-converts a ReadyValidCancel output to a DecoupledIO bundle, dropping early/late timing split. */
+   def asDecoupled(): DecoupledIO[T] = {
+diff --git a/src/main/scala/util/Repeater.scala b/src/main/scala/util/Repeater.scala
+index ed8e2c83c46..a0b0c5b297d 100644
+--- a/src/main/scala/util/Repeater.scala
++++ b/src/main/scala/util/Repeater.scala
+@@ -25,8 +25,8 @@ class Repeater[T <: Data](gen: T) extends Module
+   io.deq.bits := Mux(full, saved, io.enq.bits)
+   io.full := full
+ 
+-  when (io.enq.fire() &&  io.repeat) { full := true.B; saved := io.enq.bits }
+-  when (io.deq.fire() && !io.repeat) { full := false.B }
++  when (io.enq.fire &&  io.repeat) { full := true.B; saved := io.enq.bits }
++  when (io.deq.fire && !io.repeat) { full := false.B }
+ }
+ 
+ object Repeater
+diff --git a/src/main/scala/util/ShiftQueue.scala b/src/main/scala/util/ShiftQueue.scala
+index 2a1b0520dec..a1790b04c6c 100644
+--- a/src/main/scala/util/ShiftQueue.scala
++++ b/src/main/scala/util/ShiftQueue.scala
+@@ -27,14 +27,14 @@ class ShiftQueue[T <: Data](gen: T,
+     val wdata = if (i == entries-1) io.enq.bits else Mux(valid(i+1), elts(i+1), io.enq.bits)
+     val wen =
+       Mux(io.deq.ready,
+-          paddedValid(i+1) || io.enq.fire() && ((i == 0 && !flow).B || valid(i)),
+-          io.enq.fire() && paddedValid(i-1) && !valid(i))
++          paddedValid(i+1) || io.enq.fire && ((i == 0 && !flow).B || valid(i)),
++          io.enq.fire && paddedValid(i-1) && !valid(i))
+     when (wen) { elts(i) := wdata }
+ 
+     valid(i) :=
+       Mux(io.deq.ready,
+-          paddedValid(i+1) || io.enq.fire() && ((i == 0 && !flow).B || valid(i)),
+-          io.enq.fire() && paddedValid(i-1) || valid(i))
++          paddedValid(i+1) || io.enq.fire && ((i == 0 && !flow).B || valid(i)),
++          io.enq.fire && paddedValid(i-1) || valid(i))
+   }
+ 
+   io.enq.ready := !valid(entries-1)
+diff --git a/src/main/scala/util/SynchronizerReg.scala b/src/main/scala/util/SynchronizerReg.scala
+index 18c0d94d3dc..a006c60fdf7 100644
+--- a/src/main/scala/util/SynchronizerReg.scala
++++ b/src/main/scala/util/SynchronizerReg.scala
+@@ -3,7 +3,7 @@
+ package freechips.rocketchip.util
+ 
+ import chisel3._
+-import chisel3.util.{RegEnable, Cat}
++import chisel3.util.RegEnable
+ 
+ /**  These wrap behavioral
+   *  shift and next registers into specific modules to allow for
+diff --git a/src/test/scala/generatorTests/StageGeneratorSpec.scala b/src/test/scala/generatorTests/StageGeneratorSpec.scala
+deleted file mode 100644
+index 00ab717a286..00000000000
+--- a/src/test/scala/generatorTests/StageGeneratorSpec.scala
++++ /dev/null
+@@ -1,44 +0,0 @@
+-// See LICENSE.SiFive for license details.
+-
+-package generatorTests
+-
+-import java.io.File
+-
+-import chisel3.aop.injecting.InjectingAspect
+-import chisel3._
+-import firrtl.options.TargetDirAnnotation
+-import freechips.rocketchip.stage.{ConfigsAnnotation, TopModuleAnnotation}
+-import freechips.rocketchip.system.{RocketChipStage, TestHarness}
+-import org.scalatest.flatspec.AnyFlatSpec
+-
+-/** run via SBT with
+- *    > testOnly generatorTests.StageGeneratorSpec
+- *
+- *  Output can be viewed in the testbuild directory. The wire named "hello" should show up in the generated
+- *  *.anno.json file.
+- */
+-class StageGeneratorSpec extends AnyFlatSpec {
+-
+-  val dummyAspect = InjectingAspect(
+-    {dut: TestHarness => Seq(dut.dut)},
+-    {dut: freechips.rocketchip.system.ExampleRocketSystemModuleImp[freechips.rocketchip.system.ExampleRocketSystem] =>
+-      val dummyWire = Wire(UInt(3.W)).suggestName("hello")
+-      dummyWire := 5.U
+-      dontTouch(dummyWire)
+-    }
+-  )
+-
+-  "Test" should "pass" in {
+-    val dirName = System.getProperty("user.dir") + "/testbuild"
+-    val dir = new File(dirName)
+-    if (!dir.exists()) dir.mkdirs()
+-
+-    new RocketChipStage().run(Seq(
+-      new TargetDirAnnotation(dirName),
+-      new TopModuleAnnotation(Class.forName("freechips.rocketchip.system.TestHarness")),
+-      new ConfigsAnnotation(Seq("freechips.rocketchip.system.DefaultConfig")),
+-      dummyAspect
+-    ))
+-  }
+-
+-}
+diff --git a/src/test/scala/linting/rule/LintConflictingModuleNamesSpec.scala b/src/test/scala/linting/rule/LintConflictingModuleNamesSpec.scala
+deleted file mode 100644
+index affad0ad117..00000000000
+--- a/src/test/scala/linting/rule/LintConflictingModuleNamesSpec.scala
++++ /dev/null
+@@ -1,112 +0,0 @@
+-// See LICENSE for license details.
+-
+-package freechips.rocketchip.linting.rule
+-
+-import firrtl._
+-import firrtl.annotations._
+-import org.scalatest.matchers.should.Matchers
+-import org.scalatest.propspec.AnyPropSpec
+-
+-import freechips.rocketchip.linting.Violation
+-import freechips.rocketchip.transforms.naming.{OverrideDesiredNameAnnotation, RenameDesiredNames}
+-
+-class LintConflictingModuleNamesSpec extends AnyPropSpec with Matchers {
+-  val transform = new LintConflictingModuleNames
+-  def lint(input: String, annos: Seq[Annotation]): CircuitState = {
+-    val state = CircuitState(Parser.parse(input), UnknownForm, annos)
+-    transform.runTransform(state)
+-  }
+-
+-  def lint(state: CircuitState): CircuitState = {
+-    transform.runTransform(state)
+-  }
+-
+-  val renameTransform = new RenameDesiredNames
+-
+-  def rename(input: String, annos: Seq[Annotation]): CircuitState = {
+-    val state = CircuitState(Parser.parse(input), UnknownForm, annos)
+-    renameTransform.runTransform(state)
+-  }
+-
+-  property("It should emit LintViolations for conflicting DesiredNameAnnotations") {
+-    val top = CircuitTarget("Foo")
+-    val input =
+-      """|circuit Foo:
+-         |  module Bar_1:
+-         |    output in1: UInt<1>
+-         |  module Bar_2:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Bar_3:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |    output in3: UInt<1>
+-         |  module Foo:
+-         |    inst bar_1 of Bar_1
+-         |    inst bar_2 of Bar_2
+-         |    inst bar_3 of Bar_3
+-         |""".stripMargin
+-    val annos = Seq(
+-      DesiredNameAnnotation("Bar_1", top.module("Bar_1")),
+-      DesiredNameAnnotation("Bar_1", top.module("Bar_2"))
+-    )
+-    val conflictingModules = lint(input, annos).annotations.collect {
+-      case Violation(_: LintConflictingModuleNames, _, _, mods) => mods
+-    }
+-    conflictingModules should be (Seq(Set("Bar_1", "Bar_2")))
+-  }
+-
+-  property("It should catch LintViolations not fixed by with RenameDesiredNames") {
+-    val top = CircuitTarget("Foo")
+-    val input =
+-      """|circuit Foo:
+-         |  module Bar_1:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Bar_2:
+-         |    output in1: UInt<2>
+-         |    output in2: UInt<2>
+-         |  module Foo:
+-         |    inst bar_1 of Bar_1
+-         |    inst bar_2 of Bar_2
+-         |""".stripMargin
+-    val annos = Seq(
+-      DesiredNameAnnotation("Bar_1", top.module("Bar_1")),
+-      DesiredNameAnnotation("Bar_1", top.module("Bar_2")),
+-      OverrideDesiredNameAnnotation("BarWith2Inputs", top.module("Bar_1")),
+-      OverrideDesiredNameAnnotation("BarWith2Inputs", top.module("Bar_2"))
+-    )
+-
+-    val conflictingModules = lint(rename(input, annos)).annotations.collect {
+-      case Violation(_: LintConflictingModuleNames, _, _, mods) => mods
+-    }
+-    conflictingModules should be (Seq(Set("Bar_1", "Bar_2")))
+-  }
+-
+-  property("RenameDesiredNames should be able to fix LintViolations") {
+-    val top = CircuitTarget("Foo")
+-    val input =
+-      """|circuit Foo:
+-         |  module Bar_1:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Bar_2:
+-         |    output in1: UInt<2>
+-         |    output in2: UInt<2>
+-         |  module Foo:
+-         |    inst bar_1 of Bar_1
+-         |    inst bar_2 of Bar_2
+-         |""".stripMargin
+-    val annos = Seq(
+-      DesiredNameAnnotation("Bar_1", top.module("Bar_1")),
+-      DesiredNameAnnotation("Bar_1", top.module("Bar_2")),
+-      OverrideDesiredNameAnnotation("BarWith2BoolInputs", top.module("Bar_1")),
+-      OverrideDesiredNameAnnotation("BarWith2UIntInputs", top.module("Bar_2"))
+-    )
+-
+-    val conflictingModules = lint(rename(input, annos)).annotations.collect {
+-      case Violation(_: LintConflictingModuleNames, _, _, mods) => mods
+-    }
+-    conflictingModules should be (Seq())
+-  }
+-}
+diff --git a/src/test/scala/transforms/naming/RenameDesiredNamesSpec.scala b/src/test/scala/transforms/naming/RenameDesiredNamesSpec.scala
+deleted file mode 100644
+index 0846282e4c8..00000000000
+--- a/src/test/scala/transforms/naming/RenameDesiredNamesSpec.scala
++++ /dev/null
+@@ -1,192 +0,0 @@
+-// See LICENSE for license details.
+-
+-package freechips.rocketchip.transforms.naming
+-
+-import firrtl._
+-import firrtl.annotations._
+-import org.scalatest.matchers.should.Matchers
+-import org.scalatest.propspec.AnyPropSpec
+-
+-import freechips.rocketchip.linting.rule.DesiredNameAnnotation
+-
+-case class StableNameAnnotation(target: IsModule) extends SingleTargetAnnotation[IsModule] {
+-  def duplicate(newTarget: IsModule): StableNameAnnotation = this.copy(target = newTarget)
+-}
+-
+-case class UnstableNameAnnotation(target: IsModule) extends SingleTargetAnnotation[IsModule] {
+-  def duplicate(newTarget: IsModule): UnstableNameAnnotation = this.copy(target = newTarget)
+-}
+-
+-class RenameDesiredNamesSpec extends AnyPropSpec with Matchers {
+-  val transform = new RenameDesiredNames
+-
+-  case class TestCase(
+-    input: String,
+-    annos: Seq[Annotation]
+-  )
+-
+-  def renameNames(testCase: TestCase): CircuitState = {
+-    renameNames(CircuitState(Parser.parse(testCase.input), UnknownForm, testCase.annos))
+-  }
+-
+-  def renameNames(state: CircuitState): CircuitState = {
+-    transform.runTransform(state)
+-  }
+-
+-  def test(testCases: TestCase *): Unit = {
+-    val firstState = renameNames(testCases.head)
+-    val firstUnstableNames = firstState.annotations.collect {
+-      case a: UnstableNameAnnotation => a
+-    }
+-    val firstStableNames = firstState.annotations.collect {
+-      case a: StableNameAnnotation => a
+-    }
+-
+-    testCases.tail.foldLeft(firstStableNames, firstUnstableNames) {
+-      case ((stable, unstable), testCase) =>
+-        val state = renameNames(testCase)
+-        val currUnstableNames = state.annotations.collect {
+-          case a: UnstableNameAnnotation => a
+-        }
+-        val currStableNames = state.annotations.collect {
+-          case a: StableNameAnnotation => a
+-        }
+-
+-        currStableNames should be (stable)
+-        currUnstableNames should not be (unstable)
+-        (currStableNames, currUnstableNames)
+-    }
+-  }
+-
+-  property("It should rename modules if it can and ignore strategies which fail to result in unique names") {
+-    val top = CircuitTarget("Foo")
+-    val testCase = TestCase(
+-      """|circuit Foo:
+-         |  module Bar_1:
+-         |    output in1: UInt<1>
+-         |  module Bar_2:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Bar_3:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Foo:
+-         |    inst bar_1 of Bar_1
+-         |    inst bar_2 of Bar_2
+-         |    inst bar_3 of Bar_3
+-         |""".stripMargin,
+-      Seq(
+-        DesiredNameAnnotation("Bar_1", top.module("Bar_1")),
+-        OverrideDesiredNameAnnotation("BarWith1Input", top.module("Bar_1")),
+-
+-        // these renames should fail (be ignored) because the ExactNamingStrategy fails to result in unique names.
+-        OverrideDesiredNameAnnotation("BarWith2Inputs", top.module("Bar_2")),
+-        OverrideDesiredNameAnnotation("BarWith2Inputs", top.module("Bar_3"))
+-      )
+-    )
+-    val outputState = renameNames(testCase)
+-    val check =
+-      """|circuit Foo:
+-         |  module BarWith1Input:
+-         |    output in1: UInt<1>
+-         |  module Bar_2:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Bar_3:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Foo:
+-         |    inst bar_1 of BarWith1Input
+-         |    inst bar_2 of Bar_2
+-         |    inst bar_3 of Bar_3
+-         |""".stripMargin
+-
+-    outputState.circuit should be (Parser.parse(check))
+-
+-    // it should also update DesiredNameAnnotation and delete successfull OverrideDesiredNameAnnotation
+-    // Unsuccessful OverrideDesiredNameAnnotations should remain
+-    outputState.annotations.filterNot(_.isInstanceOf[DeletedAnnotation]) should be (Seq(
+-      DesiredNameAnnotation("BarWith1Input", top.module("BarWith1Input")),
+-      OverrideDesiredNameAnnotation("BarWith2Inputs", top.module("Bar_2")),
+-      OverrideDesiredNameAnnotation("BarWith2Inputs", top.module("Bar_3"))
+-    ))
+-  }
+-
+-  property("It should keep modules names stable between runs") {
+-    val top = CircuitTarget("Foo")
+-    test(
+-      TestCase(
+-        """|circuit Foo:
+-           |  module Bar_1:
+-           |    output in1: UInt<1>
+-           |  module Bar_2:
+-           |    output in1: UInt<1>
+-           |    output in2: UInt<1>
+-           |  module Bar_3:
+-           |    output in1: UInt<1>
+-           |    output in2: UInt<1>
+-           |    output in3: UInt<1>
+-           |  module Foo:
+-           |    inst bar_1 of Bar_1
+-           |    inst bar_2 of Bar_2
+-           |    inst bar_3 of Bar_3
+-           |""".stripMargin,
+-        Seq(
+-          UnstableNameAnnotation(top.module("Bar_1")),
+-          StableNameAnnotation(top.module("Bar_2")),
+-          StableNameAnnotation(top.module("Bar_3")),
+-          OverrideDesiredNameAnnotation("Bar_2", top.module("Bar_2")),
+-          OverrideDesiredNameAnnotation("Bar_3", top.module("Bar_3"))
+-        )
+-      ),
+-      TestCase(
+-        """|circuit Foo:
+-           |  module Bar_1:
+-           |    output in1: UInt<2>
+-           |  module Bar_5:
+-           |    output in1: UInt<1>
+-           |    output in2: UInt<1>
+-           |  module Bar_6:
+-           |    output in1: UInt<1>
+-           |    output in2: UInt<1>
+-           |    output in3: UInt<1>
+-           |  module Foo:
+-           |    inst bar_1 of Bar_1
+-           |    inst bar_5 of Bar_5
+-           |    inst bar_6 of Bar_6
+-           |""".stripMargin,
+-        Seq(
+-          UnstableNameAnnotation(top.module("Bar_1")),
+-          StableNameAnnotation(top.module("Bar_5")),
+-          StableNameAnnotation(top.module("Bar_6")),
+-          OverrideDesiredNameAnnotation("Bar_4", top.module("Bar_1")),
+-          OverrideDesiredNameAnnotation("Bar_2", top.module("Bar_5")),
+-          OverrideDesiredNameAnnotation("Bar_3", top.module("Bar_6"))
+-        )
+-      )
+-    )
+-  }
+-
+-  property("It should error if renaming to an already existing module name") {
+-    val top = CircuitTarget("Foo")
+-    val testCase = TestCase(
+-      """|circuit Foo:
+-         |  module Bar_1:
+-         |    output in1: UInt<1>
+-         |  module Bar_2:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |  module Bar_3:
+-         |    output in1: UInt<1>
+-         |    output in2: UInt<1>
+-         |    output in3: UInt<1>
+-         |  module Foo:
+-         |    inst bar_1 of Bar_1
+-         |    inst bar_2 of Bar_2
+-         |    inst bar_3 of Bar_3
+-         |""".stripMargin,
+-      Seq(OverrideDesiredNameAnnotation("Bar_1", top.module("Bar_2")))
+-    )
+-    an [Exception] should be thrownBy renameNames(testCase)
+-  }
+-}
