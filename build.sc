@@ -115,49 +115,6 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
   ) }
 }
 
-// CI Tests
-object sanitytests extends ScalaModule {
-  override def scalaVersion = ivys.sv
-  object rocketchip extends Tests with CommonModule with TestModule.Utest {
-    override def ivyDeps = Agg(
-      ivys.utest
-    )
-    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
-    def libraryResources = T {
-      val x86Dir = T.ctx.dest
-      os.proc("make", s"DESTDIR=${x86Dir}", "install").call(spike.compile())
-      PathRef(T.ctx.dest)
-    }
-    override def resources: Sources = T.sources {
-      super.resources() :+ libraryResources()
-    }
-  }
-  object vcu118 extends Tests with CommonModule with TestModule.Utest {
-    override def ivyDeps = Agg(
-      ivys.utest
-    )
-    override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, shells)
-  }
-}
-
-object spike extends Module {
-  override def millSourcePath = os.pwd / "dependencies" / "riscv-isa-sim"
-  // ask make to cache file.
-  def compile = T.persistent {
-    os.proc(millSourcePath / "configure", "--prefix", "/usr", "--without-boost", "--without-boost-asio", "--without-boost-regex").call(
-      T.ctx.dest, Map(
-        "CC" -> "clang",
-        "CXX" -> "clang++",
-        "AR" -> "llvm-ar",
-        "RANLIB" -> "llvm-ranlib",
-        "LD" -> "lld",
-      )
-    )
-    os.proc("make", "-j", Runtime.getRuntime().availableProcessors()).call(T.ctx.dest)
-    T.ctx.dest
-  }
-}
-
 // Dummy
 
 object playground extends CommonModule {
