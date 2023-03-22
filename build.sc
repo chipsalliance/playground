@@ -128,9 +128,9 @@ object playground extends CommonModule {
     ivys.mainargs
   )
 
-  def lazymodule: String = "freechips.rocketchip.system.TestHarness"
+  def lazymodule: String = "freechips.rocketchip.system.ExampleRocketSystem"
 
-  def configs: String = "freechips.rocketchip.system.DefaultConfig"
+  def configs: String = "playground.TestConfig,freechips.rocketchip.system.DefaultConfig"
 
   def elaborate = T {
     mill.modules.Jvm.runSubprocess(
@@ -143,7 +143,7 @@ object playground extends CommonModule {
         "--lm", lazymodule,
         "--configs", configs
       ),
-      workingDir = os.Path(T.dest.toString),
+      workingDir = os.pwd,
     )
     PathRef(T.dest)
   }
