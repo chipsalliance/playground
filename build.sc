@@ -130,7 +130,7 @@ object playground extends CommonModule {
 
   def lazymodule: String = "freechips.rocketchip.system.ExampleRocketSystem"
 
-  def configs: String = "playground.TestConfig+freechips.rocketchip.system.DefaultConfig"
+  def configs: String = "playground.PlaygroundConfig"
 
   def elaborate = T {
     mill.modules.Jvm.runSubprocess(
