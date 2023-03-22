@@ -18,7 +18,7 @@ object Main {
       Class
         .forName(top)
         .getConstructor(classOf[Parameters])
-        .newInstance(new Config(config.split(',').foldRight(Parameters.empty) {
+        .newInstance(new Config(config.split('+').foldRight(Parameters.empty) {
           case (currentName, config) =>
             val currentConfig = Class.forName(currentName).newInstance.asInstanceOf[Config]
             currentConfig ++ config

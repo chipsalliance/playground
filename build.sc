@@ -130,7 +130,7 @@ object playground extends CommonModule {
 
   def lazymodule: String = "freechips.rocketchip.system.ExampleRocketSystem"
 
-  def configs: String = "playground.TestConfig,freechips.rocketchip.system.DefaultConfig"
+  def configs: String = "playground.TestConfig+freechips.rocketchip.system.DefaultConfig"
 
   def elaborate = T {
     mill.modules.Jvm.runSubprocess(
@@ -147,4 +147,20 @@ object playground extends CommonModule {
     )
     PathRef(T.dest)
   }
+
+  def verilog = T {
+    os.proc("firtool",
+      elaborate().path / s"${lazymodule.split('.').last}.fir",
+      "-disable-infer-rw",
+      "--disable-annotation-unknown",
+      "-dedup",
+      "-O=debug",
+      "--split-verilog",
+      "--preserve-values=named",
+      "--output-annotation-file=mfc.anno.json",
+      s"-o=${T.dest}"
+    ).call(T.dest)
+    PathRef(T.dest)
+  }
+
 }

@@ -17,6 +17,7 @@
           deps = with pkgs; [
             mill
             espresso
+	    circt
           ];
         in
         {
