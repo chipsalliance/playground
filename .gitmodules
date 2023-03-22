@@ -21,8 +21,5 @@
 [submodule "rocket-chip-fpga-shells"]
 	path = dependencies/rocket-chip-fpga-shells
 	url = git@github.com:chipsalliance/rocket-chip-fpga-shells.git
-[submodule "dependencies/riscv-isa-sim"]
-	path = dependencies/riscv-isa-sim
-	url = git@github.com:riscv/riscv-isa-sim.git
 [submodule "dependencies/rocket-chip"]
 	branch = dev
