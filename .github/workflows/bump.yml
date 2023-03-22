@@ -1,38 +1,6 @@
-on:
-  schedule:
-    - cron: '10 0 * * *'
-  push:
-  pull_request:
+name: Check Compile
+on: [push, pull_request]
 jobs:
-  archlinux:
-    if: github.repository == 'chipsalliance/playground'
-    runs-on: ubuntu-latest
-    container: archlinux/archlinux:latest
-    steps:
-      - name: Install dependencies
-        run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 python autoconf automake
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-          fetch-depth: '0'
-      - name: work around https://github.com/actions/checkout/issues/760
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Coursier Cache
-        uses: coursier/cache-action@v5
-      - name: Init
-        run: |
-          make init
-      - name: Bump
-        id: bump
-        run: make bump
-      - name: Patch
-        run: |
-          make update-patches
-          make patch
-      - name: Check Mill Compile
-        run: make compile
-      - name: Check Sanity
-        run: make test
   nix:
     if: github.repository == 'chipsalliance/playground'
     runs-on: ubuntu-latest
@@ -43,70 +11,15 @@ jobs:
           fetch-depth: '0'
       - name: work around https://github.com/actions/checkout/issues/760
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: cachix/install-nix-action@v14.1
+      - uses: cachix/install-nix-action@v19
         with:
+          install_url: https://releases.nixos.org/nix/nix-2.13.3/install
           nix_path: nixpkgs=channel:nixos-unstable
-      - name: Coursier Cache
-        uses: coursier/cache-action@v5
       - name: Init
-        uses: ZenithalHourlyRate/nix-shell-action@v3
-        with:
-          script: |
-            make init
-      - name: Bump
-        id: bump
-        uses: ZenithalHourlyRate/nix-shell-action@v3
-        with:
-          script: |
-            make bump
+        run: nix develop -c make init
       - name: Patch
-        uses: ZenithalHourlyRate/nix-shell-action@v3
-        with:
-          script: |
-            make update-patches
-            make patch
+        run: |
+            nix develop -c make update-patches
+            nix develop -c make patch
       - name: Check Mill Compile
-        uses: ZenithalHourlyRate/nix-shell-action@v3
-        with:
-          script: |
-            make compile
-      - name: Check Sanity
-        uses: ZenithalHourlyRate/nix-shell-action@v3
-        with:
-          script: |
-            make test
-  bump:
-    if: github.repository == 'chipsalliance/playground' && github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    container: archlinux/archlinux:latest
-    needs:
-      - archlinux
-    steps:
-      - name: Install dependencies
-        run: pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 python autoconf automake
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-          fetch-depth: '0'
-      - name: work around https://github.com/actions/checkout/issues/760
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Coursier Cache
-        uses: coursier/cache-action@v5
-      - name: Init
-        run: |
-          git config --global user.email "liu@jiuyang.me"
-          git config --global user.name "Github Action"
-          make init
-      - name: Bump
-        id: bump
-        run: make bump
-      - name: Patch
-        run: |
-          make update-patches
-          make patch
-      - name: Commit
-        run: |
-          make depatch
-          if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Auto Bump" && git push origin
-          fi
+        run: nix develop -c make compile
