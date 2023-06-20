@@ -1,5 +1,5 @@
 diff --git a/sim/midas/src/main/scala/junctions/nasti.scala b/sim/midas/src/main/scala/junctions/nasti.scala
-index 6b121aafa..38e49e6ba 100644
+index 6b121aafa2..38e49e6bac 100644
 --- a/sim/midas/src/main/scala/junctions/nasti.scala
 +++ b/sim/midas/src/main/scala/junctions/nasti.scala
 @@ -3,6 +3,7 @@
@@ -23,7 +23,7 @@ index 6b121aafa..38e49e6ba 100644
  
    io.master.b <> b_arb.io.out
 diff --git a/sim/midas/src/main/scala/midas/core/Channel.scala b/sim/midas/src/main/scala/midas/core/Channel.scala
-index e6f53cb10..dd740b258 100644
+index e6f53cb10e..dd740b2581 100644
 --- a/sim/midas/src/main/scala/midas/core/Channel.scala
 +++ b/sim/midas/src/main/scala/midas/core/Channel.scala
 @@ -57,9 +57,9 @@ object AssertTokenIrrevocable {
@@ -39,7 +39,7 @@ index e6f53cb10..dd740b258 100644
  
    def apply(rv: ReadyValidIO[_ <: Data], suggestedName: Option[String] = None): Unit =
 diff --git a/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala b/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala
-index 6da67daf1..2bebb915f 100644
+index 6da67daf1a..2bebb915fc 100644
 --- a/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala
 +++ b/sim/midas/src/main/scala/midas/core/LIBDNUnitTest.scala
 @@ -73,9 +73,9 @@ case class OChannelDesc[T <: Data](
@@ -55,7 +55,7 @@ index 6da67daf1..2bebb915f 100644
      val modelChannelDone = modelIdx === testLength.U
      when (modelChannel.fire) { modelIdx := modelIdx + 1.U }
 diff --git a/sim/midas/src/main/scala/midas/models/dram/Util.scala b/sim/midas/src/main/scala/midas/models/dram/Util.scala
-index 2353bc103..da4b0b91d 100644
+index 2353bc1036..da4b0b91d1 100644
 --- a/sim/midas/src/main/scala/midas/models/dram/Util.scala
 +++ b/sim/midas/src/main/scala/midas/models/dram/Util.scala
 @@ -748,9 +748,9 @@ class MemoryModelMonitor(cfg: BaseConfig)(implicit p: Parameters) extends Module
@@ -71,7 +71,7 @@ index 2353bc103..da4b0b91d 100644
  
  /**
 diff --git a/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala b/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala
-index bb47af285..05b6a4027 100644
+index bb47af2859..05b6a4027b 100644
 --- a/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala
 +++ b/sim/midas/src/main/scala/midas/widgets/AXI4AddressTranslation.scala
 @@ -28,10 +28,10 @@ class AXI4AddressTranslation(offset: BigInt, bridgeAddressSets: Seq[AddressSet],
@@ -90,7 +90,7 @@ index bb47af285..05b6a4027 100644
    }
  }
 diff --git a/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala b/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala
-index 3839f449d..9899bea3c 100644
+index 3839f449d4..9899bea3ca 100644
 --- a/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala
 +++ b/sim/midas/src/main/scala/midas/widgets/AXI4Printf.scala
 @@ -13,7 +13,8 @@ object AXI4Printf {
@@ -144,7 +144,7 @@ index 3839f449d..9899bea3c 100644
          io.r.bits.resp,
          io.r.bits.data,
 diff --git a/sim/midas/src/main/scala/midas/widgets/Lib.scala b/sim/midas/src/main/scala/midas/widgets/Lib.scala
-index 1f15e5255..496e1eb71 100644
+index 1f15e5255c..496e1eb714 100644
 --- a/sim/midas/src/main/scala/midas/widgets/Lib.scala
 +++ b/sim/midas/src/main/scala/midas/widgets/Lib.scala
 @@ -298,13 +298,13 @@ class MCRIO(numCRs: Int)(implicit p: Parameters) extends NastiBundle()(p) {
@@ -164,7 +164,7 @@ index 1f15e5255..496e1eb71 100644
  
      read(index).valid := true.B
 diff --git a/sim/src/main/scala/midasexamples/AssertTorture.scala b/sim/src/main/scala/midasexamples/AssertTorture.scala
-index 3b81dcce9..d3c64337a 100644
+index 3b81dcce9f..d3c64337ad 100644
 --- a/sim/src/main/scala/midasexamples/AssertTorture.scala
 +++ b/sim/src/main/scala/midasexamples/AssertTorture.scala
 @@ -58,7 +58,7 @@ class AssertTortureModule(
@@ -177,7 +177,7 @@ index 3b81dcce9..d3c64337a 100644
      }
      indexes.updated(clockIdx, assertIdx + 1)
 diff --git a/sim/src/main/scala/midasexamples/AutoCounterValidator.scala b/sim/src/main/scala/midasexamples/AutoCounterValidator.scala
-index 922818971..a4994a095 100644
+index 9228189710..a4994a095d 100644
 --- a/sim/src/main/scala/midasexamples/AutoCounterValidator.scala
 +++ b/sim/src/main/scala/midasexamples/AutoCounterValidator.scala
 @@ -124,8 +124,10 @@ class AutoCounterValidator(
@@ -194,7 +194,7 @@ index 922818971..a4994a095 100644
    // Emits a csv header row to match the expected output of the driver. Note:
    // columns may be swizzled.
 diff --git a/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala b/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala
-index be4b1fafe..53489d505 100644
+index be4b1fafe0..53489d5054 100644
 --- a/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala
 +++ b/sim/src/main/scala/midasexamples/GlobalResetConditionTests.scala
 @@ -38,12 +38,12 @@ abstract class GlobalResetConditionTester(elaborator: (Bool) => Unit) extends Ra
@@ -213,7 +213,7 @@ index be4b1fafe..53489d505 100644
  
  class AutoCounterGlobalResetCondition(implicit p: Parameters) extends GlobalResetConditionTester(
 diff --git a/sim/src/main/scala/midasexamples/PrintfModule.scala b/sim/src/main/scala/midasexamples/PrintfModule.scala
-index 141c4b176..b2caaf573 100644
+index 141c4b1769..b2caaf5738 100644
 --- a/sim/src/main/scala/midasexamples/PrintfModule.scala
 +++ b/sim/src/main/scala/midasexamples/PrintfModule.scala
 @@ -30,17 +30,20 @@ class PrintfModuleDUT(printfPrefix: String = "SYNTHESIZED_PRINT ") extends Modul
@@ -251,7 +251,7 @@ index 141c4b176..b2caaf573 100644
    //when (lsfr(0)) {
    //  SynthesizePrintf(printf(p"SYNTHESIZED_PRINT CYCLE: ${cycle} LFSR is odd"))
 diff --git a/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala b/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala
-index 8dd2960c3..d31ac6f66 100644
+index 8dd2960c37..d31ac6f660 100644
 --- a/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala
 +++ b/sim/src/main/scala/midasexamples/TriggerPredicatedPrintf.scala
 @@ -37,7 +37,8 @@ class TriggerPredicatedPrintfDUT(printfPrefix: String = "SYNTHESIZED_PRINT ")
