@@ -1,18 +1,19 @@
 // import Mill dependency
 import mill._
+import mill.scalalib.publish._
 import mill.define.Sources
 import mill.modules.Util
 import scalalib._
 // support BSP
 import mill.bsp._
 // input build.sc from each repositories.
-import $file.dependencies.chisel3.build
+import $file.dependencies.chisel.build
 import $file.dependencies.firrtl.build
 import $file.dependencies.treadle.build
-import $file.dependencies.`chisel-testers2`.build
 import $file.dependencies.cde.build
 import $file.dependencies.`berkeley-hardfloat`.build
 import $file.dependencies.`rocket-chip`.common
+import $file.dependencies.`chisel-testers2`.build
 
 // Global Scala Version
 object ivys {
@@ -60,8 +61,8 @@ object myfirrtl extends dependencies.firrtl.build.firrtlCrossModule(ivys.sv) {
   override val antlr4Version = os.proc("antlr4").call().out.text.split('\n').head.split(' ').last
 }
 
-object mychisel3 extends dependencies.chisel3.build.chisel3CrossModule(ivys.sv) {
-  override def millSourcePath = os.pwd / "dependencies" / "chisel3"
+object mychisel3 extends dependencies.chisel.build.chisel3CrossModule(ivys.sv) {
+  override def millSourcePath = os.pwd / "dependencies" / "chisel"
 
   def firrtlModule: Option[PublishModule] = Some(myfirrtl)
 
@@ -102,7 +103,7 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 
   def hardfloatModule: PublishModule = myhardfloat
 
-  def configModule: PublishModule = mycde
+  def cdeModule: PublishModule = mycde
 }
 
 object inclusivecache extends CommonModule {
@@ -127,12 +128,9 @@ object shells extends CommonModule with SbtModule {
 }
 
 // UCB
-
 object mychiseltest extends dependencies.`chisel-testers2`.build.chiseltestCrossModule(ivys.sv) {
-  override def millSourcePath = os.pwd /  "dependencies" / "chisel-testers2"
-
+  override def scalaVersion = ivys.sv
   def chisel3Module: Option[PublishModule] = Some(mychisel3)
-
   def treadleModule: Option[PublishModule] = Some(mytreadle)
 }
 
@@ -143,13 +141,10 @@ object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
 
   def chisel3Module: Option[PublishModule] = Some(mychisel3)
 
-  override def ivyDeps = super.ivyDeps() ++ Agg(
-    ivys.parallel
-  )
   override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
     mychisel3.plugin.jar()
-  ) }
-
+    ) }
+  
   override def scalacOptions = T {
     Seq(s"-Xplugin:${mychisel3.plugin.jar().path}", "-Ymacro-annotations")
   }
