@@ -1,6 +1,7 @@
-[submodule "chisel3"]
-	path = dependencies/chisel3
+[submodule "chisel"]
+	path = dependencies/chisel
 	url = git@github.com:chipsalliance/chisel3.git
+	branch = 3.6.x
 [submodule "firrtl"]
 	path = dependencies/firrtl
 	url = git@github.com:chipsalliance/firrtl.git
