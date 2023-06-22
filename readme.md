@@ -153,4 +153,4 @@ This package uses rocketchip and fpga-shells to elaborate FPGA bitstream generat
 ```
 mill sanitytests.vcu118
 ```
-If you wanna alter this to your own board, you can choose implmenting your own Shell to replace `VCU118Shell` in this test.
+If you wanna alter this to your own board, you can choose implementing your own Shell to replace `VCU118Shell` in this test.
