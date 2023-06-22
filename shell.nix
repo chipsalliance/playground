@@ -1,6 +1,6 @@
 with import (fetchTarball {
-  url    = "https://github.com/NixOS/nixpkgs/archive/b3adce1542df29dd5a35077a3d42bcc47100e74e.tar.gz";
-  sha256 = "0356xngf3wvmi7qdzdwvxb87lnwmlkn3bsds3qqn3gdxhigs6mgc";
+  url    = "https://github.com/NixOS/nixpkgs/archive/b18cc3cd549d953bf8fa7a334b10b94e9bce84f0.tar.gz";
+  sha256 = "1153yq95kvbwx385pimzf0mxc2d1yxpal193k20qwy7ri7d917fk";
 }) {
   config = {
     packageOverrides = pkgs: with pkgs; {
@@ -67,6 +67,7 @@ in pkgs.callPackage (
       llvmPackages.llvm lld
       python
       cc
+      circt
     ];
   }
 ) {}
