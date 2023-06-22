@@ -1,5 +1,5 @@
 diff --git a/generators/chipyard/src/main/scala/DigitalTop.scala b/generators/chipyard/src/main/scala/DigitalTop.scala
-index 2777ba360..6f106ebc4 100644
+index 561af0d7..c86bafe3 100644
 --- a/generators/chipyard/src/main/scala/DigitalTop.scala
 +++ b/generators/chipyard/src/main/scala/DigitalTop.scala
 @@ -28,11 +28,8 @@ class DigitalTop(implicit p: Parameters) extends ChipyardSystem
@@ -15,11 +15,11 @@ index 2777ba360..6f106ebc4 100644
  {
    override lazy val module = new DigitalTopModule(this)
 diff --git a/generators/chipyard/src/main/scala/config/RocketConfigs.scala b/generators/chipyard/src/main/scala/config/RocketConfigs.scala
-index c6f5ca223..d696a9498 100644
+index d60a58e8..adf995f7 100644
 --- a/generators/chipyard/src/main/scala/config/RocketConfigs.scala
 +++ b/generators/chipyard/src/main/scala/config/RocketConfigs.scala
-@@ -21,6 +21,72 @@ class TinyRocketConfig extends Config(
-   new freechips.rocketchip.subsystem.With1TinyCore ++             // single tiny rocket-core
+@@ -27,6 +27,72 @@ class UARTTSIRocketConfig extends Config(
+   new freechips.rocketchip.subsystem.WithNBigCores(1) ++         // single rocket-core
    new chipyard.config.AbstractConfig)
  
 +class MempressRocketConfig extends Config(
@@ -91,9 +91,9 @@ index c6f5ca223..d696a9498 100644
  class SimAXIRocketConfig extends Config(
    new chipyard.harness.WithSimAXIMem ++                     // drive the master AXI4 memory with a SimAXIMem, a 1-cycle magic memory, instead of default SimDRAM
    new freechips.rocketchip.subsystem.WithNBigCores(1) ++
-@@ -76,6 +142,29 @@ class MbusScratchpadRocketConfig extends Config(
+@@ -87,6 +153,29 @@ class SbusScratchpadRocketConfig extends Config(
    new chipyard.config.AbstractConfig)
- // DOC include end: mbusscratchpadrocket
+ 
  
 +// DOC include start: RingSystemBusRocket
 +class RingSystemBusRocketConfig extends Config(
@@ -119,13 +119,13 @@ index c6f5ca223..d696a9498 100644
 +  new chipyard.config.AbstractConfig)
 +
  class MulticlockRocketConfig extends Config(
+   new freechips.rocketchip.subsystem.WithAsynchronousRocketTiles(3, 3) ++ // Add async crossings between RocketTile and uncore
    new freechips.rocketchip.subsystem.WithNBigCores(1) ++
-   // Frequency specifications
 diff --git a/generators/chipyard/src/main/scala/config/TutorialConfigs.scala b/generators/chipyard/src/main/scala/config/TutorialConfigs.scala
-index c9956b7aa..b269a7d47 100644
+index daa08265..fb9ca2c8 100644
 --- a/generators/chipyard/src/main/scala/config/TutorialConfigs.scala
 +++ b/generators/chipyard/src/main/scala/config/TutorialConfigs.scala
-@@ -108,9 +108,6 @@ class TutorialNoCConfig extends Config(
+@@ -109,9 +109,6 @@ class TutorialNoCConfig extends Config(
    new chipyard.example.WithGCD ++
    new chipyard.harness.WithLoopbackNIC ++
    new icenet.WithIceNIC ++
@@ -137,7 +137,7 @@ index c9956b7aa..b269a7d47 100644
    new freechips.rocketchip.subsystem.WithNBigCores(2) ++
 diff --git a/generators/chipyard/src/main/scala/example/dsptools/DspBlocks.scala b/generators/chipyard/src/main/scala/example/dsptools/DspBlocks.scala
 deleted file mode 100644
-index b51e2223b..000000000
+index 9ad23a4c..00000000
 --- a/generators/chipyard/src/main/scala/example/dsptools/DspBlocks.scala
 +++ /dev/null
 @@ -1,162 +0,0 @@
@@ -148,7 +148,7 @@ index b51e2223b..000000000
 -import dspblocks._
 -import dsptools.numbers._
 -import freechips.rocketchip.amba.axi4stream._
--import freechips.rocketchip.config.Parameters
+-import org.chipsalliance.cde.config.Parameters
 -import freechips.rocketchip.diplomacy._
 -import freechips.rocketchip.regmapper._
 -import freechips.rocketchip.tilelink._
@@ -305,7 +305,7 @@ index b51e2223b..000000000
 -}
 diff --git a/generators/chipyard/src/main/scala/example/dsptools/GenericFIR.scala b/generators/chipyard/src/main/scala/example/dsptools/GenericFIR.scala
 deleted file mode 100644
-index f45b318cd..000000000
+index 3e315e65..00000000
 --- a/generators/chipyard/src/main/scala/example/dsptools/GenericFIR.scala
 +++ /dev/null
 @@ -1,221 +0,0 @@
@@ -319,7 +319,7 @@ index f45b318cd..000000000
 -import dspblocks._
 -import dsptools.numbers._
 -import freechips.rocketchip.amba.axi4stream._
--import freechips.rocketchip.config.{Parameters, Field, Config}
+-import org.chipsalliance.cde.config.{Parameters, Field, Config}
 -import freechips.rocketchip.diplomacy._
 -import freechips.rocketchip.tilelink._
 -import freechips.rocketchip.subsystem._
@@ -514,7 +514,7 @@ index f45b318cd..000000000
 -        genOut = FixedPoint(8.W, 3.BP),
 -        coeffs = Seq(1.F(0.BP), 2.F(0.BP), 3.F(0.BP)),
 -        params = params))
--      pbus.toVariableWidthSlave(Some("streamingFIR")) { streamingFIR.mem.get := TLFIFOFixer() }
+-      pbus.coupleTo("streamingFIR") { streamingFIR.mem.get := TLFIFOFixer() := TLFragmenter(pbus.beatBytes, pbus.blockBytes) := _ }
 -      Some(streamingFIR)
 -    }
 -    case None => None
@@ -532,7 +532,7 @@ index f45b318cd..000000000
 -// DOC include end: WithStreamingFIR
 diff --git a/generators/chipyard/src/main/scala/example/dsptools/StreamingPassthrough.scala b/generators/chipyard/src/main/scala/example/dsptools/StreamingPassthrough.scala
 deleted file mode 100644
-index c6ffaf42c..000000000
+index 45e05fc2..00000000
 --- a/generators/chipyard/src/main/scala/example/dsptools/StreamingPassthrough.scala
 +++ /dev/null
 @@ -1,147 +0,0 @@
@@ -546,7 +546,7 @@ index c6ffaf42c..000000000
 -import dspblocks._
 -import dsptools.numbers._
 -import freechips.rocketchip.amba.axi4stream._
--import freechips.rocketchip.config.{Parameters, Field, Config}
+-import org.chipsalliance.cde.config.{Parameters, Field, Config}
 -import freechips.rocketchip.diplomacy._
 -import freechips.rocketchip.tilelink._
 -import freechips.rocketchip.subsystem._
@@ -670,7 +670,7 @@ index c6ffaf42c..000000000
 -  val passthrough = p(StreamingPassthroughKey) match {
 -    case Some(params) => {
 -      val streamingPassthroughChain = LazyModule(new TLStreamingPassthroughChain(params, UInt(32.W)))
--      pbus.toVariableWidthSlave(Some("streamingPassthrough")) { streamingPassthroughChain.mem.get := TLFIFOFixer() }
+-      pbus.coupleTo("streamingPassthrough") { streamingPassthroughChain.mem.get := TLFIFOFixer() := TLFragmenter(pbus.beatBytes, pbus.blockBytes) := _ }
 -      Some(streamingPassthroughChain)
 -    }
 -    case None => None
