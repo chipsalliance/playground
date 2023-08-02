@@ -15,7 +15,7 @@ import $file.dependencies.`rocket-chip`.common
 
 // Global Scala Version
 object ivys {
-  val sv = "2.13.10"
+  val sv = "2.13.11"
   val upickle = ivy"com.lihaoyi::upickle:1.3.15"
   val oslib = ivy"com.lihaoyi::os-lib:0.7.8"
   val pprint = ivy"com.lihaoyi::pprint:0.6.6"
@@ -76,44 +76,46 @@ object myrocketchip extends dependencies.`rocket-chip`.common.CommonRocketChip {
 }
 
 object inclusivecache extends CommonModule {
-
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-inclusive-cache" / 'design / 'craft / "inclusivecache"
-
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
 
 object blocks extends CommonModule with SbtModule {
-
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-blocks"
-
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip)
 }
 
 object shells extends CommonModule with SbtModule {
-
   override def millSourcePath = os.pwd / "dependencies" / "rocket-chip-fpga-shells"
-
   override def moduleDeps = super.moduleDeps ++ Seq(myrocketchip, blocks)
 }
 
 // UCB
-object myhardfloat extends dependencies.`berkeley-hardfloat`.build.hardfloat {
-  override def millSourcePath = os.pwd /  "dependencies" / "berkeley-hardfloat"
+object myhardfloat extends ScalaModule with SbtModule with PublishModule {
+  override def millSourcePath = os.pwd / "dependencies" / "berkeley-hardfloat"
+  def scalaVersion = ivys.sv
+  def chiselModule: Option[PublishModule] = Some(mychisel)
+  def chiselPluginJar: T[Option[PathRef]] = T(Some(mychisel.pluginModule.jar()))
+  // remove test dep
+  override def allSourceFiles = T(super.allSourceFiles().filterNot(_.path.last.contains("Tester")).filterNot(_.path.segments.contains("test")))
+  override def scalacPluginClasspath = T(super.scalacPluginClasspath() ++ chiselPluginJar())
+  override def moduleDeps = Seq() ++ chiselModule
+  override def scalacOptions = T(super.scalacOptions() ++ chiselPluginJar().map(path => s"-Xplugin:${path.path}"))
 
-  override def scalaVersion = ivys.sv
+  def publishVersion = de.tobiasroeser.mill.vcs.version.VcsVersion.vcsState().format()
 
-  def chisel3Module: Option[PublishModule] = Some(mychisel)
-
-  override def ivyDeps = super.ivyDeps() ++ Agg(
-    ivys.parallel
+  def pomSettings = PomSettings(
+    description = artifactName(),
+    organization = "edu.berkeley.cs",
+    url = "http://chisel.eecs.berkeley.edu",
+    licenses = Seq(License.`BSD-3-Clause`),
+    versionControl = VersionControl.github("ucb-bar", "berkeley-hardfloat"),
+    developers = Seq(
+      Developer("jhauser-ucberkeley", "John Hauser", "https://www.colorado.edu/faculty/hauser/about/"),
+      Developer("aswaterman", "Andrew Waterman", "https://aspire.eecs.berkeley.edu/author/waterman/"),
+      Developer("yunsup", "Yunsup Lee", "https://aspire.eecs.berkeley.edu/author/yunsup/")
+    )
   )
-
-  override def scalacOptions = T {
-    Seq(s"-Xplugin:${mychisel.pluginModule.jar().path}")
-  }
-  override def scalacPluginClasspath = T { super.scalacPluginClasspath() ++ Agg(
-    mychisel.pluginModule.jar()
-  ) }
 }
 
 // Dummy
