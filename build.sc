@@ -153,7 +153,6 @@ object playground extends CommonModule {
   def verilog = T {
     os.proc("firtool",
       elaborate().path / s"${lazymodule.split('.').last}.fir",
-      "-disable-infer-rw",
       "--disable-annotation-unknown",
       "-dedup",
       "-O=debug",

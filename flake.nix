@@ -18,6 +18,8 @@
             mill
             espresso
 	    circt
+            parallel
+            gnumake
           ];
         in
         {
