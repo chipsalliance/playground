@@ -78,15 +78,7 @@ then open by your favorite IDE, which supports [BSP](https://build-server-protoc
 Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
-chisel https://github.com/chipsalliance/chisel/pull/3045.diff  
-chisel https://github.com/chipsalliance/chisel/pull/3075.diff  
-rocket-chip https://github.com/chipsalliance/rocket-chip/pull/3291.diff  
-rocket-chip-blocks https://github.com/chipsalliance/rocket-chip-blocks/pull/15.diff  
-rocket-chip-fpga-shells https://github.com/chipsalliance/rocket-chip-fpga-shells/pull/16.diff  
-rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/12.diff  
-berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/73.diff  
-berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/72.diff  
-berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/71.diff  
+rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/22.diff
 <!-- END-PATCH -->
 
 ## Why not Chipyard

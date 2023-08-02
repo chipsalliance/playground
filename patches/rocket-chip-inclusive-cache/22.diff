@@ -1,0 +1,39 @@
+diff --git a/design/craft/inclusivecache/src/Directory.scala b/design/craft/inclusivecache/src/Directory.scala
+index 94639c9..7ff1df0 100644
+--- a/design/craft/inclusivecache/src/Directory.scala
++++ b/design/craft/inclusivecache/src/Directory.scala
+@@ -23,7 +23,7 @@ import org.chipsalliance.cde.config._
+ import freechips.rocketchip.diplomacy._
+ import freechips.rocketchip.tilelink._
+ import MetaData._
+-import chisel3.experimental.dataview.BundleUpcastable
++import chisel3.experimental.dataview.RecordUpcastable
+ import freechips.rocketchip.util.DescribedSRAM
+ 
+ class DirectoryEntry(params: InclusiveCacheParameters) extends InclusiveCacheBundle(params)
+diff --git a/design/craft/inclusivecache/src/MSHR.scala b/design/craft/inclusivecache/src/MSHR.scala
+index 5b32d18..13fe58d 100644
+--- a/design/craft/inclusivecache/src/MSHR.scala
++++ b/design/craft/inclusivecache/src/MSHR.scala
+@@ -25,7 +25,7 @@ import TLPermissions._
+ import TLMessages._
+ import MetaData._
+ import chisel3.PrintableHelper
+-import chisel3.experimental.dataview.BundleUpcastable
++import chisel3.experimental.dataview.RecordUpcastable
+ 
+ class ScheduleRequest(params: InclusiveCacheParameters) extends InclusiveCacheBundle(params)
+ {
+diff --git a/design/craft/inclusivecache/src/Scheduler.scala b/design/craft/inclusivecache/src/Scheduler.scala
+index a6701b5..927f441 100644
+--- a/design/craft/inclusivecache/src/Scheduler.scala
++++ b/design/craft/inclusivecache/src/Scheduler.scala
+@@ -18,7 +18,7 @@
+ package sifive.blocks.inclusivecache
+ 
+ import chisel3._
+-import chisel3.experimental.dataview.BundleUpcastable
++import chisel3.experimental.dataview.RecordUpcastable
+ import chisel3.util._
+ import freechips.rocketchip.diplomacy.AddressSet
+ import freechips.rocketchip.tilelink._
