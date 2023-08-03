@@ -79,6 +79,7 @@ Philosophy of this repository is **fast break and fast fix**.
 This repository always tracks remote developing branches, it may need some patches to work, `make patch` will append below in sequence:
 <!-- BEGIN-PATCH -->
 rocket-chip-inclusive-cache https://github.com/chipsalliance/rocket-chip-inclusive-cache/pull/22.diff
+berkeley-hardfloat https://github.com/ucb-bar/berkeley-hardfloat/pull/78.diff
 <!-- END-PATCH -->
 
 ## Why not Chipyard
