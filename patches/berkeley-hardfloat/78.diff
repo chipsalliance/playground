@@ -1,0 +1,893 @@
+diff --git a/Makefile b/Makefile
+deleted file mode 100644
+index 7a55618..0000000
+--- a/Makefile
++++ /dev/null
+@@ -1,32 +0,0 @@
+-CHISEL_VERSION = 3.4-SNAPSHOT
+-
+-default: test
+-
+-berkeley-softfloat-3/.git:
+-	git submodule update --init berkeley-softfloat-3
+-
+-berkeley-testfloat-3/.git:
+-	git submodule update --init berkeley-testfloat-3
+-
+-berkeley-softfloat-3/build/Linux-x86_64-GCC/softfloat.a: berkeley-softfloat-3/.git
+-	$(MAKE) -C berkeley-softfloat-3/build/Linux-x86_64-GCC SPECIALIZE_TYPE=RISCV
+-
+-berkeley-testfloat-3/build/Linux-x86_64-GCC/testfloat_gen: berkeley-testfloat-3/.git \
+-                                                           berkeley-softfloat-3/build/Linux-x86_64-GCC/softfloat.a
+-	$(MAKE) -C berkeley-testfloat-3/build/Linux-x86_64-GCC SPECIALIZE_TYPE=RISCV
+-
+-ifneq (,$(shell which testfloat_gen 2> /dev/null))
+-TESTFLOAT_GEN: ;
+-else
+-PATH := $(PATH):$(PWD)/berkeley-testfloat-3/build/Linux-x86_64-GCC/
+-TESTFLOAT_GEN: berkeley-testfloat-3/build/Linux-x86_64-GCC/testfloat_gen
+-endif
+-
+-test: TESTFLOAT_GEN
+-	sbt test
+-
+-clean:
+-	git clean -fdx
+-	git submodule foreach git clean -fdx
+-
+-.PHONY: test clean
+diff --git a/build.sbt b/build.sbt
+deleted file mode 100644
+index 198a0fa..0000000
+--- a/build.sbt
++++ /dev/null
+@@ -1,61 +0,0 @@
+-organization := "edu.berkeley.cs"
+-
+-version := "1.5-SNAPSHOT"
+-
+-name := "hardfloat"
+-
+-scalaVersion := "2.13.10"
+-
+-resolvers ++= Seq(
+-  Resolver.sonatypeRepo("snapshots"),
+-  Resolver.sonatypeRepo("releases")
+-)
+-
+-addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.5" cross CrossVersion.full)
+-libraryDependencies += "edu.berkeley.cs" %% "chisel3" % "3.5.5"
+-libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "3.2.0" % "test")
+-libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4"
+-Test / testForkedParallel := true
+-
+-publishMavenStyle := true
+-publishArtifact in Test := false
+-pomIncludeRepository := { x => false }
+-// Don't add 'scm' elements if we have a git.remoteRepo definition,
+-//  but since we don't (with the removal of ghpages), add them in below.
+-pomExtra := <url>http://chisel.eecs.berkeley.edu/</url>
+-  <licenses>
+-    <license>
+-      <name>BSD-style</name>
+-      <url>http://www.opensource.org/licenses/bsd-license.php</url>
+-      <distribution>repo</distribution>
+-    </license>
+-  </licenses>
+-  <scm>
+-    <url>https://github.com/ucb-bar/berkeley-hardfloat.git</url>
+-    <connection>scm:git:github.com/ucb-bar/berkeley-hardfloat.git</connection>
+-  </scm>
+-  <developers>
+-    <developer>
+-      <id>jhauser-ucberkeley</id>
+-      <name>John Hauser</name>
+-    </developer>
+-    <developer>
+-      <id>aswaterman</id>
+-      <name>Andrew Waterman</name>
+-    </developer>
+-    <developer>
+-      <id>yunsup</id>
+-      <name>Yunsup Lee</name>
+-    </developer>
+-  </developers>
+-
+-publishTo := {
+-  val v = version.value
+-  val nexus = "https://oss.sonatype.org/"
+-  if (v.trim.endsWith("SNAPSHOT")) {
+-    Some("snapshots" at nexus + "content/repositories/snapshots")
+-  }
+-  else {
+-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+-  }
+-}
+diff --git a/build.sc b/build.sc
+index 6954c6f..8f1fba0 100644
+--- a/build.sc
++++ b/build.sc
+@@ -1,58 +1,65 @@
+ import mill._
+ import mill.scalalib._
+ import mill.scalalib.publish._
+-import coursier.maven.MavenRepository
++import $file.common
+ 
+ object v {
+   val scala = "2.13.10"
+-  val chisel3 = ivy"edu.berkeley.cs::chisel3:3.5.5"
+-  val chisel3Plugin = ivy"edu.berkeley.cs:::chisel3-plugin:3.5.5"
++  val chiselCrossVersions = Map(
++    "3.5.5" -> (ivy"edu.berkeley.cs::chisel3:3.5.5", ivy"edu.berkeley.cs:::chisel3-plugin:3.5.5"),
++    "5.0.0" -> (ivy"org.chipsalliance::chisel:5.0.0", ivy"org.chipsalliance:::chisel-plugin:5.0.0"),
++  )
+   val scalatest = ivy"org.scalatest::scalatest:3.2.0"
+   val scalapar = ivy"org.scala-lang.modules::scala-parallel-collections:1.0.4"
+ }
+ 
+-object hardfloat extends hardfloat
++object hardfloat extends Cross[Hardfloat](v.chiselCrossVersions.keys.head)
+ 
+-class hardfloat extends ScalaModule with SbtModule with PublishModule { m =>
+-  def scalaVersion = v.scala
+-  // different scala version shares same sources
+-  // mill use foo/2.11.12 foo/2.12.11 as millSourcePath by default
+-  override def millSourcePath = super.millSourcePath / os.up
++trait Hardfloat
++  extends common.HardfloatModule
++    with HardfloatPublishModule
++    with Cross.Module[String] {
+ 
+-  def chisel3Module: Option[PublishModule] = None
++  override def scalaVersion = T(v.scala)
+ 
+-  def chisel3IvyDeps = if(chisel3Module.isEmpty) Agg(
+-    v.chisel3
+-  ) else Agg.empty[Dep]
++  override def millSourcePath = os.pwd / "hardfloat"
+ 
+-  def chisel3PluginJar: Option[PathRef] = None
++  def chiselModule = None
+ 
+-  def chisel3PluginIvyDeps = if(chisel3Module.isEmpty) Agg(
+-    v.chisel3Plugin
+-  ) else Agg.empty[Dep]
++  def chiselPluginJar = None
+ 
+-  def scalacPluginIvyDeps = super.ivyDeps() ++ chisel3PluginIvyDeps
++  def chiselIvy = Some(v.chiselCrossVersions(crossValue)._1)
+ 
+-  def scalacPluginClasspath = super.scalacPluginClasspath() ++ chisel3PluginJar
++  def chiselPluginIvy = Some(v.chiselCrossVersions(crossValue)._2)
++}
+ 
+-  def moduleDeps = super.moduleDeps ++ chisel3Module
++object hardfloatdut extends Cross[HardfloatDut](v.chiselCrossVersions.keys.head)
+ 
+-  def ivyDeps = super.ivyDeps() ++ chisel3IvyDeps
++trait HardfloatDut
++  extends common.HardfloatTestModule
++    with Cross.Module[String] {
+ 
+-  def publishVersion = "1.5-SNAPSHOT"
++  override def scalaVersion = T(v.scala)
+ 
+-  def artifactName = "hardfloat"
++  override def millSourcePath = os.pwd / "hardfloat" / "tests"
+ 
+-  def repositories() = super.repositories ++ Seq(
+-    MavenRepository("https://oss.sonatype.org/content/repositories/snapshots"),
+-    MavenRepository("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+-  )
++  def hardfloatModule = hardfloat(crossValue)
++
++  def chiselModule = None
++
++  def chiselPluginJar = None
++
++  def chiselIvy = Some(v.chiselCrossVersions(crossValue)._1)
+ 
+-  object test extends Tests {
+-    def ivyDeps = Agg(v.scalatest, v.scalapar)
+-    def testFramework = "org.scalatest.tools.Framework"
+-  }
++  def chiselPluginIvy = Some(v.chiselCrossVersions(crossValue)._2)
+ 
++  def scalatestIvy = v.scalatest
++
++  def scalaparIvy = v.scalapar
++}
++
++
++trait HardfloatPublishModule extends PublishModule {
+   def pomSettings = PomSettings(
+     description = artifactName(),
+     organization = "edu.berkeley.cs",
+@@ -65,4 +72,6 @@ class hardfloat extends ScalaModule with SbtModule with PublishModule { m =>
+       Developer("yunsup", "Yunsup Lee", "https://aspire.eecs.berkeley.edu/author/yunsup/")
+     )
+   )
+-}
++
++  def publishVersion = "1.5-SNAPSHOT"
++}
+\ No newline at end of file
+diff --git a/common.sc b/common.sc
+new file mode 100644
+index 0000000..8ccac6a
+--- /dev/null
++++ b/common.sc
+@@ -0,0 +1,59 @@
++import mill._
++import mill.scalalib._
++
++trait HasChisel
++  extends ScalaModule {
++  // Define these for building chisel from source
++  def chiselModule: Option[ScalaModule]
++
++  override def moduleDeps = super.moduleDeps ++ chiselModule
++
++  def chiselPluginJar: T[Option[PathRef]]
++
++  override def scalacOptions = T(super.scalacOptions() ++ chiselPluginJar().map(path => s"-Xplugin:${path.path}"))
++
++  override def scalacPluginClasspath: T[Agg[PathRef]] = T(super.scalacPluginClasspath() ++ chiselPluginJar())
++
++  // Define these for building chisel from ivy
++  def chiselIvy: Option[Dep]
++
++  override def ivyDeps = T(super.ivyDeps() ++ chiselIvy)
++
++  def chiselPluginIvy: Option[Dep]
++
++  override def scalacPluginIvyDeps: T[Agg[Dep]] = T(super.scalacPluginIvyDeps() ++ chiselPluginIvy.map(Agg(_)).getOrElse(Agg.empty[Dep]))
++}
++
++trait HardfloatModule
++  extends HasChisel
++
++trait HardfloatTestModule
++  extends TestModule
++    with HasChisel
++    with TestModule.ScalaTest {
++
++  def hardfloatModule: HardfloatModule
++
++  def chiselModule = hardfloatModule.chiselModule
++
++  def chiselPluginJar: T[Option[PathRef]] = T(hardfloatModule.chiselPluginJar())
++
++  def chiselIvy: Option[Dep] = hardfloatModule.chiselIvy
++
++  def chiselPluginIvy: Option[Dep] = hardfloatModule.chiselPluginIvy
++
++  def scalatestIvy: Dep
++
++  def scalaparIvy: Dep
++
++  override def moduleDeps = super.moduleDeps ++ Some(hardfloatModule)
++
++  override def defaultCommandName() = "test"
++
++  override def ivyDeps = T(
++    super.ivyDeps() ++ Agg(
++      scalatestIvy,
++      scalaparIvy
++    )
++  )
++}
+\ No newline at end of file
+diff --git a/flake.lock b/flake.lock
+new file mode 100644
+index 0000000..8590edb
+--- /dev/null
++++ b/flake.lock
+@@ -0,0 +1,61 @@
++{
++  "nodes": {
++    "flake-utils": {
++      "inputs": {
++        "systems": "systems"
++      },
++      "locked": {
++        "lastModified": 1689068808,
++        "narHash": "sha256-6ixXo3wt24N/melDWjq70UuHQLxGV8jZvooRanIHXw0=",
++        "owner": "numtide",
++        "repo": "flake-utils",
++        "rev": "919d646de7be200f3bf08cb76ae1f09402b6f9b4",
++        "type": "github"
++      },
++      "original": {
++        "owner": "numtide",
++        "repo": "flake-utils",
++        "type": "github"
++      }
++    },
++    "nixpkgs": {
++      "locked": {
++        "lastModified": 1691186842,
++        "narHash": "sha256-wxBVCvZUwq+XS4N4t9NqsHV4E64cPVqQ2fdDISpjcw0=",
++        "owner": "NixOS",
++        "repo": "nixpkgs",
++        "rev": "18036c0be90f4e308ae3ebcab0e14aae0336fe42",
++        "type": "github"
++      },
++      "original": {
++        "owner": "NixOS",
++        "ref": "nixos-unstable",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
++    "root": {
++      "inputs": {
++        "flake-utils": "flake-utils",
++        "nixpkgs": "nixpkgs"
++      }
++    },
++    "systems": {
++      "locked": {
++        "lastModified": 1681028828,
++        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
++        "owner": "nix-systems",
++        "repo": "default",
++        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
++        "type": "github"
++      },
++      "original": {
++        "owner": "nix-systems",
++        "repo": "default",
++        "type": "github"
++      }
++    }
++  },
++  "root": "root",
++  "version": 7
++}
+diff --git a/flake.nix b/flake.nix
+new file mode 100644
+index 0000000..38f2a43
+--- /dev/null
++++ b/flake.nix
+@@ -0,0 +1,30 @@
++{
++  description = "hardfloat";
++
++  inputs = {
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
++    flake-utils.url = "github:numtide/flake-utils";
++  };
++
++  outputs = { self, nixpkgs, flake-utils }@inputs:
++    let
++      overlay = import ./overlay.nix;
++    in
++    flake-utils.lib.eachDefaultSystem
++      (system:
++      let
++        pkgs = import nixpkgs { inherit system; overlays = [ overlay ]; };
++        deps = with pkgs; [
++          git
++          mill
++        ];
++      in
++        {
++          legacyPackages = pkgs;
++          devShell = pkgs.mkShell {
++	    buildInputs = deps;
++          };
++        }
++      )
++    // { inherit inputs; overlays.default = overlay; };
++}
+diff --git a/src/main/scala/AddRecFN.scala b/hardfloat/src/main/scala/AddRecFN.scala
+similarity index 100%
+rename from src/main/scala/AddRecFN.scala
+rename to hardfloat/src/main/scala/AddRecFN.scala
+diff --git a/src/main/scala/CompareRecFN.scala b/hardfloat/src/main/scala/CompareRecFN.scala
+similarity index 100%
+rename from src/main/scala/CompareRecFN.scala
+rename to hardfloat/src/main/scala/CompareRecFN.scala
+diff --git a/src/main/scala/DivSqrtRecF64.scala b/hardfloat/src/main/scala/DivSqrtRecF64.scala
+similarity index 100%
+rename from src/main/scala/DivSqrtRecF64.scala
+rename to hardfloat/src/main/scala/DivSqrtRecF64.scala
+diff --git a/src/main/scala/DivSqrtRecF64_mulAddZ31.scala b/hardfloat/src/main/scala/DivSqrtRecF64_mulAddZ31.scala
+similarity index 100%
+rename from src/main/scala/DivSqrtRecF64_mulAddZ31.scala
+rename to hardfloat/src/main/scala/DivSqrtRecF64_mulAddZ31.scala
+diff --git a/src/main/scala/DivSqrtRecFN_small.scala b/hardfloat/src/main/scala/DivSqrtRecFN_small.scala
+similarity index 100%
+rename from src/main/scala/DivSqrtRecFN_small.scala
+rename to hardfloat/src/main/scala/DivSqrtRecFN_small.scala
+diff --git a/src/main/scala/INToRecFN.scala b/hardfloat/src/main/scala/INToRecFN.scala
+similarity index 100%
+rename from src/main/scala/INToRecFN.scala
+rename to hardfloat/src/main/scala/INToRecFN.scala
+diff --git a/src/main/scala/MulAddRecFN.scala b/hardfloat/src/main/scala/MulAddRecFN.scala
+similarity index 100%
+rename from src/main/scala/MulAddRecFN.scala
+rename to hardfloat/src/main/scala/MulAddRecFN.scala
+diff --git a/src/main/scala/MulRecFN.scala b/hardfloat/src/main/scala/MulRecFN.scala
+similarity index 100%
+rename from src/main/scala/MulRecFN.scala
+rename to hardfloat/src/main/scala/MulRecFN.scala
+diff --git a/src/main/scala/RecFNToIN.scala b/hardfloat/src/main/scala/RecFNToIN.scala
+similarity index 100%
+rename from src/main/scala/RecFNToIN.scala
+rename to hardfloat/src/main/scala/RecFNToIN.scala
+diff --git a/src/main/scala/RecFNToRecFN.scala b/hardfloat/src/main/scala/RecFNToRecFN.scala
+similarity index 100%
+rename from src/main/scala/RecFNToRecFN.scala
+rename to hardfloat/src/main/scala/RecFNToRecFN.scala
+diff --git a/src/main/scala/RoundAnyRawFNToRecFN.scala b/hardfloat/src/main/scala/RoundAnyRawFNToRecFN.scala
+similarity index 100%
+rename from src/main/scala/RoundAnyRawFNToRecFN.scala
+rename to hardfloat/src/main/scala/RoundAnyRawFNToRecFN.scala
+diff --git a/src/main/scala/classifyRecFN.scala b/hardfloat/src/main/scala/classifyRecFN.scala
+similarity index 100%
+rename from src/main/scala/classifyRecFN.scala
+rename to hardfloat/src/main/scala/classifyRecFN.scala
+diff --git a/src/main/scala/common.scala b/hardfloat/src/main/scala/common.scala
+similarity index 100%
+rename from src/main/scala/common.scala
+rename to hardfloat/src/main/scala/common.scala
+diff --git a/src/main/scala/fNFromRecFN.scala b/hardfloat/src/main/scala/fNFromRecFN.scala
+similarity index 100%
+rename from src/main/scala/fNFromRecFN.scala
+rename to hardfloat/src/main/scala/fNFromRecFN.scala
+diff --git a/src/main/scala/primitives.scala b/hardfloat/src/main/scala/primitives.scala
+similarity index 100%
+rename from src/main/scala/primitives.scala
+rename to hardfloat/src/main/scala/primitives.scala
+diff --git a/src/main/scala/rawFloatFromFN.scala b/hardfloat/src/main/scala/rawFloatFromFN.scala
+similarity index 100%
+rename from src/main/scala/rawFloatFromFN.scala
+rename to hardfloat/src/main/scala/rawFloatFromFN.scala
+diff --git a/src/main/scala/rawFloatFromIN.scala b/hardfloat/src/main/scala/rawFloatFromIN.scala
+similarity index 100%
+rename from src/main/scala/rawFloatFromIN.scala
+rename to hardfloat/src/main/scala/rawFloatFromIN.scala
+diff --git a/src/main/scala/rawFloatFromRecFN.scala b/hardfloat/src/main/scala/rawFloatFromRecFN.scala
+similarity index 100%
+rename from src/main/scala/rawFloatFromRecFN.scala
+rename to hardfloat/src/main/scala/rawFloatFromRecFN.scala
+diff --git a/src/main/scala/recFNFromFN.scala b/hardfloat/src/main/scala/recFNFromFN.scala
+similarity index 100%
+rename from src/main/scala/recFNFromFN.scala
+rename to hardfloat/src/main/scala/recFNFromFN.scala
+diff --git a/src/main/scala/resizeRawFloat.scala b/hardfloat/src/main/scala/resizeRawFloat.scala
+similarity index 100%
+rename from src/main/scala/resizeRawFloat.scala
+rename to hardfloat/src/main/scala/resizeRawFloat.scala
+diff --git a/src/test/resources/csrc/CompareRecFN.cpp b/hardfloat/tests/resources/csrc/CompareRecFN.cpp
+similarity index 100%
+rename from src/test/resources/csrc/CompareRecFN.cpp
+rename to hardfloat/tests/resources/csrc/CompareRecFN.cpp
+diff --git a/src/test/resources/csrc/RecFNToIN.cpp b/hardfloat/tests/resources/csrc/RecFNToIN.cpp
+similarity index 100%
+rename from src/test/resources/csrc/RecFNToIN.cpp
+rename to hardfloat/tests/resources/csrc/RecFNToIN.cpp
+diff --git a/src/test/resources/csrc/RecFNToUIN.cpp b/hardfloat/tests/resources/csrc/RecFNToUIN.cpp
+similarity index 100%
+rename from src/test/resources/csrc/RecFNToUIN.cpp
+rename to hardfloat/tests/resources/csrc/RecFNToUIN.cpp
+diff --git a/src/test/resources/csrc/fNFromRecFN.cpp b/hardfloat/tests/resources/csrc/fNFromRecFN.cpp
+similarity index 100%
+rename from src/test/resources/csrc/fNFromRecFN.cpp
+rename to hardfloat/tests/resources/csrc/fNFromRecFN.cpp
+diff --git a/src/test/resources/csrc/test.cpp b/hardfloat/tests/resources/csrc/test.cpp
+similarity index 100%
+rename from src/test/resources/csrc/test.cpp
+rename to hardfloat/tests/resources/csrc/test.cpp
+diff --git a/src/test/resources/includes/AddRecF16.h b/hardfloat/tests/resources/includes/AddRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/AddRecF16.h
+rename to hardfloat/tests/resources/includes/AddRecF16.h
+diff --git a/src/test/resources/includes/AddRecF32.h b/hardfloat/tests/resources/includes/AddRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/AddRecF32.h
+rename to hardfloat/tests/resources/includes/AddRecF32.h
+diff --git a/src/test/resources/includes/AddRecF64.h b/hardfloat/tests/resources/includes/AddRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/AddRecF64.h
+rename to hardfloat/tests/resources/includes/AddRecF64.h
+diff --git a/src/test/resources/includes/CompareRecF16_eq.h b/hardfloat/tests/resources/includes/CompareRecF16_eq.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF16_eq.h
+rename to hardfloat/tests/resources/includes/CompareRecF16_eq.h
+diff --git a/src/test/resources/includes/CompareRecF16_le.h b/hardfloat/tests/resources/includes/CompareRecF16_le.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF16_le.h
+rename to hardfloat/tests/resources/includes/CompareRecF16_le.h
+diff --git a/src/test/resources/includes/CompareRecF16_lt.h b/hardfloat/tests/resources/includes/CompareRecF16_lt.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF16_lt.h
+rename to hardfloat/tests/resources/includes/CompareRecF16_lt.h
+diff --git a/src/test/resources/includes/CompareRecF32_eq.h b/hardfloat/tests/resources/includes/CompareRecF32_eq.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF32_eq.h
+rename to hardfloat/tests/resources/includes/CompareRecF32_eq.h
+diff --git a/src/test/resources/includes/CompareRecF32_le.h b/hardfloat/tests/resources/includes/CompareRecF32_le.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF32_le.h
+rename to hardfloat/tests/resources/includes/CompareRecF32_le.h
+diff --git a/src/test/resources/includes/CompareRecF32_lt.h b/hardfloat/tests/resources/includes/CompareRecF32_lt.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF32_lt.h
+rename to hardfloat/tests/resources/includes/CompareRecF32_lt.h
+diff --git a/src/test/resources/includes/CompareRecF64_eq.h b/hardfloat/tests/resources/includes/CompareRecF64_eq.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF64_eq.h
+rename to hardfloat/tests/resources/includes/CompareRecF64_eq.h
+diff --git a/src/test/resources/includes/CompareRecF64_le.h b/hardfloat/tests/resources/includes/CompareRecF64_le.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF64_le.h
+rename to hardfloat/tests/resources/includes/CompareRecF64_le.h
+diff --git a/src/test/resources/includes/CompareRecF64_lt.h b/hardfloat/tests/resources/includes/CompareRecF64_lt.h
+similarity index 100%
+rename from src/test/resources/includes/CompareRecF64_lt.h
+rename to hardfloat/tests/resources/includes/CompareRecF64_lt.h
+diff --git a/src/test/resources/includes/DivSqrtRecF16_small_div.h b/hardfloat/tests/resources/includes/DivSqrtRecF16_small_div.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF16_small_div.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF16_small_div.h
+diff --git a/src/test/resources/includes/DivSqrtRecF16_small_sqrt.h b/hardfloat/tests/resources/includes/DivSqrtRecF16_small_sqrt.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF16_small_sqrt.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF16_small_sqrt.h
+diff --git a/src/test/resources/includes/DivSqrtRecF32_small_div.h b/hardfloat/tests/resources/includes/DivSqrtRecF32_small_div.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF32_small_div.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF32_small_div.h
+diff --git a/src/test/resources/includes/DivSqrtRecF32_small_sqrt.h b/hardfloat/tests/resources/includes/DivSqrtRecF32_small_sqrt.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF32_small_sqrt.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF32_small_sqrt.h
+diff --git a/src/test/resources/includes/DivSqrtRecF64_div.h b/hardfloat/tests/resources/includes/DivSqrtRecF64_div.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF64_div.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF64_div.h
+diff --git a/src/test/resources/includes/DivSqrtRecF64_small_div.h b/hardfloat/tests/resources/includes/DivSqrtRecF64_small_div.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF64_small_div.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF64_small_div.h
+diff --git a/src/test/resources/includes/DivSqrtRecF64_small_sqrt.h b/hardfloat/tests/resources/includes/DivSqrtRecF64_small_sqrt.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF64_small_sqrt.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF64_small_sqrt.h
+diff --git a/src/test/resources/includes/DivSqrtRecF64_sqrt.h b/hardfloat/tests/resources/includes/DivSqrtRecF64_sqrt.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecF64_sqrt.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecF64_sqrt.h
+diff --git a/src/test/resources/includes/DivSqrtRecFN_div.h b/hardfloat/tests/resources/includes/DivSqrtRecFN_div.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecFN_div.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecFN_div.h
+diff --git a/src/test/resources/includes/DivSqrtRecFN_small_div.h b/hardfloat/tests/resources/includes/DivSqrtRecFN_small_div.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecFN_small_div.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecFN_small_div.h
+diff --git a/src/test/resources/includes/DivSqrtRecFN_small_sqrt.h b/hardfloat/tests/resources/includes/DivSqrtRecFN_small_sqrt.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecFN_small_sqrt.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecFN_small_sqrt.h
+diff --git a/src/test/resources/includes/DivSqrtRecFN_sqrt.h b/hardfloat/tests/resources/includes/DivSqrtRecFN_sqrt.h
+similarity index 100%
+rename from src/test/resources/includes/DivSqrtRecFN_sqrt.h
+rename to hardfloat/tests/resources/includes/DivSqrtRecFN_sqrt.h
+diff --git a/src/test/resources/includes/I32ToRecF16.h b/hardfloat/tests/resources/includes/I32ToRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/I32ToRecF16.h
+rename to hardfloat/tests/resources/includes/I32ToRecF16.h
+diff --git a/src/test/resources/includes/I32ToRecF32.h b/hardfloat/tests/resources/includes/I32ToRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/I32ToRecF32.h
+rename to hardfloat/tests/resources/includes/I32ToRecF32.h
+diff --git a/src/test/resources/includes/I32ToRecF64.h b/hardfloat/tests/resources/includes/I32ToRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/I32ToRecF64.h
+rename to hardfloat/tests/resources/includes/I32ToRecF64.h
+diff --git a/src/test/resources/includes/I64ToRecF16.h b/hardfloat/tests/resources/includes/I64ToRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/I64ToRecF16.h
+rename to hardfloat/tests/resources/includes/I64ToRecF16.h
+diff --git a/src/test/resources/includes/I64ToRecF32.h b/hardfloat/tests/resources/includes/I64ToRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/I64ToRecF32.h
+rename to hardfloat/tests/resources/includes/I64ToRecF32.h
+diff --git a/src/test/resources/includes/I64ToRecF64.h b/hardfloat/tests/resources/includes/I64ToRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/I64ToRecF64.h
+rename to hardfloat/tests/resources/includes/I64ToRecF64.h
+diff --git a/src/test/resources/includes/INToRecFN.h b/hardfloat/tests/resources/includes/INToRecFN.h
+similarity index 100%
+rename from src/test/resources/includes/INToRecFN.h
+rename to hardfloat/tests/resources/includes/INToRecFN.h
+diff --git a/src/test/resources/includes/MulAddRecF16.h b/hardfloat/tests/resources/includes/MulAddRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF16.h
+rename to hardfloat/tests/resources/includes/MulAddRecF16.h
+diff --git a/src/test/resources/includes/MulAddRecF16_add.h b/hardfloat/tests/resources/includes/MulAddRecF16_add.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF16_add.h
+rename to hardfloat/tests/resources/includes/MulAddRecF16_add.h
+diff --git a/src/test/resources/includes/MulAddRecF16_mul.h b/hardfloat/tests/resources/includes/MulAddRecF16_mul.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF16_mul.h
+rename to hardfloat/tests/resources/includes/MulAddRecF16_mul.h
+diff --git a/src/test/resources/includes/MulAddRecF32.h b/hardfloat/tests/resources/includes/MulAddRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF32.h
+rename to hardfloat/tests/resources/includes/MulAddRecF32.h
+diff --git a/src/test/resources/includes/MulAddRecF32_add.h b/hardfloat/tests/resources/includes/MulAddRecF32_add.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF32_add.h
+rename to hardfloat/tests/resources/includes/MulAddRecF32_add.h
+diff --git a/src/test/resources/includes/MulAddRecF32_mul.h b/hardfloat/tests/resources/includes/MulAddRecF32_mul.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF32_mul.h
+rename to hardfloat/tests/resources/includes/MulAddRecF32_mul.h
+diff --git a/src/test/resources/includes/MulAddRecF64.h b/hardfloat/tests/resources/includes/MulAddRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF64.h
+rename to hardfloat/tests/resources/includes/MulAddRecF64.h
+diff --git a/src/test/resources/includes/MulAddRecF64_add.h b/hardfloat/tests/resources/includes/MulAddRecF64_add.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF64_add.h
+rename to hardfloat/tests/resources/includes/MulAddRecF64_add.h
+diff --git a/src/test/resources/includes/MulAddRecF64_mul.h b/hardfloat/tests/resources/includes/MulAddRecF64_mul.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecF64_mul.h
+rename to hardfloat/tests/resources/includes/MulAddRecF64_mul.h
+diff --git a/src/test/resources/includes/MulAddRecFN.h b/hardfloat/tests/resources/includes/MulAddRecFN.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecFN.h
+rename to hardfloat/tests/resources/includes/MulAddRecFN.h
+diff --git a/src/test/resources/includes/MulAddRecFN_add.h b/hardfloat/tests/resources/includes/MulAddRecFN_add.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecFN_add.h
+rename to hardfloat/tests/resources/includes/MulAddRecFN_add.h
+diff --git a/src/test/resources/includes/MulAddRecFN_mul.h b/hardfloat/tests/resources/includes/MulAddRecFN_mul.h
+similarity index 100%
+rename from src/test/resources/includes/MulAddRecFN_mul.h
+rename to hardfloat/tests/resources/includes/MulAddRecFN_mul.h
+diff --git a/src/test/resources/includes/MulRecF16.h b/hardfloat/tests/resources/includes/MulRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/MulRecF16.h
+rename to hardfloat/tests/resources/includes/MulRecF16.h
+diff --git a/src/test/resources/includes/MulRecF32.h b/hardfloat/tests/resources/includes/MulRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/MulRecF32.h
+rename to hardfloat/tests/resources/includes/MulRecF32.h
+diff --git a/src/test/resources/includes/MulRecF64.h b/hardfloat/tests/resources/includes/MulRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/MulRecF64.h
+rename to hardfloat/tests/resources/includes/MulRecF64.h
+diff --git a/src/test/resources/includes/RecF16ToI32.h b/hardfloat/tests/resources/includes/RecF16ToI32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF16ToI32.h
+rename to hardfloat/tests/resources/includes/RecF16ToI32.h
+diff --git a/src/test/resources/includes/RecF16ToI64.h b/hardfloat/tests/resources/includes/RecF16ToI64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF16ToI64.h
+rename to hardfloat/tests/resources/includes/RecF16ToI64.h
+diff --git a/src/test/resources/includes/RecF16ToRecF32.h b/hardfloat/tests/resources/includes/RecF16ToRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF16ToRecF32.h
+rename to hardfloat/tests/resources/includes/RecF16ToRecF32.h
+diff --git a/src/test/resources/includes/RecF16ToRecF64.h b/hardfloat/tests/resources/includes/RecF16ToRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF16ToRecF64.h
+rename to hardfloat/tests/resources/includes/RecF16ToRecF64.h
+diff --git a/src/test/resources/includes/RecF16ToUI32.h b/hardfloat/tests/resources/includes/RecF16ToUI32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF16ToUI32.h
+rename to hardfloat/tests/resources/includes/RecF16ToUI32.h
+diff --git a/src/test/resources/includes/RecF16ToUI64.h b/hardfloat/tests/resources/includes/RecF16ToUI64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF16ToUI64.h
+rename to hardfloat/tests/resources/includes/RecF16ToUI64.h
+diff --git a/src/test/resources/includes/RecF32ToI32.h b/hardfloat/tests/resources/includes/RecF32ToI32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF32ToI32.h
+rename to hardfloat/tests/resources/includes/RecF32ToI32.h
+diff --git a/src/test/resources/includes/RecF32ToI64.h b/hardfloat/tests/resources/includes/RecF32ToI64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF32ToI64.h
+rename to hardfloat/tests/resources/includes/RecF32ToI64.h
+diff --git a/src/test/resources/includes/RecF32ToRecF16.h b/hardfloat/tests/resources/includes/RecF32ToRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/RecF32ToRecF16.h
+rename to hardfloat/tests/resources/includes/RecF32ToRecF16.h
+diff --git a/src/test/resources/includes/RecF32ToRecF64.h b/hardfloat/tests/resources/includes/RecF32ToRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF32ToRecF64.h
+rename to hardfloat/tests/resources/includes/RecF32ToRecF64.h
+diff --git a/src/test/resources/includes/RecF32ToUI32.h b/hardfloat/tests/resources/includes/RecF32ToUI32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF32ToUI32.h
+rename to hardfloat/tests/resources/includes/RecF32ToUI32.h
+diff --git a/src/test/resources/includes/RecF32ToUI64.h b/hardfloat/tests/resources/includes/RecF32ToUI64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF32ToUI64.h
+rename to hardfloat/tests/resources/includes/RecF32ToUI64.h
+diff --git a/src/test/resources/includes/RecF64ToI32.h b/hardfloat/tests/resources/includes/RecF64ToI32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF64ToI32.h
+rename to hardfloat/tests/resources/includes/RecF64ToI32.h
+diff --git a/src/test/resources/includes/RecF64ToI64.h b/hardfloat/tests/resources/includes/RecF64ToI64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF64ToI64.h
+rename to hardfloat/tests/resources/includes/RecF64ToI64.h
+diff --git a/src/test/resources/includes/RecF64ToRecF16.h b/hardfloat/tests/resources/includes/RecF64ToRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/RecF64ToRecF16.h
+rename to hardfloat/tests/resources/includes/RecF64ToRecF16.h
+diff --git a/src/test/resources/includes/RecF64ToRecF32.h b/hardfloat/tests/resources/includes/RecF64ToRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF64ToRecF32.h
+rename to hardfloat/tests/resources/includes/RecF64ToRecF32.h
+diff --git a/src/test/resources/includes/RecF64ToUI32.h b/hardfloat/tests/resources/includes/RecF64ToUI32.h
+similarity index 100%
+rename from src/test/resources/includes/RecF64ToUI32.h
+rename to hardfloat/tests/resources/includes/RecF64ToUI32.h
+diff --git a/src/test/resources/includes/RecF64ToUI64.h b/hardfloat/tests/resources/includes/RecF64ToUI64.h
+similarity index 100%
+rename from src/test/resources/includes/RecF64ToUI64.h
+rename to hardfloat/tests/resources/includes/RecF64ToUI64.h
+diff --git a/src/test/resources/includes/RecFNToRecFN.h b/hardfloat/tests/resources/includes/RecFNToRecFN.h
+similarity index 100%
+rename from src/test/resources/includes/RecFNToRecFN.h
+rename to hardfloat/tests/resources/includes/RecFNToRecFN.h
+diff --git a/src/test/resources/includes/UI32ToRecF16.h b/hardfloat/tests/resources/includes/UI32ToRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/UI32ToRecF16.h
+rename to hardfloat/tests/resources/includes/UI32ToRecF16.h
+diff --git a/src/test/resources/includes/UI32ToRecF32.h b/hardfloat/tests/resources/includes/UI32ToRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/UI32ToRecF32.h
+rename to hardfloat/tests/resources/includes/UI32ToRecF32.h
+diff --git a/src/test/resources/includes/UI32ToRecF64.h b/hardfloat/tests/resources/includes/UI32ToRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/UI32ToRecF64.h
+rename to hardfloat/tests/resources/includes/UI32ToRecF64.h
+diff --git a/src/test/resources/includes/UI64ToRecF16.h b/hardfloat/tests/resources/includes/UI64ToRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/UI64ToRecF16.h
+rename to hardfloat/tests/resources/includes/UI64ToRecF16.h
+diff --git a/src/test/resources/includes/UI64ToRecF32.h b/hardfloat/tests/resources/includes/UI64ToRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/UI64ToRecF32.h
+rename to hardfloat/tests/resources/includes/UI64ToRecF32.h
+diff --git a/src/test/resources/includes/UI64ToRecF64.h b/hardfloat/tests/resources/includes/UI64ToRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/UI64ToRecF64.h
+rename to hardfloat/tests/resources/includes/UI64ToRecF64.h
+diff --git a/src/test/resources/includes/UINToRecFN.h b/hardfloat/tests/resources/includes/UINToRecFN.h
+similarity index 100%
+rename from src/test/resources/includes/UINToRecFN.h
+rename to hardfloat/tests/resources/includes/UINToRecFN.h
+diff --git a/src/test/resources/includes/f16FromRecF16.h b/hardfloat/tests/resources/includes/f16FromRecF16.h
+similarity index 100%
+rename from src/test/resources/includes/f16FromRecF16.h
+rename to hardfloat/tests/resources/includes/f16FromRecF16.h
+diff --git a/src/test/resources/includes/f32FromRecF32.h b/hardfloat/tests/resources/includes/f32FromRecF32.h
+similarity index 100%
+rename from src/test/resources/includes/f32FromRecF32.h
+rename to hardfloat/tests/resources/includes/f32FromRecF32.h
+diff --git a/src/test/resources/includes/f64FromRecF64.h b/hardfloat/tests/resources/includes/f64FromRecF64.h
+similarity index 100%
+rename from src/test/resources/includes/f64FromRecF64.h
+rename to hardfloat/tests/resources/includes/f64FromRecF64.h
+diff --git a/src/test/resources/includes/verilator.h b/hardfloat/tests/resources/includes/verilator.h
+similarity index 100%
+rename from src/test/resources/includes/verilator.h
+rename to hardfloat/tests/resources/includes/verilator.h
+diff --git a/src/test/resources/vsrc/emulator-f32_mulAdd.vh b/hardfloat/tests/resources/vsrc/emulator-f32_mulAdd.vh
+similarity index 100%
+rename from src/test/resources/vsrc/emulator-f32_mulAdd.vh
+rename to hardfloat/tests/resources/vsrc/emulator-f32_mulAdd.vh
+diff --git a/src/test/resources/vsrc/emulator-f64_div.vh b/hardfloat/tests/resources/vsrc/emulator-f64_div.vh
+similarity index 100%
+rename from src/test/resources/vsrc/emulator-f64_div.vh
+rename to hardfloat/tests/resources/vsrc/emulator-f64_div.vh
+diff --git a/src/test/resources/vsrc/emulator-f64_mulAdd.vh b/hardfloat/tests/resources/vsrc/emulator-f64_mulAdd.vh
+similarity index 100%
+rename from src/test/resources/vsrc/emulator-f64_mulAdd.vh
+rename to hardfloat/tests/resources/vsrc/emulator-f64_mulAdd.vh
+diff --git a/src/test/resources/vsrc/emulator-f64_sqrt.vh b/hardfloat/tests/resources/vsrc/emulator-f64_sqrt.vh
+similarity index 100%
+rename from src/test/resources/vsrc/emulator-f64_sqrt.vh
+rename to hardfloat/tests/resources/vsrc/emulator-f64_sqrt.vh
+diff --git a/src/test/resources/vsrc/emulator.v b/hardfloat/tests/resources/vsrc/emulator.v
+similarity index 100%
+rename from src/test/resources/vsrc/emulator.v
+rename to hardfloat/tests/resources/vsrc/emulator.v
+diff --git a/src/test/scala/FMATester.scala b/hardfloat/tests/src/FMATester.scala
+similarity index 100%
+rename from src/test/scala/FMATester.scala
+rename to hardfloat/tests/src/FMATester.scala
+diff --git a/src/test/scala/HardfloatTester.scala b/hardfloat/tests/src/HardfloatTester.scala
+similarity index 100%
+rename from src/test/scala/HardfloatTester.scala
+rename to hardfloat/tests/src/HardfloatTester.scala
+diff --git a/src/test/scala/ValExec_AddRecFN.scala b/hardfloat/tests/src/ValExec_AddRecFN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_AddRecFN.scala
+rename to hardfloat/tests/src/ValExec_AddRecFN.scala
+diff --git a/src/test/scala/ValExec_CompareRecFN.scala b/hardfloat/tests/src/ValExec_CompareRecFN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_CompareRecFN.scala
+rename to hardfloat/tests/src/ValExec_CompareRecFN.scala
+diff --git a/src/test/scala/ValExec_DivSqrtRecF64.scala b/hardfloat/tests/src/ValExec_DivSqrtRecF64.scala
+similarity index 100%
+rename from src/test/scala/ValExec_DivSqrtRecF64.scala
+rename to hardfloat/tests/src/ValExec_DivSqrtRecF64.scala
+diff --git a/src/test/scala/ValExec_DivSqrtRecFN_small.scala b/hardfloat/tests/src/ValExec_DivSqrtRecFN_small.scala
+similarity index 100%
+rename from src/test/scala/ValExec_DivSqrtRecFN_small.scala
+rename to hardfloat/tests/src/ValExec_DivSqrtRecFN_small.scala
+diff --git a/src/test/scala/ValExec_INToRecFN.scala b/hardfloat/tests/src/ValExec_INToRecFN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_INToRecFN.scala
+rename to hardfloat/tests/src/ValExec_INToRecFN.scala
+diff --git a/src/test/scala/ValExec_MulAddRecFN.scala b/hardfloat/tests/src/ValExec_MulAddRecFN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_MulAddRecFN.scala
+rename to hardfloat/tests/src/ValExec_MulAddRecFN.scala
+diff --git a/src/test/scala/ValExec_MulRecFN.scala b/hardfloat/tests/src/ValExec_MulRecFN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_MulRecFN.scala
+rename to hardfloat/tests/src/ValExec_MulRecFN.scala
+diff --git a/src/test/scala/ValExec_RecFNToIN.scala b/hardfloat/tests/src/ValExec_RecFNToIN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_RecFNToIN.scala
+rename to hardfloat/tests/src/ValExec_RecFNToIN.scala
+diff --git a/src/test/scala/ValExec_RecFNToRecFN.scala b/hardfloat/tests/src/ValExec_RecFNToRecFN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_RecFNToRecFN.scala
+rename to hardfloat/tests/src/ValExec_RecFNToRecFN.scala
+diff --git a/src/test/scala/ValExec_fNFromRecFN.scala b/hardfloat/tests/src/ValExec_fNFromRecFN.scala
+similarity index 100%
+rename from src/test/scala/ValExec_fNFromRecFN.scala
+rename to hardfloat/tests/src/ValExec_fNFromRecFN.scala
+diff --git a/src/test/scala/package.scala b/hardfloat/tests/src/package.scala
+similarity index 100%
+rename from src/test/scala/package.scala
+rename to hardfloat/tests/src/package.scala
+diff --git a/overlay.nix b/overlay.nix
+new file mode 100644
+index 0000000..ab18dd5
+--- /dev/null
++++ b/overlay.nix
+@@ -0,0 +1,9 @@
++final: prev: {
++  mill = prev.mill.overrideAttrs (oldAttrs: rec {
++    version = "0.11.1";
++    src = prev.fetchurl {
++      url = "https://github.com/com-lihaoyi/mill/releases/download/${version}/${version}-assembly";
++      hash = "sha256-qG+Ddn0BHUZX1VX5hO84exgRz8YuUgYF/fH6MmgkrXE=";
++    };
++  });
++}
+diff --git a/project/build.properties b/project/build.properties
+deleted file mode 100644
+index a919a9b..0000000
+--- a/project/build.properties
++++ /dev/null
+@@ -1 +0,0 @@
+-sbt.version=1.3.8
+diff --git a/project/plugins.sbt b/project/plugins.sbt
+deleted file mode 100644
+index 72477a2..0000000
+--- a/project/plugins.sbt
++++ /dev/null
+@@ -1 +0,0 @@
+-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.15.0")
+diff --git a/sbt-launch.jar b/sbt-launch.jar
+deleted file mode 100644
+index c91a243..0000000
+Binary files a/sbt-launch.jar and /dev/null differ
