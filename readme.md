@@ -18,7 +18,7 @@ git clone git@github.com:chipsalliance/playground.git
 
 0. Install dependencies and setup environments:
 - Arch Linux `pacman -Syu --noconfirm make parallel wget cmake ninja mill dtc verilator git llvm clang lld protobuf antlr4 numactl`
-- Nix `nix-shell`
+- Nix `nix develop`
 
 0. [Optional] Remove unused dependences to accelerate bsp compile in `build.sc` `playground.moduleDeps`;
 
